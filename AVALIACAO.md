@@ -22,7 +22,10 @@
 | 8       | Letícia Helena do R. Furlan  | 13e70c6 | 01/06/26 | 11/06/26 | 3,6  | 10   |
 | 8       | Lucas Barbieri Catarina      | 13e70c6 | 01/06/26 | 11/06/26 | 2,8  | 10   |
 | 8       | Vinicíus Martins de M. Lopes | 13e70c6 | 01/06/26 | 11/06/26 | 2,5  | 10   |
-| 9       |                              |         |          |          |      | 10   |
+| 9       | Leonardo D. de Martini       | 0fbd8b6 | 12/06/26 | 14/06/26 | 7,2  | 10   |
+| 9       | Letícia Helena do R. Furlan  | 0fbd8b6 | 12/06/26 | 14/06/26 | 6,7  | 10   |
+| 9       | Lucas Barbieri Catarina      | 0fbd8b6 | 12/06/26 | 14/06/26 | 7,3  | 10   |
+| 9       | Vinicíus Martins de M. Lopes | 0fbd8b6 | 12/06/26 | 14/06/26 | 6,2  | 10   |
 | 10      |                              |         |          |          |      | 10   |
 | 11/12   |                              |         |          |          |      | 30   |
 
@@ -30,10 +33,12 @@
 
 | aluno                        | nota parcial |
 | ---------------------------- | ------------ |
-| Leonardo D. de Martini       | 6,8          |
-| Letícia Helena do R. Furlan  | 6,3          |
-| Lucas Barbieri Catarina      | 6,5          |
-| Vinicíus Martins de M. Lopes | 5,3          |
+| Leonardo D. de Martini       | 6,9          |
+| Letícia Helena do R. Furlan  | 6,4          |
+| Lucas Barbieri Catarina      | 6,6          |
+| Vinicíus Martins de M. Lopes | 5,4          |
+
+> Nota parcial calculada como média ponderada de todas as entregas avaliadas até o momento (entregas 1 a 9), conforme pesos definidos na tabela.
 
 ## Comentários
 
@@ -210,6 +215,7 @@
 
 1. Ambiente de staging ou equivalente acessível: parcial.
    - O README informa deploy em `https://zelium.onrender.com/`.
+   - A URL respondeu HTTP 200 e carregou o frontend Next.js.
    - Não foi encontrada URL de backend/API documentada; `/health` e `/api/health` no mesmo domínio retornaram 404. Assim, há evidência de frontend em staging, mas não de fluxo funcional completo com backend em produção.
 2. Manutenção e atualização da integração contínua: parcial.
    - `.github/workflows/test.yml` continua executando testes de backend e frontend em PRs e push para `main`.
@@ -239,7 +245,56 @@
    - Não há relatório de contribuições individuais da Sprint 4.
    - O histórico pós-Sprint 3 mostra apenas contribuições de Leonardo e Letícia em README/deploy/health; não há commits rastreáveis de Lucas ou Vinícius no período considerado.
 Notas individuais:
-    - Leonardo: há contribuição rastreável em README/deploy e ajuste de health, mas sem tag/release, relatório de Sprint 4, métricas, ADRs ou incremento funcional. Recebe nota um pouco maior pela participação técnica rastreável.
-    - Letícia: há contribuição rastreável nos merges de README/deploy e health, mas a entrega formal da Sprint 4 não foi realizada. Nota próxima à de Leonardo pela participação rastreável, com menor evidência técnica direta.
-    - Lucas: não há contribuição rastreável após a Sprint 3 no intervalo avaliado. A nota reflete principalmente a ausência de entrega individual da Sprint 4, apesar de trabalhos anteriores permanecerem no produto.
-    - Vinícius: não há contribuição rastreável após a Sprint 3 no intervalo avaliado e a entrega formal da Sprint 4 não foi feita. Recebe a menor nota individual.
+     - Leonardo: há contribuição rastreável em README/deploy e ajuste de health, mas sem tag/release, relatório de Sprint 4, métricas, ADRs ou incremento funcional. Recebe nota um pouco maior pela participação técnica rastreável.
+     - Letícia: há contribuição rastreável nos merges de README/deploy e health, mas a entrega formal da Sprint 4 não foi realizada. Nota próxima à de Leonardo pela participação rastreável, com menor evidência técnica direta.
+     - Lucas: não há contribuição rastreável após a Sprint 3 no intervalo avaliado. A nota reflete principalmente a ausência de entrega individual da Sprint 4, apesar de trabalhos anteriores permanecerem no produto.
+     - Vinícius: não há contribuição rastreável após a Sprint 3 no intervalo avaliado e a entrega formal da Sprint 4 não foi feita. Recebe a menor nota individual.
+
+### Entrega 9
+
+Commit/tag base: `v1.0.0` (`0fbd8b6`). Período avaliado: `13e70c6..v1.0.0`.
+
+Observação: a tag de maior valor é `v1.0.0` e, por orientação desta correção, ela foi considerada como a release final válida do projeto. Há commits posteriores em `main` (`747be1e0`, `ae93f5a5`, `87ac2b6f`), mas eles não foram considerados porque não fazem parte da versão marcada pela entrega.
+
+1. MVP completo e integrado: atendido.
+   - O MVP implementa os CRUDs principais de Patrimônio, Ambiente, Responsável, Fornecedor, Conferente, Tipo de Material e Estado do Item, integrando frontend Next.js, backend Express/Sequelize e PostgreSQL.
+   - O fluxo principal está conectado: cadastros auxiliares > patrimônio com vínculos > mudança de estado > histórico por `audit_log` > solicitação de manutenção/substituição.
+   - A Sprint 4 adicionou dashboard com dados reais, módulo de solicitações, regra de responsável obrigatório por ambiente e tela/endpoint de histórico de estado.
+   - A execução integrada com `docker compose up -d` em `src/` subiu banco, backend e frontend; backend `/health` respondeu HTTP 200 e o frontend local respondeu HTTP 200 após inicialização.
+   - A documentação final indica o que ficou fora do escopo (autenticação, autorização por papéis, e-mails, exportações, mobile, integrações externas, notificações em tempo real e painel admin avançado).
+2. Hardening do sistema: parcial.
+   - Há melhorias reais de estabilidade e validação: middleware global de erro, tratamento de FK inválida em Solicitação, validação explícita de `tipo`, `status` e ids positivos, obrigatoriedade de `responsavel_id` em Ambiente, constraints nos models, soft delete, timestamps, versionamento otimista e auditoria.
+   - A análise estática mostra separação em rotas/controllers/services/repositories/models, coerente com a arquitetura documentada.
+   - O código ainda usa CORS aberto (`Access-Control-Allow-Origin: *`), não possui autenticação/autorização, não usa Helmet/rate limiting, não possui sanitização centralizada e não tem uma estratégia uniforme de erro de domínio: em alguns fluxos, erros de regra de negócio acabam no middleware genérico como 500.
+   - Em `RegistroEstado.tsx`, a criação automática de solicitação envia `observacoes`, enquanto o model de Solicitação espera `descricao`; isso não impede a demonstração principal, mas indica desalinhamento de contrato entre frontend e backend.
+3. Integração contínua obrigatória: parcial.
+   - `.github/workflows/test.yml` executa em `pull_request` e `push` para `main`.
+   - O workflow possui job de backend com PostgreSQL e `npm test`, e job de frontend com `pnpm install` e `pnpm test`.
+   - Os PRs centrais da entrega (`#59`, `#63`, `#64`, `#65`, `#67`) tiveram aprovação e checks verdes de backend/frontend.
+   - Verificação local: backend `npx tsc` passou; frontend `CI=true pnpm exec jest --runInBand --detectOpenHandles --forceExit` passou com 11 suítes e 76 testes; `CI=true pnpm lint` passou; `CI=true pnpm build` passou.
+   - Ressalvas: o CI não executa build, lint, typecheck do backend, validação de YAML/formatação ou verificação de documentos obrigatórios. A suíte backend completa (`npm test -- --runInBand --detectOpenHandles --forceExit`) teve 142/143 testes passando e 1 timeout em `estadoItem.test.ts`; o arquivo falho passou isoladamente com 15/15 testes, indicando flutuação/fragilidade de execução, não falha funcional determinística.
+4. Testes de aceitação: não atendido.
+   - Não encontrei definição de testes de aceitação baseados nas funcionalidades principais do MVP.
+   - Não há associação explícita de testes de aceitação aos critérios de aceitação das issues/histórias.
+   - Não há execução documentada com resultado aprovado/reprovado/aprovado com ressalvas, checklist de aceite, evidências de execução manual ou testes E2E/BDD.
+   - Os testes automatizados existentes são relevantes, mas são testes de unidade/integração/componentes, não testes de aceitação do MVP final.
+5. Ambiente de execução acessível: atendido.
+   - Frontend público `https://zelium.onrender.com/` respondeu HTTP 200.
+   - Backend público `https://zelium-backend.onrender.com/health` respondeu HTTP 200.
+   - Execução local via Docker Compose foi validada com backend e frontend respondendo.
+   - `docs/instalacao.md` documenta execução local, variáveis, testes, lint, build, Docker e deploy.
+6. Revisão final da documentação: parcial.
+   - `README.md`, `docs/entrega-final.md`, `docs/instalacao.md`, `docs/arquitetura.md`, `docs/c4-diagrams.md` e `docs/entregas/sprint-4.md` foram atualizados e cobrem boa parte do MVP entregue, execução, arquitetura, deploy, limitações e contribuições individuais.
+   - A documentação de arquitetura possui visão C4 de contexto, contêineres e componentes, além de explicação das camadas do backend/frontend.
+   - A documentação final lista funcionalidades concluídas, fora de escopo, situação final e próximos passos.
+   - Pontos insuficientes: `docs/metricas.md` permanece apenas com definições, sem valores observados, datas de coleta, comparação de sprints ou análise; `docs/riscos.md` não registra acompanhamento final, riscos materializados/encerrados ou revisão de probabilidade/impacto; os ADRs continuam apenas com `ADR-0001` e `ADR-0002`, sem consolidar decisões importantes como deploy Render, soft delete, audit log, versionamento otimista e solicitações.
+7. Release Candidate: parcial.
+   - A tag/release criada foi `v1.0.0`, com nome "Release Final".
+   - Considerando `v1.0.0` como a release final válida deste projeto, há tag do marco, descrição da release, changelog/lista de PRs e indicação do ambiente publicado.
+   - A release não usa o formato exigido `v1.0.0-rc.1`.
+
+Notas individuais da entrega 9:
+- Leonardo: implementou o módulo de Solicitação no PR `#63` com backend, banco, rotas, service/repository, testes e tela frontend, além de limpeza de dependências. A contribuição é uma das mais centrais para o MVP da entrega. Recebe nota alta dentro do contexto da equipe, limitada por falhas coletivas em aceite, métricas, riscos, ADRs e CI incompleto.
+- Lucas: implementou histórico de estado e integração da tela `RegistroEstado` no PR `#64`, além de adicionar `docs/entrega-final.md`, `docs/instalacao.md` e finalizar a tag/release `v1.0.0`. A contribuição é central e bem rastreável. Recebe a maior nota pela combinação de incremento funcional, documentação final e release, limitada pelos itens coletivos ainda incompletos.
+- Letícia: implementou a regra de responsável obrigatório por ambiente no PR `#65` e produziu documentação de arquitetura/C4 e relatório da Sprint 4 no PR `#66`. A contribuição é relevante, mas a funcionalidade é mais pontual que Solicitação/Histórico e os documentos sob sua área não fecharam métricas, riscos e ADRs finais.
+- Vinícius: implementou o dashboard com dados reais no PR `#59`, com testes e tratamento de loading/erro. A contribuição é positiva e coerente com o relatório, mas tem escopo menor e não há evidência adicional de atuação nos itens críticos ausentes da entrega 9 (aceite, métricas, riscos, ADRs e CI mais completo).
