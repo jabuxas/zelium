@@ -26,17 +26,17 @@
 | 9       | Letícia Helena do R. Furlan  | 0fbd8b6 | 12/06/26 | 14/06/26 | 6,7  | 10   |
 | 9       | Lucas Barbieri Catarina      | 0fbd8b6 | 12/06/26 | 14/06/26 | 7,3  | 10   |
 | 9       | Vinicíus Martins de M. Lopes | 0fbd8b6 | 12/06/26 | 14/06/26 | 6,2  | 10   |
-| 10      |                              |         |          |          |      | 10   |
+| 10      | equipe                       | --      | 15/06/26 | 15/06/26 | 8    | 10   |
 | 11/12   |                              |         |          |          |      | 30   |
 
 ## Nota parcial
 
 | aluno                        | nota parcial |
 | ---------------------------- | ------------ |
-| Leonardo D. de Martini       | 6,9          |
-| Letícia Helena do R. Furlan  | 6,4          |
-| Lucas Barbieri Catarina      | 6,6          |
-| Vinicíus Martins de M. Lopes | 5,4          |
+| Leonardo D. de Martini       | 7            |
+| Letícia Helena do R. Furlan  | 6,6          |
+| Lucas Barbieri Catarina      | 6,8          |
+| Vinicíus Martins de M. Lopes | 5,8          |
 
 > Nota parcial calculada como média ponderada de todas as entregas avaliadas até o momento (entregas 1 a 9), conforme pesos definidos na tabela.
 
@@ -206,10 +206,10 @@
 8. Registro de contribuição individual: parcial.
    - `entregas/sprint-3.md` lista contribuições individuais, mas é muito curto e não associa explicitamente cada contribuição a issues, commits, PRs e revisões.
    - As contribuições foram inferidas pelo histórico de commits e PR.
-    - Leonardo: contribuição em deploy, soft delete, ajustes de ambiente/CI e CRUD de Patrimônio, além de documentação da sprint. Nota limitada pelas lacunas gerais de arquitetura, métricas, ADRs e release.
-    - Lucas: contribuiu de forma relevante na auditoria (`audit_log`) e na API de auditoria, com PR `#54` bem descrito e testes. A nota é limitaa pelo menor volume integrado na sprint.
-    - Letícia: aparece no relatório como responsável pelo controle de versão e tem commits relacionados a versionamento/soft delete e documentação, mas o PR `#48` teve descrição/checklist incompletos e check inicial de backend falhando. A contribuição é relevante, mas com menor qualidade de evidência.
-    - Vinícius: aparece no relatório como responsável pelos timestamps, mas no intervalo `v0.2.0..c6939774` não há commits rastreáveis com autoria dele. A nota é menor porque a contribuição documentada não foi confirmada pelos commits/PRs do marco.
+   - Leonardo: contribuição em deploy, soft delete, ajustes de ambiente/CI e CRUD de Patrimônio, além de documentação da sprint. Nota limitada pelas lacunas gerais de arquitetura, métricas, ADRs e release.
+   - Lucas: contribuiu de forma relevante na auditoria (`audit_log`) e na API de auditoria, com PR `#54` bem descrito e testes. A nota é limitaa pelo menor volume integrado na sprint.
+   - Letícia: aparece no relatório como responsável pelo controle de versão e tem commits relacionados a versionamento/soft delete e documentação, mas o PR `#48` teve descrição/checklist incompletos e check inicial de backend falhando. A contribuição é relevante, mas com menor qualidade de evidência.
+   - Vinícius: aparece no relatório como responsável pelos timestamps, mas no intervalo `v0.2.0..c6939774` não há commits rastreáveis com autoria dele. A nota é menor porque a contribuição documentada não foi confirmada pelos commits/PRs do marco.
 
 ### Entrega 8
 
@@ -244,11 +244,7 @@
 8. Registro de contribuição individual: não atendido.
    - Não há relatório de contribuições individuais da Sprint 4.
    - O histórico pós-Sprint 3 mostra apenas contribuições de Leonardo e Letícia em README/deploy/health; não há commits rastreáveis de Lucas ou Vinícius no período considerado.
-Notas individuais:
-     - Leonardo: há contribuição rastreável em README/deploy e ajuste de health, mas sem tag/release, relatório de Sprint 4, métricas, ADRs ou incremento funcional. Recebe nota um pouco maior pela participação técnica rastreável.
-     - Letícia: há contribuição rastreável nos merges de README/deploy e health, mas a entrega formal da Sprint 4 não foi realizada. Nota próxima à de Leonardo pela participação rastreável, com menor evidência técnica direta.
-     - Lucas: não há contribuição rastreável após a Sprint 3 no intervalo avaliado. A nota reflete principalmente a ausência de entrega individual da Sprint 4, apesar de trabalhos anteriores permanecerem no produto.
-     - Vinícius: não há contribuição rastreável após a Sprint 3 no intervalo avaliado e a entrega formal da Sprint 4 não foi feita. Recebe a menor nota individual.
+     Notas individuais: - Leonardo: há contribuição rastreável em README/deploy e ajuste de health, mas sem tag/release, relatório de Sprint 4, métricas, ADRs ou incremento funcional. Recebe nota um pouco maior pela participação técnica rastreável. - Letícia: há contribuição rastreável nos merges de README/deploy e health, mas a entrega formal da Sprint 4 não foi realizada. Nota próxima à de Leonardo pela participação rastreável, com menor evidência técnica direta. - Lucas: não há contribuição rastreável após a Sprint 3 no intervalo avaliado. A nota reflete principalmente a ausência de entrega individual da Sprint 4, apesar de trabalhos anteriores permanecerem no produto. - Vinícius: não há contribuição rastreável após a Sprint 3 no intervalo avaliado e a entrega formal da Sprint 4 não foi feita. Recebe a menor nota individual.
 
 ### Entrega 9
 
@@ -294,7 +290,18 @@ Observação: a tag de maior valor é `v1.0.0` e, por orientação desta correç
    - A release não usa o formato exigido `v1.0.0-rc.1`.
 
 Notas individuais da entrega 9:
+
 - Leonardo: implementou o módulo de Solicitação no PR `#63` com backend, banco, rotas, service/repository, testes e tela frontend, além de limpeza de dependências. A contribuição é uma das mais centrais para o MVP da entrega. Recebe nota alta dentro do contexto da equipe, limitada por falhas coletivas em aceite, métricas, riscos, ADRs e CI incompleto.
 - Lucas: implementou histórico de estado e integração da tela `RegistroEstado` no PR `#64`, além de adicionar `docs/entrega-final.md`, `docs/instalacao.md` e finalizar a tag/release `v1.0.0`. A contribuição é central e bem rastreável. Recebe a maior nota pela combinação de incremento funcional, documentação final e release, limitada pelos itens coletivos ainda incompletos.
 - Letícia: implementou a regra de responsável obrigatório por ambiente no PR `#65` e produziu documentação de arquitetura/C4 e relatório da Sprint 4 no PR `#66`. A contribuição é relevante, mas a funcionalidade é mais pontual que Solicitação/Histórico e os documentos sob sua área não fecharam métricas, riscos e ADRs finais.
 - Vinícius: implementou o dashboard com dados reais no PR `#59`, com testes e tratamento de loading/erro. A contribuição é positiva e coerente com o relatório, mas tem escopo menor e não há evidência adicional de atuação nos itens críticos ausentes da entrega 9 (aceite, métricas, riscos, ADRs e CI mais completo).
+
+### Entrega 10
+
+| critério                  | peso | nota |
+| ------------------------- | ---- | ---- |
+| Identificação do projeto  | 1    | 7    |
+| Resumo do MVP             | 2    | 7    |
+| Demonstração do sistema   | 4    | 10   |
+| Situação final do projeto | 1,5  | 4    |
+| Objetividade e perguntas  | 0,5  | 10   |
