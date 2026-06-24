@@ -27,16 +27,19 @@
 | 9       | Lucas Barbieri Catarina      | 0fbd8b6 | 12/06/26 | 14/06/26 | 7,3  | 10   |
 | 9       | Vinicíus Martins de M. Lopes | 0fbd8b6 | 12/06/26 | 14/06/26 | 6,2  | 10   |
 | 10      | equipe                       | --      | 15/06/26 | 15/06/26 | 8    | 10   |
-| 11/12   |                              |         |          |          |      | 30   |
+| 11/12   | Leonardo D. de Martini       | --      | 18/06/26 | 24/06/26 | 6,5  | 30   |
+| 11/12   | Letícia Helena do R. Furlan  | --      | 18/06/26 | 24/06/26 | 5    | 30   |
+| 11/12   | Lucas Barbieri Catarina      | --      | 18/06/26 | 24/06/26 | 7,5  | 30   |
+| 11/12   | Vinicíus Martins de M. Lopes | --      | 18/06/26 | 24/06/26 | 4    | 30   |
 
-## Nota parcial
+## Nota final
 
-| aluno                        | nota parcial |
-| ---------------------------- | ------------ |
-| Leonardo D. de Martini       | 7            |
-| Letícia Helena do R. Furlan  | 6,6          |
-| Lucas Barbieri Catarina      | 6,8          |
-| Vinicíus Martins de M. Lopes | 5,8          |
+| aluno                        | nota |
+| ---------------------------- | ---- |
+| Leonardo D. de Martini       | 6,9  |
+| Letícia Helena do R. Furlan  | 6,1  |
+| Lucas Barbieri Catarina      | 7    |
+| Vinicíus Martins de M. Lopes | 5,2  |
 
 > Nota parcial calculada como média ponderada de todas as entregas avaliadas até o momento (entregas 1 a 9), conforme pesos definidos na tabela.
 
@@ -305,3 +308,85 @@ Notas individuais da entrega 9:
 | Demonstração do sistema   | 4    | 10   |
 | Situação final do projeto | 1,5  | 4    |
 | Objetividade e perguntas  | 0,5  | 10   |
+
+### Entrega 11/12
+
+1. Produto e MVP: atendido com ressalvas.
+   - O MVP final entrega o fluxo central de gestão de patrimônio: CRUDs principais, associação entre patrimônio/ambiente/responsável, mudança de estado, histórico por auditoria, solicitações de manutenção/substituição e dashboard com dados reais.
+   - A tag/release formal usada para entrega foi `v1.0.0` (`0fbd8b6`), e há deploy público com frontend em `https://zelium.onrender.com/` e backend em `https://zelium-backend.onrender.com/health`.
+   - Após a tag, houve commits adicionais em `main`: métricas/riscos (`747be1e0`), ADRs finais (`ae93f5a5`) e funcionalidade de upload de fotos/localização (`87ac2b6`). Essas mudanças melhoram evidências e escopo técnico, mas não estão marcadas em nova release/tag.
+   - Ainda há funcionalidades importantes fora do MVP, corretamente documentadas como limitações: autenticação, autorização por papéis, e-mails, relatórios/exportações e notificações.
+2. Arquitetura e decisões técnicas: atendido com ressalvas.
+   - A arquitetura cliente-servidor com Next.js/React, Express/Sequelize e PostgreSQL está documentada em `docs/arquitetura.md` e `docs/c4-diagrams.md`, com visões de contexto, contêineres e componentes.
+   - A organização backend em `routes -> controllers -> services -> repositories -> models` é coerente e aparece tanto no código quanto na documentação.
+   - Após `v1.0.0`, foram adicionados ADRs para soft delete, audit log/histórico, controle de versão otimista, solicitações e deploy Render/Docker, o que corrige parcialmente a lacuna apontada na Entrega 9.
+   - O README ainda lista apenas ADR-0001 e ADR-0002 na seção de decisões de arquitetura, ficando desatualizado em relação aos ADRs finais existentes.
+3. Projeto orientado a objetos e padrões: parcial.
+   - O projeto usa TypeScript com classes/camadas e aplica separação de responsabilidades por controllers, services, repositories e models.
+   - Repository Pattern e Service Layer estão aplicados de forma prática e documentados em `entrega-final.md`, principalmente nos módulos de Ambiente, Patrimônio, Solicitação e cadastros auxiliares.
+   - Soft delete, audit log e versionamento otimista são decisões de design relevantes para integridade/rastreabilidade.
+   - A documentação de padrões ainda é mais arquitetural do que analítica: faltou uma seção específica discutindo trade-offs de padrões OO por problema de design, e alguns erros de domínio ainda caem no middleware genérico como HTTP 500.
+4. Qualidade, testes e pipeline: parcial.
+   - Frontend validado localmente em 18/06/2026: `CI=true pnpm exec jest --runInBand --detectOpenHandles --forceExit`, `CI=true pnpm lint` e `CI=true pnpm build` passaram; foram 11 suítes e 76 testes.
+   - Backend: após `npm ci`, `npx tsc --noEmit` passou. O `npm ci` reportou 33 vulnerabilidades, incluindo 5 altas, que deveriam ser tratadas como dívida de segurança.
+   - A suíte backend completa falhou localmente sem PostgreSQL em `localhost:5432`, principalmente em testes de auditoria/versionamento que dependem de banco real; no CI há serviço PostgreSQL configurado, mas o workflow ainda não executa typecheck, lint ou build.
+   - O CI executa testes de backend e frontend em PRs e push para `main`, mas continua insuficiente para bloquear problemas de build/lint/typecheck e vulnerabilidades.
+   - Não há testes de aceitação formais do MVP final; os testes automatizados são relevantes, mas não substituem roteiro de aceite ponta a ponta.
+5. Deploy, staging e reprodutibilidade: atendido com ressalvas.
+   - `docs/instalacao.md` documenta execução local com Docker Compose, variáveis de ambiente, testes, build, lint e deploy via Render.
+   - A arquitetura de deploy foi registrada em `ADR-0008`, com frontend, backend e PostgreSQL no Render, além de fallback local com Docker.
+   - O uso de Render gratuito é adequado para demonstração acadêmica, mas possui cold start e menor previsibilidade operacional.
+   - A validação local do backend depende de PostgreSQL disponível; sem Docker/Postgres, parte dos testes falha, o que reforça a necessidade de documentar o comando Docker como pré-condição para a suíte completa.
+6. Métricas, riscos e acompanhamento: parcial.
+   - `docs/metricas.md` foi atualizado após a tag e agora registra fontes, métricas, acompanhamento por sprint, lead time, velocity, densidade de defeitos, rastreabilidade e estabilidade do pipeline.
+   - `docs/riscos.md` também foi atualizado e passou a registrar matriz, acompanhamento por sprint, situação final e relação com decisões técnicas.
+   - A melhoria é relevante, mas tardia em relação à release `v1.0.0`; além disso, algumas métricas continuam aproximadas e não trazem evidência direta de consulta ao GitHub/Actions além da documentação textual.
+   - O risco residual de CI insuficiente está corretamente reconhecido, mas ainda não foi resolvido no workflow.
+7. Manutenção e reengenharia: atendido com ressalvas.
+   - Há evidências de evolução orientada a qualidade: soft delete, audit log, versionamento otimista, responsável obrigatório, tratamento de solicitações e reaproveitamento de `audit_log` para histórico de estado.
+   - Os ADRs finais explicam contexto, decisão, alternativas e trade-offs, especialmente `ADR-0004`, `ADR-0005`, `ADR-0006`, `ADR-0007` e `ADR-0008`.
+   - A manutenção/reengenharia melhora integridade e rastreabilidade do produto, mas faltou comparação objetiva antes/depois com métrica técnica direta, como redução de erros, cobertura, acoplamento, duplicação ou complexidade.
+   - O commit pós-release `87ac2b6` adiciona upload de fotos/localização e testes, mas por estar fora da tag final e sem nova release, deve ser tratado como evolução posterior, não como evidência principal do marco.
+8. Colaboração e contribuição individual: parcial.
+   - Leonardo D. de Martini: maior volume de commits e contribuição técnica contínua em frontend/backend, Docker, CRUDs iniciais, patrimônio, solicitações, deploy, ajustes de ambiente e funcionalidade pós-release de fotos/localização. As contribuições documentadas são amplamente confirmadas pelos commits, embora algumas responsabilidades coletivas de CI/segurança ainda tenham ficado incompletas.
+   - Lucas Barbieri Catarina: contribuição forte em modelagem inicial, Docker, tipos de material, auditoria, histórico de estado, documentação final, release `v1.0.0`, atualização de métricas/riscos e ADRs finais. Os commits confirmam protagonismo em documentação técnica e rastreabilidade final.
+   - Letícia Helena do R. Furlan: contribuição rastreável em DoD/inception, fornecedores, controle de versão/soft delete, responsável obrigatório, arquitetura/C4 e relatório de Sprint 4. A contribuição é consistente, mas parte das entregas de qualidade sob seu papel ficou incompleta, como testes de aceitação, CI mais completo e fechamento antecipado de métricas/riscos.
+   - Vinícius Martins de M. Lopes: contribuição rastreável em templates/governança, estado do item, conferentes, testes de frontend e dashboard com dados reais. A participação existe e é coerente com alguns itens documentados, mas é menor em volume e menos presente nos itens finais de documentação, CI, riscos, ADRs e release.
+
+#### Perguntas para a defesa
+
+Leonardo D. de Martini:
+
+1. Como o módulo de Solicitações aplica padrões estruturais como Controller-Service-Repository e quais benefícios isso trouxe para manutenibilidade e testabilidade?
+   - Resposta esperada: deve explicar que routes/controllers recebem HTTP e validam entrada, services concentram regras como tipo/status e vínculo com patrimônio/conferente, repositories isolam Sequelize/banco e models definem schema. O benefício é separar responsabilidades, facilitar testes por camada, reduzir acoplamento e permitir evoluir regras sem espalhar lógica em controllers, alinhado aos padrões estruturais vistos em aula.
+2. A funcionalidade de upload de fotos/localização foi adicionada após `v1.0.0`, em `main`. Pela política de releases e versionamento semântico, como uma evolução pós-release deveria ser tratada no repositório para não comprometer a rastreabilidade da entrega avaliada?
+   - Resposta esperada: criar nova branch/PR, tag/release específica, rodar CI completo com typecheck, lint, build e testes, atualizar documentação, manter changelog e definir se a mudança é correção (patch) ou funcionalidade (minor). O correto seria criar `v1.1.0` a partir da `main` após a evolução, não misturar na mesma tag da release. Também deveria verificar dependências novas (`multer`) e vulnerabilidades.
+3. O backend possui middleware global de erro, mas alguns erros de domínio retornam 500. Pela ISO 25010, como isso afeta confiabilidade e usabilidade, e como você melhoraria essa estratégia?
+   - Resposta esperada: criar classes/objetos de erro de domínio com código HTTP, mapear validação para 400/422, não encontrado para 404, conflito de versão para 409 e erros inesperados para 500. Pela ISO 25010, erros 500 genéricos prejudicam confiabilidade (tolerância a falhas) e usabilidade (inteligibilidade). Services deveriam lançar erros tipados, controllers/middleware deveriam traduzir consistentemente, e testes deveriam validar os códigos.
+
+Letícia Helena do R. Furlan:
+
+1. Qual foi a definição de pronto (DoD) aplicada nas Sprints e como ela se relaciona com a governança de repositório e garantia de qualidade antes do merge?
+   - Resposta esperada: a DoD deveria incluir code review, testes passando no CI, lint/typecheck, documentação se necessário, nenhum warning crítico, e issue vinculada ao PR. Pela governança de repositório, toda entrega na `main` deveria atender esses critérios. Deve reconhecer se a DoD foi seguida consistentemente ou se houve exceções.
+2. Como os ADRs finais registram decisões arquiteturais e como eles se conectam aos padrões arquiteturais/estruturais vistos em aula e à rastreabilidade da release?
+   - Resposta esperada: ADRs capturam contexto, decisão, alternativas e trade-offs, justificando soft delete, audit log, versionamento otimista, solicitações e deploy. Devem ser consolidados antes da release para orientar implementação, revisão e testes. Relacionam-se a padrões arquiteturais (C4, camadas, REST) e estruturais (Repository, Service) vistos nas aulas de ES2.
+3. Pela ISO 25010, como você avaliaria a qualidade do projeto além da quantidade de testes automatizados?
+   - Resposta esperada: usar critérios como rastreabilidade issue-PR-teste-doc, cobertura de fluxo crítico, estabilidade do CI, lint/build/typecheck, defeitos por funcionalidade, tratamento de erros, segurança básica, manutenibilidade das camadas e testes de aceitação do MVP. Deve citar explicitamente características ISO 25010 relevantes: confiabilidade, usabilidade, manutenibilidade, segurança.
+
+Lucas Barbieri Catarina:
+
+1. Por que reaproveitar `audit_log` para histórico de estado foi uma decisão melhor do que criar uma tabela específica? Quais trade-offs de manutenibilidade e desempenho isso envolve?
+   - Resposta esperada: evita redundância, centraliza rastreabilidade e reaproveita infraestrutura existente. Trade-offs: consulta mais complexa, dependência do formato dos logs, necessidade de garantir que alterações de estado sejam registradas corretamente e possível necessidade de otimização futura. Isso se relaciona a decisões arquiteturais vistas em aula como evolução e engenharia reversa.
+2. As métricas e riscos foram atualizados após a tag `v1.0.0`. Pelo que foi visto em aula sobre gestão de riscos (RMMM) e métricas de software, como essas evidências deveriam ter sido incorporadas formalmente à release?
+   - Resposta esperada: integrar documentação antes da tag, referenciar no release notes, revisar por PR, vincular métricas/riscos às issues e criar nova tag se houver atualização relevante pós-release. Pela gestão de riscos, riscos deveriam ser identificados, analisados, priorizados e monitorados ao longo de todo o ciclo de vida, com planos de mitigação ativos na release. Métricas deveriam ter base de comparação entre sprints.
+3. O CI atual executa testes, mas não lint/build/typecheck. Considerando o pipeline canônico de Integração Contínua visto em aula, que passos mínimos ainda faltam e qual o impacto na qualidade e na definição de pronto?
+   - Resposta esperada: adicionar no backend `npm ci`, `npx tsc --noEmit`, `npm test`; no frontend `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm build`, `pnpm test`; opcionalmente validação YAML/documentos e `npm audit`/`pnpm audit` com política definida. Sem essas etapas, a DoD não é verificável e o CI não garante estabilidade nem quebra regressões de tipo/build antes do merge.
+
+Vinícius Martins de M. Lopes:
+
+1. Como o dashboard com dados reais melhora o MVP e que cuidados de engenharia ele exige em termos de verificação e validação do produto?
+   - Resposta esperada: melhora aderência ao produto porque mostra indicadores reais do banco, reduz divergência entre protótipo e sistema e apoia decisão do gestor. Exige API estável, tratamento de loading/erro, testes, consistência dos cálculos, fallback quando dados estão vazios e alinhamento com regras de domínio. Verificação garante que os cálculos estão corretos; validação confirma que o dashboard atende as necessidades do gestor.
+2. Você atuou em Estado do Item/Conferentes e Dashboard. Como relacionaria suas contribuições a issues, PRs, testes e critérios de aceitação, e como isso demonstra rastreabilidade no ciclo de vida?
+   - Resposta esperada: citar commits/PRs de Estado do Item/Conferentes e PR `#59` do dashboard, apontando quais testes foram adicionados e como cada entrega atende critérios de listagem, cadastro, integração frontend/API, estados de erro/loading e dados reais. Rastreabilidade no ciclo de vida conecta requisito > issue > PR > teste > funcionalidade na release.
+3. Como arquiteto/infra inicialmente indicado no README, elabore uma análise de riscos (identificação, priorização e mitigação) para os principais riscos técnicos que o Zelar enfrentaria em produção.
+   - Resposta esperada: CI incompleto, ausência de autenticação/autorização, CORS aberto, dependência de Render gratuito, vulnerabilidades npm, falta de testes de aceitação/E2E, tratamento inconsistente de erros, necessidade de migrações versionadas e maior padronização entre frontend/backend. Deve classificar cada risco por probabilidade/impacto, propor mitigação (ex: CI completo reduz risco de regressão) e contingência (ex: se Render cair, ter plano de migração). Isso segue a abordagem RMMM vista em aula.
