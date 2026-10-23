@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 import { API_URL } from '../lib/api';
 import { apiFetch } from '../lib/api-client';
 import { useAuth } from '../lib/auth-context';
@@ -364,6 +365,7 @@ export default function SolicitacoesList() {
                     {formatarData(solicitacao.createdAt ?? solicitacao.created_at)}
                   </td>
                   <td className="px-6 py-4">
+                    <Link href={`/solicitacoes/${solicitacao.id}`} className="inline-flex items-center gap-1 text-sm text-blue-700 hover:underline mb-2" aria-label={`Inspecionar solicitação ${solicitacao.id}`}><ExternalLink size={15} />Inspecionar</Link>
                     <SolicitacaoAcoes id={solicitacao.id} status={solicitacao.status} ocupado={atualizando === solicitacao.id} onChange={status => alterarStatus(solicitacao.id, status)} />
                   </td>
                 </tr>

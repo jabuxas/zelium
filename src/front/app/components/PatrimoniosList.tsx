@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2, AlertCircle, QrCode } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, AlertCircle, QrCode, ExternalLink } from 'lucide-react';
 import { useToast } from './Toast';
 import Link from 'next/link';
 import { API_URL } from '../lib/api';
@@ -148,6 +148,7 @@ export default function PatrimoniosList() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
+                      <Link href={`/patrimonios/${patrimonio.id}`} className="p-2 text-blue-700 hover:bg-blue-50 rounded-lg" title="Inspecionar patrimônio" aria-label={`Inspecionar patrimônio ${patrimonio.numero_patrimonio}`}><ExternalLink size={18} /></Link>
                       {podeEditar && (
                         <>
 

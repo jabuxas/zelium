@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { Package, MapPin, Users, AlertTriangle } from 'lucide-react';
 import { API_URL } from '../lib/api';
 import { apiFetch } from '../lib/api-client';
+import Link from 'next/link';
+import AuditTimeline from './AuditTimeline';
+import type { AuditEvent, AuditPage } from '../lib/audit';
 
 type Patrimonio = {
   id: number;
@@ -14,71 +17,8 @@ type Patrimonio = {
 
 type Opcao = { id: number; nome: string };
 
-type AuditLog = {
-  id: number;
-  tabela: string;
-  registro_id: number;
-  acao: string;
-  dados_novos: Record<string, unknown> | null;
-  created_at: string;
-};
-
-type AuditLogResponse = {
-  data: AuditLog[];
-};
-
 function normalizar(texto: string) {
   return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-}
-
-function formatarData(valor: string) {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(valor));
-}
-
-function labelTabela(tabela: string) {
-  const labels: Record<string, string> = {
-    ambiente: 'Ambiente',
-    conferente: 'Conferente',
-    estado_item: 'Estado do item',
-    fornecedor: 'Fornecedor',
-    patrimonio: 'Patrimônio',
-    responsavel: 'Responsável',
-    tipo_material: 'Tipo de material',
-  };
-
-  return labels[tabela] ?? tabela;
-}
-
-function labelAcao(acao: string) {
-  const labels: Record<string, string> = {
-    CREATE: 'cadastrado',
-    UPDATE: 'atualizado',
-    DELETE: 'removido',
-    RESTORE: 'restaurado',
-  };
-
-  return labels[acao.toUpperCase()] ?? acao.toLowerCase();
-}
-
-function descricaoRegistro(log: AuditLog) {
-  const dados = log.dados_novos ?? {};
-  const nome = dados.nome ?? dados.descricao ?? dados.numero_patrimonio;
-
-  if (typeof nome === 'string' && nome.trim()) {
-    return `"${nome}"`;
-  }
-
-  return `#${log.registro_id}`;
-}
-
-function descricaoAtividade(log: AuditLog) {
-  return `${labelTabela(log.tabela)} ${descricaoRegistro(log)} ${labelAcao(log.acao)}`;
 }
 
 async function buscarJson<T>(url: string): Promise<T> {
@@ -96,10 +36,11 @@ export default function Dashboard() {
   const [ambientes, setAmbientes] = useState<Opcao[]>([]);
   const [responsaveis, setResponsaveis] = useState<Opcao[]>([]);
   const [estados, setEstados] = useState<Opcao[]>([]);
-  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [logs, setLogs] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [erroAtividades, setErroAtividades] = useState(false);
+  const [loadingAtividades, setLoadingAtividades] = useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -119,9 +60,10 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    buscarJson<AuditLogResponse>(`${API_URL}/audit-log?limit=5`)
+    buscarJson<AuditPage>(`${API_URL}/audit-log?limit=5&operacional=true`)
       .then(auditLogs => setLogs(auditLogs.data ?? []))
-      .catch(() => setErroAtividades(true));
+      .catch(() => setErroAtividades(true))
+      .finally(() => setLoadingAtividades(false));
   }, []);
 
   const estadosManutencao = new Set(
@@ -172,24 +114,14 @@ export default function Dashboard() {
           </div>
 
           <div className="bg-white border border-gray-200 rounded-lg">
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-gray-900">Atividades Recentes</h2>
+              <Link href="/audit-log" className="text-sm text-blue-700 hover:underline">Ver histórico completo</Link>
             </div>
             <div className="divide-y divide-gray-200">
               {erroAtividades && <p role="status" className="p-4 text-gray-600">Atividades indisponíveis no momento. Os indicadores continuam disponíveis.</p>}
-              {logs.map((activity) => (
-                <div key={activity.id} className="p-4 hover:bg-gray-50">
-                  <div className="flex justify-between items-start gap-4">
-                    <p className="text-gray-900">{descricaoAtividade(activity)}</p>
-                    <span className="text-sm text-gray-500 whitespace-nowrap">{formatarData(activity.created_at)}</span>
-                  </div>
-                </div>
-              ))}
-              {logs.length === 0 && (
-                <div className="p-4 text-gray-500">
-                  Nenhuma atividade recente encontrada.
-                </div>
-              )}
+              {loadingAtividades && <p role="status" className="p-4 text-gray-500">Buscando atividades...</p>}
+              {!loadingAtividades && !erroAtividades && <AuditTimeline eventos={logs} compacto />}
             </div>
           </div>
         </>

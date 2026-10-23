@@ -101,7 +101,7 @@ describe("Dashboard", () => {
     });
     expect(screen.getByText(/29\/04\/2026/)).toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledWith(
-      "http://localhost:8000/api/audit-log?limit=5",
+      "http://localhost:8000/api/audit-log?limit=5&operacional=true",
       expect.anything(),
     );
   });
@@ -137,5 +137,13 @@ describe("Dashboard", () => {
     render(<Dashboard />);
     await waitFor(() => expectStat('Total de Patrimônios', '3'));
     expect(screen.getByText(/atividades indisponíveis/i)).toBeInTheDocument();
+  });
+
+  it('oferece inspeção e não exibe eventos técnicos de notificação', async () => {
+    mockFetch(url => ({ status: 200, body: url.includes('/audit-log') ? { ...auditLog, data: [...auditLog.data, { ...auditLog.data[0], id: 11, tabela: 'notificacao' }] } : routeBody(url) }));
+    render(<Dashboard />);
+    expect(await screen.findByRole('link', { name: /inspecionar patrimônio/i })).toHaveAttribute('href', '/patrimonios/1');
+    expect(screen.queryByText(/notificacao/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /ver histórico completo/i })).toHaveAttribute('href', '/audit-log');
   });
 });

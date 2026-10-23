@@ -19,6 +19,7 @@ import {
   DollarSign,
   LogOut,
   Bell,
+  History,
 } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
 import type { Papel } from "../lib/auth";
@@ -42,6 +43,7 @@ const menuItems: MenuItem[] = [
   { path: "/patrimonios", icon: Package, label: "Patrimônios", papeis: ["gestor", "responsavel", "conferente"] },
   { path: "/solicitacoes", icon: Wrench, label: "Solicitações", papeis: ["gestor", "responsavel", "conferente"] },
   { path: "/ambientes", icon: MapPin, label: "Ambientes", papeis: ["gestor", "responsavel", "conferente"] },
+  { path: "/audit-log", icon: History, label: "Histórico", papeis: ["gestor", "responsavel", "conferente"] },
   { path: "/relatorios", icon: FileBarChart2, label: "Relatórios", papeis: ["gestor", "responsavel"] },
   { path: "/financeiro", icon: DollarSign, label: "Financeiro", papeis: ["gestor"] },
   { path: "/notificacoes", icon: Bell, label: "Notificações", papeis: ["gestor"] },
@@ -54,6 +56,7 @@ const menuItems: MenuItem[] = [
 
 export default function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [menuMovelAberto, setMenuMovelAberto] = useState(false);
   const pathname = usePathname();
   const { usuario, organizacao, papel, logout } = useAuth();
 
@@ -68,13 +71,16 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
   );
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50" onKeyDown={event => { if (event.key === 'Escape') setMenuMovelAberto(false); }}>
+      {menuMovelAberto && <button type="button" aria-label="Fechar menu" onClick={() => setMenuMovelAberto(false)} className="fixed inset-0 z-20 bg-black/30 md:hidden" />}
       <div
-        className={`${sidebarOpen ? "w-64" : "w-0"} transition-all duration-300 bg-white border-r border-gray-200 overflow-hidden flex flex-col`}
+        id="sidebar-navegacao"
+        className={`${menuMovelAberto ? "flex w-64" : "hidden"} ${sidebarOpen ? "md:flex md:w-64" : "md:hidden"} fixed inset-y-0 left-0 md:static z-30 shrink-0 bg-white border-r border-gray-200 overflow-hidden flex-col`}
       >
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 relative">
           <h1 className="text-xl font-bold text-gray-800">Zelium</h1>
           <p className="text-xs text-gray-500">Gestão Patrimonial</p>
+          <button type="button" aria-label="Fechar menu de navegação" onClick={() => setMenuMovelAberto(false)} className="md:hidden absolute top-3 right-3 p-2 rounded-lg hover:bg-gray-100"><X size={20} /></button>
         </div>
         <nav className="p-4 flex-1 overflow-auto">
           {itensVisiveis.map((item) => {
@@ -84,6 +90,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
               <Link
                 key={item.path}
                 href={item.path}
+                onClick={() => setMenuMovelAberto(false)}
                 className={`flex items-center gap-3 px-4 py-3 mb-2 rounded-lg transition-colors ${
                   isActive
                     ? "bg-blue-50 text-blue-600"
@@ -114,16 +121,21 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
         )}
       </div>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center gap-4">
+          <button type="button" aria-label="Abrir menu de navegação" aria-controls="sidebar-navegacao" aria-expanded={menuMovelAberto} onClick={() => setMenuMovelAberto(!menuMovelAberto)} className="md:hidden p-2 hover:bg-gray-100 rounded-lg"><Menu size={20} /></button>
           <button
+            type="button"
+            aria-label={sidebarOpen ? 'Recolher menu' : 'Expandir menu'}
+            aria-controls="sidebar-navegacao"
+            aria-expanded={sidebarOpen}
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
+            className="hidden md:inline-flex p-2 hover:bg-gray-100 rounded-lg"
           >
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-800">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800">
               Sistema de Gestão Patrimonial
             </h2>
             {organizacao && (
@@ -132,7 +144,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 min-w-0 overflow-auto p-4 sm:p-6">
           <AcessoPagina path={pathname}>{children}</AcessoPagina>
         </main>
       </div>
