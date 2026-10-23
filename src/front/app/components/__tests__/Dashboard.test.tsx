@@ -102,6 +102,7 @@ describe("Dashboard", () => {
     expect(screen.getByText(/29\/04\/2026/)).toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledWith(
       "http://localhost:8000/api/audit-log?limit=5",
+      expect.anything(),
     );
   });
 

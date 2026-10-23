@@ -5,6 +5,8 @@ import { Plus, Search, Edit2, Trash2 } from "lucide-react";
 import { useToast } from "./Toast";
 import Link from "next/link";
 import { API_URL } from "../lib/api";
+import { apiFetch } from "../lib/api-client";
+import { useAuth } from "../lib/auth-context";
 
 type TipoMaterial = {
   id: number;
@@ -17,9 +19,11 @@ export default function TiposMaterialList() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const { toast } = useToast();
+  const { podeEscrever } = useAuth();
+  const podeEditar = podeEscrever('cadastros');
 
   useEffect(() => {
-    fetch(`${API_URL}/tipo-material`)
+    apiFetch(`${API_URL}/tipo-material`)
       .then((r) => r.json())
       .then(setTipos)
       .catch(() => setErro("Erro ao carregar tipos de material"))
@@ -29,7 +33,7 @@ export default function TiposMaterialList() {
   async function handleDelete(id: number) {
     if (!confirm("Confirmar exclusão do tipo de material?")) return;
     try {
-      const res = await fetch(`${API_URL}/tipo-material/${id}`, {
+      const res = await apiFetch(`${API_URL}/tipo-material/${id}`, {
         method: "DELETE",
       });
       if (res.status === 409) {
@@ -86,6 +90,7 @@ export default function TiposMaterialList() {
           </h1>
           <p className="text-gray-600">Gerencie os tipos de material</p>
         </div>
+        {podeEditar && (
         <Link
           href="/tipos-material/novo"
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -93,6 +98,7 @@ export default function TiposMaterialList() {
           <Plus size={20} />
           Novo Tipo
         </Link>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -138,6 +144,9 @@ export default function TiposMaterialList() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
+                      {podeEditar && (
+                        <>
+
                       <Link
                         href={`/tipos-material/editar/${tipo.id}`}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
@@ -150,6 +159,9 @@ export default function TiposMaterialList() {
                       >
                         <Trash2 size={16} />
                       </button>
+                    
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

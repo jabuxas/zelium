@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
+import { apiFetch } from '../lib/api-client';
 
 export default function FornecedorForm() {
   const { id } = useParams();
@@ -20,7 +21,7 @@ export default function FornecedorForm() {
 
   useEffect(() => {
     if (!isEdit) return;
-    fetch(`${API_URL}/fornecedores/${id}`)
+    apiFetch(`${API_URL}/fornecedores/${id}`)
       .then(r => r.json())
       .then(data => {
         setNome(data.nome ?? '');
@@ -55,7 +56,7 @@ export default function FornecedorForm() {
     try {
       const url = isEdit ? `${API_URL}/fornecedores/${id}` : `${API_URL}/fornecedores`;
       const method = isEdit ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

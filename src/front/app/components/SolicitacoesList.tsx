@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle, Clock, PlayCircle, Plus, RotateCcw, Search, XCircle } from 'lucide-react';
 import { API_URL } from '../lib/api';
+import { apiFetch } from '../lib/api-client';
+import { useAuth } from '../lib/auth-context';
 import { useToast } from './Toast';
 
 type SolicitacaoStatus = 'aberta' | 'em_andamento' | 'concluida' | 'cancelada';
@@ -81,12 +83,13 @@ export default function SolicitacoesList() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const { toast } = useToast();
+  const { podeEscrever } = useAuth();
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_URL}/solicitacoes`).then(r => r.json()),
-      fetch(`${API_URL}/patrimonios`).then(r => r.json()),
-      fetch(`${API_URL}/conferentes`).then(r => r.json()),
+      apiFetch(`${API_URL}/solicitacoes`).then(r => r.json()),
+      apiFetch(`${API_URL}/patrimonios`).then(r => r.json()),
+      apiFetch(`${API_URL}/conferentes`).then(r => r.json()),
     ])
       .then(([sols, pats, confs]) => {
         setSolicitacoes(sols);
@@ -101,7 +104,7 @@ export default function SolicitacoesList() {
 
   async function alterarStatus(id: number, status: SolicitacaoStatus) {
     try {
-      const res = await fetch(`${API_URL}/solicitacoes/${id}/status`, {
+      const res = await apiFetch(`${API_URL}/solicitacoes/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -138,7 +141,7 @@ export default function SolicitacoesList() {
         conferente_id: novoConferenteId ? Number(novoConferenteId) : null,
       };
 
-      const res = await fetch(`${API_URL}/solicitacoes`, {
+      const res = await apiFetch(`${API_URL}/solicitacoes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -355,6 +358,7 @@ export default function SolicitacoesList() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col items-end gap-2">
+                      {podeEscrever('solicitacoes') && (
                       <select
                         aria-label={`Alterar status da solicitacao ${solicitacao.id}`}
                         className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm"
@@ -366,7 +370,9 @@ export default function SolicitacoesList() {
                         <option value="concluida">Concluida</option>
                         <option value="cancelada">Cancelada</option>
                       </select>
+                      )}
 
+                      {podeEscrever('solicitacoes') && (
                       <div className="flex flex-wrap justify-end gap-2">
                         {solicitacao.status === 'aberta' && (
                           <button
@@ -415,6 +421,7 @@ export default function SolicitacoesList() {
                           </button>
                         )}
                       </div>
+                      )}
                     </div>
                   </td>
                 </tr>

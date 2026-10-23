@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
+import { apiFetch } from '../lib/api-client';
 
 export default function ResponsavelForm() {
   const { id } = useParams();
@@ -21,7 +22,7 @@ export default function ResponsavelForm() {
 
   useEffect(() => {
     if (!isEdit) return;
-    fetch(`${API_URL}/responsaveis/${id}`)
+    apiFetch(`${API_URL}/responsaveis/${id}`)
       .then(r => r.json())
       .then(data => {
         setNome(data.nome ?? '');
@@ -58,7 +59,7 @@ export default function ResponsavelForm() {
     try {
       const url = isEdit ? `${API_URL}/responsaveis/${id}` : `${API_URL}/responsaveis`;
       const method = isEdit ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Package, MapPin, Users, AlertTriangle } from 'lucide-react';
 import { API_URL } from '../lib/api';
+import { apiFetch } from '../lib/api-client';
 
 type Patrimonio = {
   id: number;
@@ -81,7 +82,7 @@ function descricaoAtividade(log: AuditLog) {
 }
 
 async function buscarJson<T>(url: string): Promise<T> {
-  const resposta = await fetch(url);
+  const resposta = await apiFetch(url);
 
   if (!resposta.ok) {
     throw new Error('Erro ao carregar dados do dashboard');

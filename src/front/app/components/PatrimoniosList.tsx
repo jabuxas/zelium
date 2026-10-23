@@ -5,6 +5,8 @@ import { Plus, Search, Edit2, Trash2, AlertCircle } from 'lucide-react';
 import { useToast } from './Toast';
 import Link from 'next/link';
 import { API_URL } from '../lib/api';
+import { apiFetch } from '../lib/api-client';
+import { useAuth } from '../lib/auth-context';
 
 type Patrimonio = {
   id: number;
@@ -34,14 +36,16 @@ export default function PatrimoniosList() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const { toast } = useToast();
+  const { podeEscrever } = useAuth();
+  const podeEditar = podeEscrever('patrimonios');
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_URL}/patrimonios`).then(r => r.json()),
-      fetch(`${API_URL}/tipo-material`).then(r => r.json()),
-      fetch(`${API_URL}/ambientes`).then(r => r.json()),
-      fetch(`${API_URL}/responsaveis`).then(r => r.json()),
-      fetch(`${API_URL}/estados-item`).then(r => r.json()),
+      apiFetch(`${API_URL}/patrimonios`).then(r => r.json()),
+      apiFetch(`${API_URL}/tipo-material`).then(r => r.json()),
+      apiFetch(`${API_URL}/ambientes`).then(r => r.json()),
+      apiFetch(`${API_URL}/responsaveis`).then(r => r.json()),
+      apiFetch(`${API_URL}/estados-item`).then(r => r.json()),
     ])
       .then(([pats, tps, ambs, resps, ests]) => {
         setPatrimonios(pats);
@@ -58,7 +62,7 @@ export default function PatrimoniosList() {
     if (!confirm('Confirmar exclusao do patrimonio?')) return;
 
     try {
-      const res = await fetch(`${API_URL}/patrimonios/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API_URL}/patrimonios/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         toast(data.error ?? 'Erro ao excluir patrimonio', 'error');
@@ -88,6 +92,7 @@ export default function PatrimoniosList() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Patrimônios</h1>
           <p className="text-gray-600">Gerencie todos os patrimônios da empresa</p>
         </div>
+        {podeEditar && (
         <Link
           href="/patrimonios/novo"
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -95,6 +100,7 @@ export default function PatrimoniosList() {
           <Plus size={20} />
           Novo Patrimônio
         </Link>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -142,6 +148,9 @@ export default function PatrimoniosList() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
+                      {podeEditar && (
+                        <>
+
                       <Link
                         href={`/patrimonios/estado/${patrimonio.id}`}
                         className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg"
@@ -161,6 +170,9 @@ export default function PatrimoniosList() {
                       >
                         <Trash2 size={18} />
                       </button>
+                    
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { API_URL } from '../lib/api';
+import { apiFetch } from '../lib/api-client';
 import { useToast } from './Toast';
 
 type Patrimonio = {
@@ -32,7 +33,7 @@ type HistoricoEstado = {
 };
 
 async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url);
+  const res = await apiFetch(url);
   if (!res.ok) throw new Error('Erro ao carregar dados');
   return res.json();
 }
@@ -89,7 +90,7 @@ export default function RegistroEstado() {
   async function criarSolicitacao() {
     if (acao === 'nenhuma') return;
 
-    const res = await fetch(`${API_URL}/solicitacoes`, {
+    const res = await apiFetch(`${API_URL}/solicitacoes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -121,7 +122,7 @@ export default function RegistroEstado() {
 
     setSalvando(true);
     try {
-      const res = await fetch(`${API_URL}/patrimonios/${patrimonioId}`, {
+      const res = await apiFetch(`${API_URL}/patrimonios/${patrimonioId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

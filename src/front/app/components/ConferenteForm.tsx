@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '../lib/api-client';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -24,7 +25,7 @@ export default function ConferenteForm() {
   useEffect(() => {
     if (!isEdit) return;
 
-    fetch(`${API}/conferentes/${id}`)
+    apiFetch(`${API}/conferentes/${id}`)
       .then(r => r.json())
       .then(data => {
         setNome(data.nome ?? '');
@@ -59,7 +60,7 @@ export default function ConferenteForm() {
     try {
       const url = isEdit ? `${API}/conferentes/${id}` : `${API}/conferentes`;
       const method = isEdit ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

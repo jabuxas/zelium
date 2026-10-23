@@ -5,6 +5,8 @@ import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { useToast } from './Toast';
 import Link from 'next/link';
 import { API_URL } from '../lib/api';
+import { apiFetch } from '../lib/api-client';
+import { useAuth } from '../lib/auth-context';
 
 type Fornecedor = {
   id: number;
@@ -20,9 +22,11 @@ export default function FornecedoresList() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const { toast } = useToast();
+  const { podeEscrever } = useAuth();
+  const podeEditar = podeEscrever('cadastros');
 
   useEffect(() => {
-    fetch(`${API_URL}/fornecedores`)
+    apiFetch(`${API_URL}/fornecedores`)
       .then(r => r.json())
       .then(setFornecedores)
       .catch(() => setErro('Erro ao carregar fornecedores'))
@@ -33,7 +37,7 @@ export default function FornecedoresList() {
     if (!confirm('Confirmar exclusao do fornecedor?')) return;
 
     try {
-      const res = await fetch(`${API_URL}/fornecedores/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API_URL}/fornecedores/${id}`, { method: 'DELETE' });
       if (res.status === 409) {
         const data = await res.json().catch(() => ({}));
         const lista = (data.patrimonios as { numero_patrimonio: string; descricao: string }[] | undefined)
@@ -68,10 +72,12 @@ export default function FornecedoresList() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Fornecedores</h1>
           <p className="text-gray-600">Gerencie os fornecedores de patrimonios</p>
         </div>
+        {podeEditar && (
         <Link href="/fornecedores/novo" className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
           <Plus size={20} />
           Novo Fornecedor
         </Link>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -111,6 +117,9 @@ export default function FornecedoresList() {
                   <td className="px-6 py-4 text-sm text-gray-600">{fornecedor.telefone ?? '-'}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
+                      {podeEditar && (
+                        <>
+
                       <Link href={`/fornecedores/editar/${fornecedor.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit2 size={18} />
                       </Link>
@@ -120,6 +129,9 @@ export default function FornecedoresList() {
                       >
                         <Trash2 size={18} />
                       </button>
+                    
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

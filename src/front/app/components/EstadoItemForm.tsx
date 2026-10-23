@@ -1,5 +1,6 @@
 'use client'
 
+import { apiFetch } from '../lib/api-client';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
@@ -22,7 +23,7 @@ export default function EstadoItemForm() {
   useEffect(() => {
     if (!isEdit) return;
 
-    fetch(`${API}/estados-item/${id}`)
+    apiFetch(`${API}/estados-item/${id}`)
       .then(r => r.json())
       .then(data => {
         setNome(data.nome ?? '');
@@ -49,7 +50,7 @@ export default function EstadoItemForm() {
     try {
       const url = isEdit ? `${API}/estados-item/${id}` : `${API}/estados-item`;
       const method = isEdit ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

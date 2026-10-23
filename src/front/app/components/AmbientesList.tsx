@@ -5,6 +5,8 @@ import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import { useToast } from './Toast';
 import Link from 'next/link';
 import { API_URL } from '../lib/api';
+import { apiFetch } from '../lib/api-client';
+import { useAuth } from '../lib/auth-context';
 
 type Ambiente = {
   id: number;
@@ -20,9 +22,11 @@ export default function AmbientesList() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const { toast } = useToast();
+  const { podeEscrever } = useAuth();
+  const podeEditar = podeEscrever('ambientes');
 
   useEffect(() => {
-    fetch(`${API_URL}/ambientes`)
+    apiFetch(`${API_URL}/ambientes`)
       .then(r => r.json())
       .then(setAmbientes)
       .catch(() => setErro('Erro ao carregar ambientes'))
@@ -32,7 +36,7 @@ export default function AmbientesList() {
   async function handleDelete(id: number) {
     if (!confirm('Confirmar exclusão do ambiente?')) return;
     try {
-      const res = await fetch(`${API_URL}/ambientes/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API_URL}/ambientes/${id}`, { method: 'DELETE' });
       if (res.status === 409) {
         const data = await res.json().catch(() => ({}));
         const lista = (data.patrimonios as { numero_patrimonio: string; descricao: string }[] | undefined)
@@ -66,6 +70,7 @@ export default function AmbientesList() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Ambientes</h1>
           <p className="text-gray-600">Gerencie os ambientes da empresa</p>
         </div>
+        {podeEditar && (
         <Link
           href="/ambientes/novo"
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -73,6 +78,7 @@ export default function AmbientesList() {
           <Plus size={20} />
           Novo Ambiente
         </Link>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -110,6 +116,9 @@ export default function AmbientesList() {
                   <td className="px-6 py-4 text-sm text-gray-600">{ambiente.andar ?? '-'}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
+                      {podeEditar && (
+                        <>
+
                       <Link
                         href={`/ambientes/editar/${ambiente.id}`}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
@@ -122,6 +131,9 @@ export default function AmbientesList() {
                       >
                         <Trash2 size={18} />
                       </button>
+                    
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

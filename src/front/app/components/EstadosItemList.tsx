@@ -1,5 +1,7 @@
 'use client'
 
+import { apiFetch } from '../lib/api-client';
+import { useAuth } from '../lib/auth-context';
 import { useEffect, useState } from 'react';
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -19,9 +21,11 @@ export default function EstadosItemList() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const { toast } = useToast();
+  const { podeEscrever } = useAuth();
+  const podeEditar = podeEscrever('cadastros');
 
   useEffect(() => {
-    fetch(`${API}/estados-item`)
+    apiFetch(`${API}/estados-item`)
       .then(r => r.json())
       .then(setEstados)
       .catch(() => setErro('Erro ao carregar estados do item'))
@@ -32,7 +36,7 @@ export default function EstadosItemList() {
     if (!confirm('Confirmar exclusao do estado do item?')) return;
 
     try {
-      const res = await fetch(`${API}/estados-item/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`${API}/estados-item/${id}`, { method: 'DELETE' });
       if (res.status === 409) {
         const data = await res.json().catch(() => ({}));
         const lista = (data.patrimonios as { numero_patrimonio: string; descricao: string }[] | undefined)
@@ -82,10 +86,12 @@ export default function EstadosItemList() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Estados do Item</h1>
           <p className="text-gray-600">Gerencie os possiveis estados dos patrimonios</p>
         </div>
+        {podeEditar && (
         <Link href="/estados-item/novo" className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
           <Plus size={20} />
           Novo Estado
         </Link>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -124,6 +130,9 @@ export default function EstadosItemList() {
                   <td className="px-6 py-4 text-sm text-gray-600">{estado.descricao ?? '-'}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
+                      {podeEditar && (
+                        <>
+
                       <Link href={`/estados-item/editar/${estado.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit2 size={18} />
                       </Link>
@@ -133,6 +142,9 @@ export default function EstadosItemList() {
                       >
                         <Trash2 size={18} />
                       </button>
+                    
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

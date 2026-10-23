@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { API_URL } from '../lib/api';
+import { apiFetch } from '../lib/api-client';
 
 type Opcao = { id: number; nome: string };
 
@@ -33,16 +34,16 @@ export default function PatrimonioForm() {
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/tipo-material`).then(r => r.json()).then(setTiposMaterial).catch(() => {});
-    fetch(`${API_URL}/estados-item`).then(r => r.json()).then(setEstadosItem).catch(() => {});
-    fetch(`${API_URL}/ambientes`).then(r => r.json()).then(setAmbientes).catch(() => {});
-    fetch(`${API_URL}/responsaveis`).then(r => r.json()).then(setResponsaveis).catch(() => {});
-    fetch(`${API_URL}/fornecedores`).then(r => r.json()).then(setFornecedores).catch(() => {});
+    apiFetch(`${API_URL}/tipo-material`).then(r => r.json()).then(setTiposMaterial).catch(() => {});
+    apiFetch(`${API_URL}/estados-item`).then(r => r.json()).then(setEstadosItem).catch(() => {});
+    apiFetch(`${API_URL}/ambientes`).then(r => r.json()).then(setAmbientes).catch(() => {});
+    apiFetch(`${API_URL}/responsaveis`).then(r => r.json()).then(setResponsaveis).catch(() => {});
+    apiFetch(`${API_URL}/fornecedores`).then(r => r.json()).then(setFornecedores).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!isEdit) return;
-    fetch(`${API_URL}/patrimonios/${id}`)
+    apiFetch(`${API_URL}/patrimonios/${id}`)
       .then(r => r.json())
       .then(data => {
         setNumeroPatrimonio(data.numero_patrimonio ?? '');
@@ -107,7 +108,7 @@ export default function PatrimonioForm() {
     try {
       const url = isEdit ? `${API_URL}/patrimonios/${id}` : `${API_URL}/patrimonios`;
       const method = isEdit ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

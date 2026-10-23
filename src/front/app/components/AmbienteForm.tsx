@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { API_URL } from "../lib/api";
+import { apiFetch } from "../lib/api-client";
 
 type Responsavel = { id: number; nome: string };
 
@@ -22,7 +23,7 @@ export default function AmbienteForm() {
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/responsaveis`)
+    apiFetch(`${API_URL}/responsaveis`)
       .then((r) => r.json())
       .then(setResponsaveis)
       .catch(() => {});
@@ -30,7 +31,7 @@ export default function AmbienteForm() {
 
   useEffect(() => {
     if (!isEdit) return;
-    fetch(`${API_URL}/ambientes/${id}`)
+    apiFetch(`${API_URL}/ambientes/${id}`)
       .then((r) => r.json())
       .then((data) => {
         setNome(data.nome ?? "");
@@ -68,7 +69,7 @@ export default function AmbienteForm() {
     try {
       const url = isEdit ? `${API_URL}/ambientes/${id}` : `${API_URL}/ambientes`;
       const method = isEdit ? "PUT" : "POST";
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
