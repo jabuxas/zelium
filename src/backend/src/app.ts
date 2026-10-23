@@ -1,6 +1,7 @@
 import path from "path";
 import express, { NextFunction, Request, Response } from "express";
 import routes from "./routes";
+import { ReferenciaDeOutraOrganizacaoError } from "./context/errors";
 
 const app = express();
 
@@ -23,6 +24,9 @@ app.get("/health", (_req, res) => {
 app.use("/api", routes);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof ReferenciaDeOutraOrganizacaoError) {
+    return res.status(400).json({ error: err.message });
+  }
   console.error(err);
   res.status(500).json({ error: "Erro interno do servidor" });
 });

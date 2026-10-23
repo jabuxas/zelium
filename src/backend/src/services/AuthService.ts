@@ -2,17 +2,20 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { JWT_EXPIRES_IN, JWT_SECRET } from "../config/auth";
 import { Usuario, UsuarioPapel } from "../models/Usuario";
+import { Organizacao } from "../models/Organizacao";
 
 export interface AuthUser {
   id: number;
   email: string;
   nome: string;
   papel: UsuarioPapel;
+  organizacaoId: number;
 }
 
 export interface LoginResult {
   token: string;
   usuario: AuthUser;
+  organizacao: { id: number; nome: string };
 }
 
 export class CredenciaisInvalidasError extends Error {
@@ -28,6 +31,7 @@ function toAuthUser(usuario: Usuario): AuthUser {
     email: usuario.email,
     nome: usuario.nome,
     papel: usuario.papel,
+    organizacaoId: usuario.organizacao_id,
   };
 }
 
@@ -43,7 +47,16 @@ export class AuthService {
       throw new CredenciaisInvalidasError();
     }
 
-    return { token: this.signToken(usuario), usuario: toAuthUser(usuario) };
+    const organizacao = await Organizacao.findByPk(usuario.organizacao_id);
+    if (!organizacao || !organizacao.ativo) {
+      throw new CredenciaisInvalidasError();
+    }
+
+    return {
+      token: this.signToken(usuario),
+      usuario: toAuthUser(usuario),
+      organizacao: { id: organizacao.id, nome: organizacao.nome },
+    };
   }
 
   signToken(usuario: Usuario): string {
@@ -52,6 +65,7 @@ export class AuthService {
         email: usuario.email,
         nome: usuario.nome,
         papel: usuario.papel,
+        organizacaoId: usuario.organizacao_id,
       },
       JWT_SECRET,
       {

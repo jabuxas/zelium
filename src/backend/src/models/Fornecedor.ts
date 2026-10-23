@@ -6,6 +6,7 @@ export class Fornecedor extends Model<
   InferCreationAttributes<Fornecedor>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number>;
   declare nome: string;
   declare cnpj: string | null;
   declare telefone: string | null;
@@ -16,6 +17,7 @@ export class Fornecedor extends Model<
 Fornecedor.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     nome: { type: DataTypes.STRING(100), allowNull: false },
     cnpj: { type: DataTypes.STRING(18), allowNull: true },
     telefone: { type: DataTypes.STRING(20), allowNull: true },
@@ -25,6 +27,7 @@ Fornecedor.init(
   {
     sequelize,
     tableName: 'fornecedor',
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

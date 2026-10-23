@@ -6,6 +6,7 @@ export class Ambiente extends Model<
   InferCreationAttributes<Ambiente>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number>;
   declare nome: string;
   declare bloco: string | null;
   declare andar: string | null;
@@ -21,6 +22,7 @@ export class Ambiente extends Model<
 Ambiente.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     nome: { type: DataTypes.STRING(100), allowNull: false },
     bloco: { type: DataTypes.STRING(50), allowNull: true },
     andar: { type: DataTypes.STRING(20), allowNull: true },
@@ -35,6 +37,7 @@ Ambiente.init(
   {
     sequelize,
     tableName: 'ambiente',
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

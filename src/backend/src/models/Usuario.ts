@@ -20,7 +20,7 @@ export class Usuario extends Model<
   declare senha_hash: string;
   declare papel: UsuarioPapel;
   declare ativo: boolean;
-  declare organizacao_id: CreationOptional<number | null>;
+  declare organizacao_id: CreationOptional<number>;
   declare versao: CreationOptional<number>;
 }
 
@@ -36,12 +36,13 @@ Usuario.init(
       defaultValue: "conferente",
     },
     ativo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
-    organizacao_id: { type: DataTypes.INTEGER, allowNull: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     versao: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
   },
   {
     sequelize,
     tableName: "usuario",
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

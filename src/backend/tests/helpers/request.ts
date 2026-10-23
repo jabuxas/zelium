@@ -20,10 +20,16 @@ export const rawRequest = supertest;
 
 export function bearerToken(
   papel: UsuarioPapel = "gestor",
-  subject = "1"
+  subject = "1",
+  organizacaoId = 1
 ): Record<string, string> {
   const token = jwt.sign(
-    { email: `${papel}@teste.zelium.com`, nome: `Teste ${papel}`, papel },
+    {
+      email: `${papel}@teste.zelium.com`,
+      nome: `Teste ${papel}`,
+      papel,
+      organizacaoId,
+    },
     JWT_SECRET,
     { subject, expiresIn: "1h" }
   );
@@ -32,10 +38,12 @@ export function bearerToken(
 
 const HTTP_METHODS = ["get", "post", "put", "patch", "delete", "head", "options"];
 
-export function request(app: unknown) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function request(app: any) {
   const instance = supertest(app);
-  return new Proxy(instance, {
-    get(target, prop: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new Proxy(instance as any, {
+    get(target: any, prop: string) {
       if (HTTP_METHODS.includes(prop)) {
         return (url: string) => {
           const test = target[prop](url);

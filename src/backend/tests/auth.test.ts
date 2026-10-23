@@ -27,10 +27,13 @@ beforeAll(async () => {
   const connection = await import('../src/database/connection');
   sequelize = connection.sequelize;
   Usuario = (await import('../src/models/Usuario')).Usuario;
+  const Organizacao = (await import('../src/models/Organizacao')).Organizacao;
   await import('../src/database/index');
   await sequelize.sync({ force: true });
 
   app = (await import('../src/app')).default;
+
+  await Organizacao.create({ id: 1, nome: 'Organizacao Teste', slug: 'org-teste' });
 
   const senha_hash = await bcrypt.hash(SENHA, 10);
   await Usuario.create({ nome: 'Gestor Org', email: 'gestor@org.com', senha_hash, papel: 'gestor' });

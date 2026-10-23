@@ -10,15 +10,17 @@ import auditLogRoutes from "./auditLog.routes";
 import solicitacaoRoutes from "./solicitacao.routes";
 import authRoutes from "./auth.routes";
 import usuarioRoutes from "./usuario.routes";
-import { authenticate } from "../middlewares/auth";
+import { authenticate, withUserContext } from "../middlewares/auth";
 
 const router = Router();
 
 // Login e sessão: acesso público (login) e leitura do usuário logado
 router.use("/auth", authRoutes);
 
-// A partir daqui, toda rota exige um token JWT válido
+// A partir daqui, toda rota exige um token JWT válido e roda dentro do
+// contexto da organização do usuário (isolamento multiempresa)
 router.use(authenticate);
+router.use(withUserContext);
 
 router.use("/ambientes", ambienteRoutes);
 router.use("/conferentes", conferenteRoutes);

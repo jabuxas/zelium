@@ -53,7 +53,7 @@ const menuItems: MenuItem[] = [
 export default function SidebarLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
-  const { usuario, papel, logout } = useAuth();
+  const { usuario, organizacao, papel, logout } = useAuth();
 
   const isLogin = pathname === "/login";
 
@@ -124,6 +124,9 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
             <h2 className="text-lg font-semibold text-gray-800">
               Sistema de Gestão Patrimonial
             </h2>
+            {organizacao && (
+              <p className="text-xs text-gray-500">{organizacao.nome}</p>
+            )}
           </div>
         </header>
 

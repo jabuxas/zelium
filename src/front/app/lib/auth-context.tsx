@@ -11,9 +11,11 @@ import { useRouter } from "next/navigation";
 import { API_URL } from "./api";
 import {
   clearSession,
+  getOrganizacao,
   getToken,
   getUsuario,
   setSession,
+  type OrganizacaoSessao,
   type Papel,
   type UsuarioSessao,
 } from "./auth";
@@ -43,6 +45,7 @@ const PERMISSOES_ESCRITA: Record<Papel, Recurso[]> = {
 
 interface AuthContextValue {
   usuario: UsuarioSessao | null;
+  organizacao: OrganizacaoSessao | null;
   papel: Papel | null;
   carregando: boolean;
   login: (email: string, senha: string) => Promise<void>;
@@ -52,6 +55,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue>({
   usuario: null,
+  organizacao: null,
   papel: null,
   carregando: false,
   login: async () => {},
@@ -61,11 +65,13 @@ const AuthContext = createContext<AuthContextValue>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioSessao | null>(null);
+  const [organizacao, setOrganizacao] = useState<OrganizacaoSessao | null>(null);
   const [carregando, setCarregando] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     setUsuario(getToken() ? getUsuario() : null);
+    setOrganizacao(getToken() ? getOrganizacao() : null);
     setCarregando(false);
   }, []);
 
@@ -83,8 +89,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.error ?? "Falha ao entrar");
       }
 
-      setSession(data.token, data.usuario);
+      setSession(data.token, data.usuario, data.organizacao);
       setUsuario(data.usuario);
+      setOrganizacao(data.organizacao ?? null);
       router.push("/");
       router.refresh();
     },
@@ -94,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     clearSession();
     setUsuario(null);
+    setOrganizacao(null);
     router.push("/login");
   }, [router]);
 
@@ -107,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, papel: usuario?.papel ?? null, carregando, login, logout, podeEscrever }}
+      value={{ usuario, organizacao, papel: usuario?.papel ?? null, carregando, login, logout, podeEscrever }}
     >
       {children}
     </AuthContext.Provider>

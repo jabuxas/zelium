@@ -5,10 +5,15 @@ import { Patrimonio } from "../models/Patrimonio";
 import { PatrimonioFoto } from "../models/PatrimonioFoto";
 import { Responsavel } from "../models/Responsavel";
 import { TipoMaterial } from "../models/TipoMaterial";
-import { AuditLog } from "../models/AuditLog";
+// AuditLog é importado apenas pelo efeito colateral (registra o modelo no Sequelize)
+import "../models/AuditLog";
 import { Conferente } from "../models/Conferente";
 import { Solicitacao } from "../models/Solicitacao";
 import { Usuario } from "../models/Usuario";
+import { Organizacao } from "../models/Organizacao";
+
+Organizacao.hasMany(Usuario, { foreignKey: "organizacao_id" });
+Usuario.belongsTo(Organizacao, { foreignKey: "organizacao_id", as: "organizacao" });
 
 Ambiente.belongsTo(Responsavel, { foreignKey: "responsavel_id" });
 Responsavel.hasMany(Ambiente, { foreignKey: "responsavel_id" });

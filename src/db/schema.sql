@@ -1,5 +1,16 @@
+CREATE TABLE organizacao (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    slug VARCHAR(80) NOT NULL UNIQUE,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP NULL
+);
+
 CREATE TABLE tipo_material (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     nome VARCHAR(50) NOT NULL,
     versao INTEGER DEFAULT 1 NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -9,6 +20,7 @@ CREATE TABLE tipo_material (
 
 CREATE TABLE estado_item (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     nome VARCHAR(50) NOT NULL,
     descricao TEXT,
     versao INTEGER DEFAULT 1 NOT NULL,
@@ -19,6 +31,7 @@ CREATE TABLE estado_item (
 
 CREATE TABLE fornecedor (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     nome VARCHAR(100) NOT NULL,
     cnpj VARCHAR(18),
     telefone VARCHAR(20),
@@ -33,6 +46,7 @@ CREATE TABLE fornecedor (
 
 CREATE TABLE responsavel (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
     cargo VARCHAR(50),
@@ -46,6 +60,7 @@ CREATE TABLE responsavel (
 
 CREATE TABLE conferente (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
     cargo VARCHAR(50),
@@ -60,6 +75,7 @@ CREATE TABLE conferente (
 
 CREATE TABLE ambiente (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     nome VARCHAR(100) NOT NULL,
     bloco VARCHAR(50),
     andar VARCHAR(20),
@@ -77,6 +93,7 @@ CREATE TABLE ambiente (
 
 CREATE TABLE patrimonio (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     numero_patrimonio VARCHAR(50) NOT NULL UNIQUE,
     descricao TEXT NOT NULL,
     valor FLOAT NOT NULL,
@@ -94,6 +111,7 @@ CREATE TABLE patrimonio (
 
 CREATE TABLE patrimonio_fotos (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     patrimonio_id INT NOT NULL REFERENCES patrimonio(id),
     url VARCHAR(255) NOT NULL,
     nome_arquivo VARCHAR(255) NOT NULL,
@@ -114,6 +132,7 @@ CREATE INDEX patrimonio_fotos_patrimonio_id_idx ON patrimonio_fotos (patrimonio_
 
 CREATE TABLE solicitacao (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     patrimonio_id INT NOT NULL REFERENCES patrimonio(id),
     tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('manutencao', 'substituicao')),
     status VARCHAR(20) NOT NULL DEFAULT 'aberta' CHECK (status IN ('aberta', 'em_andamento', 'concluida', 'cancelada')),
@@ -127,6 +146,7 @@ CREATE TABLE solicitacao (
 
 CREATE TABLE audit_log (
     id SERIAL PRIMARY KEY,
+    organizacao_id INT,
     tabela VARCHAR(100) NOT NULL,
     registro_id INT NOT NULL,
     acao VARCHAR(20) NOT NULL,
@@ -144,7 +164,7 @@ CREATE TABLE usuario (
     senha_hash VARCHAR(100) NOT NULL,
     papel VARCHAR(20) NOT NULL DEFAULT 'conferente' CHECK (papel IN ('gestor', 'responsavel', 'conferente')),
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
-    organizacao_id INT,
+    organizacao_id INT NOT NULL REFERENCES organizacao(id),
     versao INTEGER DEFAULT 1 NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),

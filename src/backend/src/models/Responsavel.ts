@@ -6,6 +6,7 @@ export class Responsavel extends Model<
   InferCreationAttributes<Responsavel>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number>;
   declare nome: string;
   declare email: string;
   declare cargo: string | null;
@@ -17,6 +18,7 @@ export class Responsavel extends Model<
 Responsavel.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     nome: { type: DataTypes.STRING(100), allowNull: false },
     email: { type: DataTypes.STRING(100), allowNull: false },
     cargo: { type: DataTypes.STRING(50), allowNull: true },
@@ -27,6 +29,7 @@ Responsavel.init(
   {
     sequelize,
     tableName: 'responsavel',
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

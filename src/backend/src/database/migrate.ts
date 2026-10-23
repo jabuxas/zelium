@@ -3,10 +3,23 @@ import path from 'path';
 import { QueryTypes } from 'sequelize';
 import { sequelize } from './connection';
 
+const TABELAS_COM_ORGANIZACAO = [
+  'tipo_material',
+  'estado_item',
+  'fornecedor',
+  'responsavel',
+  'conferente',
+  'ambiente',
+  'patrimonio',
+  'patrimonio_fotos',
+  'solicitacao',
+];
+
 async function ensureSolicitacaoTable(): Promise<void> {
   await sequelize.query(`
     CREATE TABLE IF NOT EXISTS solicitacao (
       id SERIAL PRIMARY KEY,
+      organizacao_id INT NOT NULL DEFAULT 1,
       patrimonio_id INT NOT NULL REFERENCES patrimonio(id),
       tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('manutencao', 'substituicao')),
       status VARCHAR(20) NOT NULL DEFAULT 'aberta' CHECK (status IN ('aberta', 'em_andamento', 'concluida', 'cancelada')),
@@ -24,6 +37,7 @@ async function ensurePatrimonioFotosTable(): Promise<void> {
   await sequelize.query(`
     CREATE TABLE IF NOT EXISTS patrimonio_fotos (
       id SERIAL PRIMARY KEY,
+      organizacao_id INT NOT NULL DEFAULT 1,
       patrimonio_id INT NOT NULL REFERENCES patrimonio(id),
       url VARCHAR(255) NOT NULL,
       nome_arquivo VARCHAR(255) NOT NULL,
@@ -90,13 +104,70 @@ async function ensureDefaultUsers(): Promise<void> {
 
   await sequelize.query(
     `
-    INSERT INTO usuario (nome, email, senha_hash, papel, ativo) VALUES
-      ('Gestor Zelium', 'gestor@zelium.com', '${DEFAULT_SENHA_HASH}', 'gestor', TRUE),
-      ('Responsavel Zelium', 'responsavel@zelium.com', '${DEFAULT_SENHA_HASH}', 'responsavel', TRUE),
-      ('Conferente Zelium', 'conferente@zelium.com', '${DEFAULT_SENHA_HASH}', 'conferente', TRUE)
+    INSERT INTO usuario (nome, email, senha_hash, papel, ativo, organizacao_id) VALUES
+      ('Gestor Zelium', 'gestor@zelium.com', '${DEFAULT_SENHA_HASH}', 'gestor', TRUE, 1),
+      ('Responsavel Zelium', 'responsavel@zelium.com', '${DEFAULT_SENHA_HASH}', 'responsavel', TRUE, 1),
+      ('Conferente Zelium', 'conferente@zelium.com', '${DEFAULT_SENHA_HASH}', 'conferente', TRUE, 1)
   `
   );
   console.log('Usuarios padrao criados (gestor@zelium.com / responsavel@zelium.com / conferente@zelium.com).');
+}
+
+// ---------------------------------------------------------------------------
+// Multiempresa: organizacao + coluna organizacao_id em todas as tabelas
+// ---------------------------------------------------------------------------
+
+async function ensureOrganizacaoTable(): Promise<void> {
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS organizacao (
+      id SERIAL PRIMARY KEY,
+      nome VARCHAR(150) NOT NULL,
+      slug VARCHAR(80) NOT NULL UNIQUE,
+      ativo BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      deleted_at TIMESTAMP NULL
+    )
+  `);
+
+  // Organização padrão: todos os dados existentes migram para ela
+  await sequelize.query(`
+    INSERT INTO organizacao (id, nome, slug, ativo)
+    SELECT 1, 'IFSC Campus São José', 'ifsc-sj', TRUE
+    WHERE NOT EXISTS (SELECT 1 FROM organizacao WHERE id = 1)
+  `);
+  await sequelize.query(
+    `SELECT setval('organizacao_id_seq', GREATEST((SELECT MAX(id) FROM organizacao), 1))`
+  );
+}
+
+async function ensureOrganizacaoColumns(): Promise<void> {
+  for (const tabela of TABELAS_COM_ORGANIZACAO) {
+    await sequelize.query(`
+      ALTER TABLE ${tabela}
+        ADD COLUMN IF NOT EXISTS organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id)
+    `);
+    await sequelize.query(
+      `CREATE INDEX IF NOT EXISTS ${tabela}_organizacao_id_idx ON ${tabela} (organizacao_id)`
+    );
+  }
+
+  await sequelize.query(`
+    ALTER TABLE audit_log
+      ADD COLUMN IF NOT EXISTS organizacao_id INT
+  `);
+  await sequelize.query(`
+    ALTER TABLE usuario
+      ADD COLUMN IF NOT EXISTS organizacao_id INT
+  `);
+  await sequelize.query(`
+    UPDATE usuario SET organizacao_id = 1 WHERE organizacao_id IS NULL
+  `);
+  await sequelize.query(`
+    ALTER TABLE usuario
+      ALTER COLUMN organizacao_id SET DEFAULT 1,
+      ALTER COLUMN organizacao_id SET NOT NULL
+  `);
 }
 
 export async function migrate(): Promise<void> {
@@ -121,5 +192,7 @@ export async function migrate(): Promise<void> {
   await ensurePatrimonioFotosTable();
   await ensureAmbienteLocalizacaoColumns();
   await ensureUsuarioTable();
+  await ensureOrganizacaoTable();
+  await ensureOrganizacaoColumns();
   await ensureDefaultUsers();
 }

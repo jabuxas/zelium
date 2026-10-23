@@ -2,12 +2,14 @@ import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/auth";
 import { UsuarioPapel } from "../models/Usuario";
+import { runWithContext } from "../context/requestContext";
 
 export interface AuthPayload {
   sub: string;
   email: string;
   nome: string;
   papel: UsuarioPapel;
+  organizacaoId: number;
 }
 
 declare global {
@@ -35,11 +37,17 @@ export function authenticate(
 
   try {
     const payload = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
+    if (!payload.organizacaoId) {
+      return res
+        .status(401)
+        .json({ error: "Sessao desatualizada. Faca login novamente." });
+    }
     req.user = {
       sub: String(payload.sub),
       email: String(payload.email),
       nome: String(payload.nome),
       papel: payload.papel as UsuarioPapel,
+      organizacaoId: Number(payload.organizacaoId),
     };
     next();
   } catch {
@@ -47,6 +55,29 @@ export function authenticate(
       .status(401)
       .json({ error: "Sessao expirada ou token invalido. Faca login novamente." });
   }
+}
+
+/**
+ * Roda toda a cadeia de middlewares/controllers da requisição dentro do
+ * AsyncLocalStorage com os dados do usuário, isolando o acesso a dados por
+ * organização (multiempresa).
+ */
+export function withUserContext(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  if (!req.user) {
+    return next();
+  }
+  return runWithContext(
+    {
+      usuarioId: Number(req.user.sub),
+      papel: req.user.papel,
+      organizacaoId: req.user.organizacaoId,
+    },
+    () => next()
+  );
 }
 
 export function authorize(...papeis: UsuarioPapel[]) {

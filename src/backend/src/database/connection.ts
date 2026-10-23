@@ -1,11 +1,147 @@
-import { Sequelize } from "sequelize";
+import { Model, ModelStatic, Op, Sequelize } from "sequelize";
 import { dbConfig } from "../config/database";
+import { currentOrgId, DEFAULT_ORG_ID } from "../context/requestContext";
+import { ReferenciaDeOutraOrganizacaoError } from "../context/errors";
+
+declare module "sequelize" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface InitOptions<M extends Model = Model> {
+    /** Marca o modelo como isolado por organização (multiempresa). */
+    orgScoped?: boolean;
+  }
+}
 
 export const sequelize = new Sequelize({
   dialect: "postgres",
   ...dbConfig,
   logging: process.env.NODE_ENV === "development" ? console.log : false,
 });
+
+// ---------------------------------------------------------------------------
+// Isolamento multiempresa
+//
+// Modelos marcados com `orgScoped: true` (todos os dados de negócio) têm
+// TODAS as consultas automaticamente filtradas pela organização do usuário da
+// requisição (AsyncLocalStorage). Escritas recebem a organizacao_id do
+// contexto e validam que referências (FKs) pertencem à mesma organização.
+// ---------------------------------------------------------------------------
+
+interface ModelWithOrg extends Model {
+  organizacao_id?: number | null;
+}
+
+type OrgScopedModel = ModelStatic<ModelWithOrg> & {
+  options?: { orgScoped?: boolean };
+};
+
+function orgOfModel(model: OrgScopedModel): boolean {
+  return model.options?.orgScoped === true;
+}
+
+// FKs que devem pertencer à mesma organização do registro
+const ORG_FKS: Record<string, string[]> = {
+  ambiente: ["responsavel_id"],
+  patrimonio: [
+    "tipo_material_id",
+    "estado_item_id",
+    "ambiente_id",
+    "responsavel_id",
+    "fornecedor_id",
+  ],
+  solicitacao: ["patrimonio_id", "conferente_id"],
+  patrimonio_fotos: ["patrimonio_id"],
+};
+
+sequelize.addHook("beforeFind", function (this: OrgScopedModel, options: any) {
+  const model = this;
+  if (!orgOfModel(model)) return;
+  const orgId = currentOrgId();
+  if (orgId === undefined) return;
+
+  const orgWhere = { organizacao_id: orgId };
+  options.where = options.where
+    ? { [Op.and]: [options.where, orgWhere] }
+    : orgWhere;
+});
+
+sequelize.addHook("beforeCreate", function (instance: ModelWithOrg) {
+  const model = instance.constructor as OrgScopedModel;
+  if (!orgOfModel(model)) return;
+
+  if (instance.organizacao_id === undefined || instance.organizacao_id === null) {
+    instance.set("organizacao_id" as any, currentOrgId() ?? DEFAULT_ORG_ID);
+  }
+});
+
+sequelize.addHook("beforeUpdate", function (instance: ModelWithOrg) {
+  const model = instance.constructor as OrgScopedModel;
+  if (!orgOfModel(model)) return;
+
+  // Um usuário jamais pode mover um registro para outra organização
+  const orgId = currentOrgId();
+  if (orgId !== undefined && instance.organizacao_id !== orgId) {
+    throw new Error("Registro de outra organizacao");
+  }
+});
+
+function findModelByTable(table: string): ModelStatic<ModelWithOrg> | undefined {
+  for (const model of Object.values(sequelize.models)) {
+    if ((model as unknown as OrgScopedModel).getTableName() === table) {
+      return model as ModelStatic<ModelWithOrg>;
+    }
+  }
+  return undefined;
+}
+
+sequelize.addHook("beforeValidate", async function (instance: ModelWithOrg) {
+  const model = instance.constructor as OrgScopedModel;
+  if (!orgOfModel(model)) return;
+
+  // Preenche a organizacao ANTES da validacao notNull
+  if (instance.organizacao_id === undefined || instance.organizacao_id === null) {
+    instance.set("organizacao_id" as any, currentOrgId() ?? DEFAULT_ORG_ID);
+  }
+
+  const fks = ORG_FKS[model.getTableName() as string];
+  if (!fks || fks.length === 0) return;
+
+  const organizacaoId = instance.organizacao_id ?? currentOrgId() ?? DEFAULT_ORG_ID;
+
+  for (const fkField of fks) {
+    const fkValue = instance.get(fkField as any) as number | undefined | null;
+    if (fkValue === undefined || fkValue === null) continue;
+
+    const targetTable = FK_TABLE[fkField];
+    if (!targetTable) continue;
+
+    const targetModel = findModelByTable(targetTable);
+    if (!targetModel) continue;
+
+    // A referência precisa existir e pertencer à MESMA organização
+    const alvo = await targetModel.findOne({
+      where: { id: fkValue, organizacao_id: organizacaoId } as any,
+    });
+    if (!alvo) {
+      throw new ReferenciaDeOutraOrganizacaoError(
+        `Referencia invalida: ${fkField} nao pertence a esta organizacao`
+      );
+    }
+  }
+});
+
+const FK_TABLE: Record<string, string> = {
+  responsavel_id: "responsavel",
+  tipo_material_id: "tipo_material",
+  estado_item_id: "estado_item",
+  ambiente_id: "ambiente",
+  fornecedor_id: "fornecedor",
+  patrimonio_id: "patrimonio",
+  conferente_id: "conferente",
+};
+
+// ---------------------------------------------------------------------------
+// Auditoria
+// ---------------------------------------------------------------------------
 
 const logAction = async (
   action: "CREATE" | "UPDATE" | "DELETE",
@@ -54,6 +190,8 @@ const logAction = async (
         dados_novos: dadosNovos,
         campos_alterados: camposAlterados,
         usuario: "sistema",
+        organizacao_id:
+          instance.getDataValue("organizacao_id") ?? currentOrgId() ?? null,
       },
       { transaction: options.transaction },
     );

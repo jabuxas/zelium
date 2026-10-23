@@ -6,6 +6,7 @@ export class Patrimonio extends Model<
   InferCreationAttributes<Patrimonio>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number>;
   declare numero_patrimonio: string;
   declare descricao: string;
   declare valor: number;
@@ -21,6 +22,7 @@ export class Patrimonio extends Model<
 Patrimonio.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     numero_patrimonio: { type: DataTypes.STRING(50), allowNull: false, unique: true },
     descricao: { type: DataTypes.TEXT, allowNull: false },
     valor: { type: DataTypes.FLOAT, allowNull: false },
@@ -35,6 +37,7 @@ Patrimonio.init(
   {
     sequelize,
     tableName: 'patrimonio',
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

@@ -3,6 +3,7 @@ import { UniqueConstraintError } from "sequelize";
 import { AuthService, CredenciaisInvalidasError } from "../services/AuthService";
 import { UsuarioService } from "../services/UsuarioService";
 import { PAPEIS, UsuarioPapel } from "../models/Usuario";
+import { Organizacao } from "../models/Organizacao";
 
 const authService = new AuthService();
 const usuarioService = new UsuarioService();
@@ -20,8 +21,8 @@ export const AuthController = {
     }
 
     try {
-      const { token, usuario } = await authService.login(String(email), String(senha));
-      res.json({ token, usuario });
+      const { token, usuario, organizacao } = await authService.login(String(email), String(senha));
+      res.json({ token, usuario, organizacao });
     } catch (err) {
       if (err instanceof CredenciaisInvalidasError) {
         return res.status(401).json({ error: "Email ou senha invalidos" });
@@ -31,7 +32,13 @@ export const AuthController = {
   },
 
   async me(req: Request, res: Response) {
-    res.json({ usuario: req.user });
+    const organizacao = req.user
+      ? await Organizacao.findByPk(req.user.organizacaoId)
+      : null;
+    res.json({
+      usuario: req.user,
+      organizacao: organizacao ? { id: organizacao.id, nome: organizacao.nome } : null,
+    });
   },
 };
 

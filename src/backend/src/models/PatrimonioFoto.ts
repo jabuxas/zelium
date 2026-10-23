@@ -6,6 +6,7 @@ export class PatrimonioFoto extends Model<
   InferCreationAttributes<PatrimonioFoto>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number>;
   declare patrimonio_id: number;
   declare url: string;
   declare nome_arquivo: string;
@@ -22,6 +23,7 @@ export class PatrimonioFoto extends Model<
 PatrimonioFoto.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     patrimonio_id: { type: DataTypes.INTEGER, allowNull: false },
     url: { type: DataTypes.STRING(255), allowNull: false },
     nome_arquivo: { type: DataTypes.STRING(255), allowNull: false },
@@ -37,6 +39,7 @@ PatrimonioFoto.init(
   {
     sequelize,
     tableName: 'patrimonio_fotos',
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

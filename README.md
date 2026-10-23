@@ -162,11 +162,28 @@ Veja documentos detalhados:
 
 ### Próximos Passos de Arquitetura
 
-- **Autenticação**: JWT ou Session-based
-- **Autorização**: RBAC (Gestor, Responsável, Conferente)
-- **Notificações**: SMTP para e-mails automáticos
-- **Auditoria**: População completa de `audit_log`
-- **Relatórios**: Exportação em CSV/PDF
+- ~~**Autenticação**: JWT ou Session-based~~ → **implementado**: JWT + RBAC (Gestor, Responsável, Conferente)
+- ~~**Autorização**: RBAC (Gestor, Responsável, Conferente)~~ → **implementado**: middleware `authorize` por rota
+- **Notificações**: SMTP para e-mails automáticos → **implementado** (avaria e solicitações)
+- **Auditoria**: População completa de `audit_log` → **implementado** (hooks globais, isolada por organização)
+- **Relatórios**: Exportação em CSV/PDF → **implementado** (`/relatorios`)
+- **Multiempresa**: isolamento por `organizacao_id` em todas as camadas → **implementado**
+
+### Segurança e Isolamento Multiempresa
+
+Todas as tabelas de negócio carregam `organizacao_id` e o backend aplica o
+isolamento em **todas as camadas**:
+
+1. **Rede**: toda rota `/api` exige JWT (exceto `/api/auth/login` e `/health`).
+2. **Contexto**: o usuário autenticado roda dentro de um `AsyncLocalStorage`;
+   consultas Sequelize são filtradas por organização automaticamente (hook global).
+3. **Escrita**: `organizacao_id` é preenchida pelo servidor (nunca pelo cliente)
+   e referências (FKs) a cadastros de OUTRA organização são bloqueadas.
+4. **Papéis**: cada rota declara quais perfis podem executá-la (gestor,
+   responsável, conferente).
+
+A senha dos usuários é armazenada com hash bcrypt e nunca retorna nas
+respostas da API.
 
 Para mais detalhes, acesse **[`docs/arquitetura.md`](docs/arquitetura.md)**.
 

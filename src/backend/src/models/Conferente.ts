@@ -6,6 +6,7 @@ export class Conferente extends Model<
   InferCreationAttributes<Conferente>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number>;
   declare nome: string;
   declare email: string;
   declare cargo: string | null;
@@ -16,6 +17,7 @@ export class Conferente extends Model<
 Conferente.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     nome: { type: DataTypes.STRING(100), allowNull: false },
     email: { type: DataTypes.STRING(100), allowNull: false },
     cargo: { type: DataTypes.STRING(50), allowNull: true },
@@ -25,6 +27,7 @@ Conferente.init(
   {
     sequelize,
     tableName: 'conferente',
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

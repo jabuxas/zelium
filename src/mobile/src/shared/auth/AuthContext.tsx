@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = (await res.json().catch(() => ({}))) as {
       token?: string;
       usuario?: UsuarioSessao;
+      organizacao?: { id: number; nome: string };
       error?: string;
     };
 
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setAuthToken(data.token);
-    await saveSession(data.token, data.usuario);
+    await saveSession(data.token, data.usuario, data.organizacao);
     setUsuario(data.usuario);
   }, []);
 

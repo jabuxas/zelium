@@ -6,6 +6,7 @@ export class TipoMaterial extends Model<
   InferCreationAttributes<TipoMaterial>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number>;
   declare nome: string;
   declare versao: CreationOptional<number>;
 }
@@ -13,12 +14,14 @@ export class TipoMaterial extends Model<
 TipoMaterial.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     nome: { type: DataTypes.STRING(50), allowNull: false },
     versao: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
   },
   {
     sequelize,
     tableName: 'tipo_material',
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

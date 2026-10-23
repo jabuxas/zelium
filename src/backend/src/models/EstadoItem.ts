@@ -6,6 +6,7 @@ export class EstadoItem extends Model<
   InferCreationAttributes<EstadoItem>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number>;
   declare nome: string;
   declare descricao: string | null;
   declare versao: CreationOptional<number>;
@@ -14,6 +15,7 @@ export class EstadoItem extends Model<
 EstadoItem.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     nome: { type: DataTypes.STRING(50), allowNull: false },
     descricao: { type: DataTypes.TEXT, allowNull: true },
     versao: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
@@ -21,6 +23,7 @@ EstadoItem.init(
   {
     sequelize,
     tableName: 'estado_item',
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

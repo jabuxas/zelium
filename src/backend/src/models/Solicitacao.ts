@@ -9,6 +9,7 @@ export class Solicitacao extends Model<
   InferCreationAttributes<Solicitacao>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number>;
   declare patrimonio_id: number;
   declare tipo: SolicitacaoTipo;
   declare status: CreationOptional<SolicitacaoStatus>;
@@ -20,6 +21,7 @@ export class Solicitacao extends Model<
 Solicitacao.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     patrimonio_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -47,6 +49,7 @@ Solicitacao.init(
   {
     sequelize,
     tableName: 'solicitacao',
+    orgScoped: true,
     timestamps: true,
     paranoid: true,
     underscored: true,

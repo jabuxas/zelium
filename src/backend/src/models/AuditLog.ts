@@ -12,6 +12,7 @@ export class AuditLog extends Model<
   InferCreationAttributes<AuditLog>
 > {
   declare id: CreationOptional<number>;
+  declare organizacao_id: CreationOptional<number | null>;
   declare tabela: string;
   declare registro_id: number;
   declare acao: string;
@@ -28,6 +29,10 @@ AuditLog.init(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+    },
+    organizacao_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     tabela: {
       type: DataTypes.STRING(100),
@@ -67,6 +72,7 @@ AuditLog.init(
   {
     sequelize,
     tableName: "audit_log",
+    orgScoped: true,
     timestamps: true,
     updatedAt: false,
     createdAt: "created_at",
