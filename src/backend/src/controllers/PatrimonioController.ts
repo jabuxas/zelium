@@ -1,12 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 import { ForeignKeyConstraintError, UniqueConstraintError } from "sequelize";
 import { PatrimonioService } from "../services/PatrimonioService";
+import { gerarQrCodeSvg, qrConteudoPatrimonio } from "../utils/qrcode";
 
 const service = new PatrimonioService();
 
 export const PatrimonioController = {
-  async findAll(_req: Request, res: Response) {
-    const items = await service.findAll();
+  async findAll(req: Request, res: Response) {
+    const { numero } = req.query;
+    const items = await service.findAll(
+      typeof numero === "string" && numero.trim() !== ""
+        ? { numero: numero.trim() }
+        : {}
+    );
     res.json(items);
   },
 
@@ -20,6 +26,62 @@ export const PatrimonioController = {
     try {
       const items = await service.findHistoricoEstado(Number(req.params.id));
       res.json(items);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async qrCode(req: Request, res: Response, next: NextFunction) {
+    try {
+      const item = await service.findById(Number(req.params.id));
+      if (!item) return res.status(404).json({ error: "Patrimonio nao encontrado" });
+
+      const svg = await gerarQrCodeSvg(
+        qrConteudoPatrimonio(String(item.numero_patrimonio))
+      );
+      res.type("image/svg+xml").send(svg);
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  async etiqueta(req: Request, res: Response, next: NextFunction) {
+    try {
+      const item = await service.findById(Number(req.params.id));
+      if (!item) return res.status(404).json({ error: "Patrimonio nao encontrado" });
+
+      const svg = await gerarQrCodeSvg(
+        qrConteudoPatrimonio(String(item.numero_patrimonio))
+      );
+      const numero = String(item.numero_patrimonio);
+      const descricao = String(item.descricao ?? "");
+
+      res.type("text/html").send(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Etiqueta ${numero}</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; }
+  .etiqueta { width: 320px; border: 2px solid #111827; border-radius: 12px; padding: 16px; }
+  .marca { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #6b7280; }
+  .numero { font-size: 22px; font-weight: 700; margin: 4px 0; }
+  .descricao { font-size: 13px; color: #374151; margin-bottom: 10px; }
+  .qr { text-align: center; }
+  .qr svg { width: 160px; height: 160px; }
+  @media print { .nao-imprimir { display: none; } }
+</style>
+</head>
+<body>
+  <div class="etiqueta">
+    <div class="marca">Zelium &middot; Gestão Patrimonial</div>
+    <div class="numero">${numero}</div>
+    <div class="descricao">${descricao}</div>
+    <div class="qr">${svg}</div>
+  </div>
+  <button class="nao-imprimir" onclick="window.print()">Imprimir etiqueta</button>
+</body>
+</html>`);
     } catch (err) {
       next(err);
     }

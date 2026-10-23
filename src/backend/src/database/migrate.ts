@@ -186,6 +186,20 @@ async function ensureNotificacaoTable(): Promise<void> {
   `);
 }
 
+async function ensureConferenciaTable(): Promise<void> {
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS conferencia (
+      id SERIAL PRIMARY KEY,
+      organizacao_id INT NOT NULL REFERENCES organizacao(id),
+      patrimonio_id INT NOT NULL REFERENCES patrimonio(id),
+      usuario_id INT NOT NULL REFERENCES usuario(id),
+      estado_item_id INT REFERENCES estado_item(id),
+      observacao TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+}
+
 async function ensureEstadoItemAvariaColumn(): Promise<void> {
   await sequelize.query(`
     ALTER TABLE estado_item
@@ -226,6 +240,7 @@ export async function migrate(): Promise<void> {
   await ensureOrganizacaoTable();
   await ensureOrganizacaoColumns();
   await ensureNotificacaoTable();
+  await ensureConferenciaTable();
   await ensureEstadoItemAvariaColumn();
   await ensureDefaultUsers();
 }

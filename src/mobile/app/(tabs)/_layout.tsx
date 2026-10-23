@@ -32,6 +32,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="escanear"
+        options={{
+          title: "Escanear",
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="qrcode" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="patrimonios"
         options={{
           title: "Patrimônios",

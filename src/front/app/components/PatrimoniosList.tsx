@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, AlertCircle, QrCode } from 'lucide-react';
 import { useToast } from './Toast';
 import Link from 'next/link';
 import { API_URL } from '../lib/api';
@@ -173,6 +173,13 @@ export default function PatrimoniosList() {
                     
                         </>
                       )}
+                      <Link
+                        href={`/patrimonios/etiqueta/${patrimonio.id}`}
+                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                        title="Etiqueta com QR Code"
+                      >
+                        <QrCode size={18} />
+                      </Link>
                     </div>
                   </td>
                 </tr>

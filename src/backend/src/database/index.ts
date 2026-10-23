@@ -14,9 +14,14 @@ import { Organizacao } from "../models/Organizacao";
 // Modelos importados apenas pelo efeito colateral (registro no Sequelize)
 import "../models/AuditLog";
 import "../models/Notificacao";
+import { Conferencia } from "../models/Conferencia";
 
 Organizacao.hasMany(Usuario, { foreignKey: "organizacao_id" });
 Usuario.belongsTo(Organizacao, { foreignKey: "organizacao_id", as: "organizacao" });
+
+Conferencia.belongsTo(Patrimonio, { foreignKey: "patrimonio_id", as: "patrimonio" });
+Conferencia.belongsTo(Usuario, { foreignKey: "usuario_id", as: "usuario" });
+Patrimonio.hasMany(Conferencia, { foreignKey: "patrimonio_id", as: "conferencias" });
 
 Ambiente.belongsTo(Responsavel, { foreignKey: "responsavel_id" });
 Responsavel.hasMany(Ambiente, { foreignKey: "responsavel_id" });

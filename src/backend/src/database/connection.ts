@@ -50,6 +50,7 @@ const ORG_FKS: Record<string, string[]> = {
   ],
   solicitacao: ["patrimonio_id", "conferente_id"],
   patrimonio_fotos: ["patrimonio_id"],
+  conferencia: ["patrimonio_id", "usuario_id", "estado_item_id"],
 };
 
 sequelize.addHook("beforeFind", function (this: OrgScopedModel, options: any) {
@@ -137,6 +138,7 @@ const FK_TABLE: Record<string, string> = {
   fornecedor_id: "fornecedor",
   patrimonio_id: "patrimonio",
   conferente_id: "conferente",
+  usuario_id: "usuario",
 };
 
 // ---------------------------------------------------------------------------

@@ -28,8 +28,10 @@ const notificacoes = new NotificacaoService();
 export class PatrimonioService {
   private repo = new PatrimonioRepository();
 
-  async findAll() {
+  async findAll(filtros: { numero?: string } = {}) {
+    const where = filtros.numero ? { numero_patrimonio: filtros.numero } : undefined;
     const items = await Patrimonio.findAll({
+      where,
       include: [fotoPrincipalInclude],
       order: [['id', 'ASC']],
     });

@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "projeto2zelium",
+    "scheme": "zelium",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -48,6 +48,12 @@
         {
           "photosPermission": "Permita acessar suas fotos para anexar imagens aos patrimônios.",
           "cameraPermission": "Permita acessar a câmera para fotografar patrimônios."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permita acessar a câmera para escanear etiquetas QR Code dos patrimônios."
         }
       ]
     ],

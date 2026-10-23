@@ -16,7 +16,6 @@ import {
   Menu,
   X,
   FileBarChart2,
-  QrCode,
   DollarSign,
   LogOut,
   Bell,
