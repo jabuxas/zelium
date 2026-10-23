@@ -1,7 +1,8 @@
 import { Model, ModelStatic, Op, Sequelize } from "sequelize";
 import { dbConfig } from "../config/database";
-import { currentOrgId, DEFAULT_ORG_ID } from "../context/requestContext";
+import { currentContext, currentOrgId, DEFAULT_ORG_ID } from "../context/requestContext";
 import { ReferenciaDeOutraOrganizacaoError } from "../context/errors";
+import { sanitizarAuditoria } from '../services/auditData';
 
 declare module "sequelize" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -146,13 +147,13 @@ const FK_TABLE: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 const logAction = async (
-  action: "CREATE" | "UPDATE" | "DELETE",
+  action: "CREATE" | "UPDATE" | "DELETE" | "RESTORE",
   instance: any,
   options: any,
 ) => {
   const tableName =
     instance.constructor.tableName || (instance.constructor as any).tableName;
-  if (tableName === "audit_log") {
+  if (tableName === "audit_log" || tableName === "notificacao") {
     return;
   }
 
@@ -166,7 +167,7 @@ const logAction = async (
   let dadosNovos: any = null;
   let camposAlterados: any = null;
 
-  if (action === "CREATE") {
+  if (action === "CREATE" || action === "RESTORE") {
     dadosNovos = instance.get({ plain: true });
   } else if (action === "UPDATE") {
     const current = instance.get({ plain: true });
@@ -188,10 +189,10 @@ const logAction = async (
         tabela: tableName,
         registro_id: registroId,
         acao: action,
-        dados_anteriores: dadosAnteriores,
-        dados_novos: dadosNovos,
-        campos_alterados: camposAlterados,
-        usuario: "sistema",
+        dados_anteriores: sanitizarAuditoria(dadosAnteriores),
+        dados_novos: sanitizarAuditoria(dadosNovos),
+        campos_alterados: camposAlterados?.filter((campo: string) => !/senha|password|token|secret/i.test(campo)) ?? null,
+        usuario: currentContext() ? `${currentContext()!.usuarioNome ?? 'Usuário'} (#${currentContext()!.usuarioId})` : "sistema",
         organizacao_id:
           instance.getDataValue("organizacao_id") ?? currentOrgId() ?? null,
       },
@@ -211,3 +212,4 @@ sequelize.addHook("afterUpdate", (instance: any, options: any) =>
 sequelize.addHook("afterDestroy", (instance: any, options: any) =>
   logAction("DELETE", instance, options),
 );
+sequelize.addHook('afterRestore', (instance: any, options: any) => logAction('RESTORE', instance, options));

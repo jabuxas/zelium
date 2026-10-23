@@ -1,4 +1,5 @@
 import { request } from "./helpers/request";
+import { rawRequest, bearerToken } from "./helpers/request";
 import app from "../src/app";
 import { sequelize } from "../src/database/connection";
 import { TipoMaterial } from "../src/models/TipoMaterial";
@@ -77,7 +78,7 @@ describe("Testes de integração do log de auditoria", () => {
     expect(log.dados_anteriores).toBeNull();
     expect(log.dados_novos).toBeDefined();
     expect(log.dados_novos?.nome).toBe("Audit-Create-Test");
-    expect(log.usuario).toBe("sistema");
+    expect(log.usuario).toBe("Teste gestor (#1)");
   });
 
   it("deve registrar automaticamente quando um TipoMaterial é atualizado", async () => {
@@ -200,5 +201,53 @@ describe("Testes de integração do log de auditoria", () => {
         data: expect.any(String),
       },
     ]);
+  });
+
+  it.each(['responsavel', 'conferente'] as const)('%s consulta atividades operacionais sem dados administrativos', async (papel) => {
+    await AuditLog.bulkCreate([
+      { tabela: 'solicitacao', registro_id: 1, acao: 'CREATE', organizacao_id: 1, dados_novos: { tipo: 'manutencao' } },
+      { tabela: 'usuario', registro_id: 1, acao: 'UPDATE', organizacao_id: 1, dados_novos: { senha_hash: 'segredo' } },
+      { tabela: 'notificacao', registro_id: 1, acao: 'UPDATE', organizacao_id: 1 },
+    ]);
+    const res = await rawRequest(app).get('/api/audit-log').set(bearerToken(papel));
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+    expect(res.body.data.map((log: AuditLog) => log.tabela)).toEqual(['solicitacao']);
+    expect((await rawRequest(app).get('/api/audit-log/usuario/1').set(bearerToken(papel))).status).toBe(403);
+  });
+
+  it('filtra entidade, registro, ação, autor, texto e período com total isolado por organização', async () => {
+    await AuditLog.bulkCreate([
+      { tabela: 'solicitacao', registro_id: 7, acao: 'UPDATE', usuario: 'Ana', organizacao_id: 1, dados_novos: { descricao: 'Tela quebrada' }, created_at: new Date('2026-10-20T12:00:00Z') },
+      { tabela: 'solicitacao', registro_id: 7, acao: 'UPDATE', usuario: 'Ana', organizacao_id: 2, dados_novos: { descricao: 'Tela quebrada' }, created_at: new Date('2026-10-20T12:00:00Z') },
+      { tabela: 'patrimonio', registro_id: 7, acao: 'CREATE', organizacao_id: 1 },
+    ]);
+    const res = await request(app).get('/api/audit-log').query({ tabela: 'solicitacao', registro_id: 7, acao: 'UPDATE', usuario: 'Ana', busca: 'Tela', de: '2026-10-20', ate: '2026-10-20' });
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(1);
+    expect(res.body.data).toHaveLength(1);
+  });
+
+  it.each([{ page: -1 }, { limit: 0 }, { registro_id: 'x' }, { de: '2026-02-31' }, { acao: 'DROP' }])('rejeita filtro inválido: %j', async (query) => {
+    expect((await request(app).get('/api/audit-log').query(query)).status).toBe(400);
+  });
+
+  it('remove credenciais dos logs legados antes de responder', async () => {
+    await AuditLog.create({ tabela: 'usuario', registro_id: 1, acao: 'UPDATE', organizacao_id: 1, dados_novos: { nome: 'Ana', senha_hash: 'segredo', token: 'jwt' } });
+    const res = await request(app).get('/api/audit-log');
+    expect(JSON.stringify(res.body)).not.toMatch(/segredo|jwt/);
+  });
+
+  it('histórico de um bem reúne solicitações e conferências relacionadas sem misturar outros bens', async () => {
+    await AuditLog.bulkCreate([
+      { tabela: 'patrimonio', registro_id: 7, acao: 'CREATE', organizacao_id: 1, dados_novos: { numero_patrimonio: 'PAT-7' } },
+      { tabela: 'solicitacao', registro_id: 8, acao: 'UPDATE', organizacao_id: 1, dados_novos: { patrimonio_id: 7, status: 'concluida' }, dados_anteriores: { patrimonio_id: 7, status: 'aberta' }, campos_alterados: ['status'] },
+      { tabela: 'conferencia', registro_id: 9, acao: 'CREATE', organizacao_id: 1, dados_novos: { patrimonio_id: 7 } },
+      { tabela: 'solicitacao', registro_id: 10, acao: 'CREATE', organizacao_id: 1, dados_novos: { patrimonio_id: 99 } },
+    ]);
+    const res = await rawRequest(app).get('/api/audit-log').query({ tabela: 'patrimonio', registro_id: 7, relacionados: 'true' }).set(bearerToken('conferente'));
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(3);
+    expect(res.body.data.find((log: AuditLog) => log.tabela === 'solicitacao').alteracoes).toEqual([{ campo: 'status', anterior: 'aberta', novo: 'concluida' }]);
   });
 });

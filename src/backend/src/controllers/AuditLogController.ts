@@ -1,51 +1,26 @@
-import { Request, Response, NextFunction } from "express";
-import { AuditLog } from "../models/AuditLog";
+import { Request, Response, NextFunction } from 'express';
+import { AuditFilterError, AuditLogService } from '../services/AuditLogService';
+import { tabelasVisiveis } from '../services/auditData';
+
+const service = new AuditLogService();
 
 export const AuditLogController = {
   async findAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const offset = (page - 1) * limit;
-
-      const { count, rows } = await AuditLog.findAndCountAll({
-        limit,
-        offset,
-        order: [["created_at", "DESC"]],
-      });
-
-      res.json({
-        total: count,
-        pages: Math.ceil(count / limit),
-        currentPage: page,
-        limit,
-        data: rows,
-      });
+      res.json(await service.listar(req.query, req.user!.papel));
     } catch (err) {
+      if (err instanceof AuditFilterError) return res.status(400).json({ error: err.message });
       next(err);
     }
   },
 
   async findByTableAndRecord(req: Request, res: Response, next: NextFunction) {
+    const tabela = req.params.tabela.toLowerCase();
+    const id = Number(req.params.registroId);
+    if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: 'registroId deve ser um inteiro positivo' });
+    if (!tabelasVisiveis(req.user!.papel).includes(tabela)) return res.status(403).json({ error: 'Histórico indisponível para este perfil' });
     try {
-      const { tabela, registroId } = req.params;
-      const id = Number(registroId);
-
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "registroId deve ser um número" });
-      }
-
-      const items = await AuditLog.findAll({
-        where: {
-          tabela: tabela.toLowerCase(),
-          registro_id: id,
-        },
-        order: [["created_at", "DESC"]],
-      });
-
-      res.json(items);
-    } catch (err) {
-      next(err);
-    }
+      res.json(await service.historico(tabela, id));
+    } catch (err) { next(err); }
   },
 };

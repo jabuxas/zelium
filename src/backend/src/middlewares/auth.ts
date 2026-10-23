@@ -73,6 +73,7 @@ export function withUserContext(
   return runWithContext(
     {
       usuarioId: Number(req.user.sub),
+      usuarioNome: req.user.nome,
       papel: req.user.papel,
       organizacaoId: req.user.organizacaoId,
     },

@@ -10,6 +10,7 @@ import { AsyncLocalStorage } from "async_hooks";
  */
 export interface RequestContext {
   usuarioId: number;
+  usuarioNome?: string;
   papel: string;
   organizacaoId: number;
 }
