@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Bell, Mail } from 'lucide-react';
 import { API_URL } from '../lib/api';
 import { apiFetch } from '../lib/api-client';
+import { formatarDataHora } from '../lib/dates';
 
 type Notificacao = {
   id: number;
@@ -12,7 +13,8 @@ type Notificacao = {
   corpo: string;
   destinatarios: string[];
   status: string;
-  created_at: string;
+  created_at?: string;
+  createdAt?: string;
 };
 
 const TIPO_LABEL: Record<string, string> = {
@@ -27,16 +29,6 @@ const STATUS_CLASSES: Record<string, string> = {
   pendente: 'bg-blue-50 text-blue-700 border-blue-200',
   falha: 'bg-red-50 text-red-700 border-red-200',
 };
-
-function formatarData(valor: string) {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(valor));
-}
 
 export default function NotificacoesPage() {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
@@ -88,7 +80,7 @@ export default function NotificacoesPage() {
                     <span className={`inline-flex px-2 py-1 text-xs rounded-full border ${STATUS_CLASSES[notificacao.status] ?? 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                       {notificacao.status}
                     </span>
-                    <p className="text-xs text-gray-400 mt-2">{formatarData(notificacao.created_at)}</p>
+                    <p className="text-xs text-gray-500 mt-2">{formatarDataHora(notificacao.created_at ?? notificacao.createdAt)}</p>
                   </div>
                 </div>
               </div>
