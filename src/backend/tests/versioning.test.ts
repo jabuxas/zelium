@@ -6,14 +6,41 @@ import { Fornecedor } from '../src/models/Fornecedor';
 import { Patrimonio } from '../src/models/Patrimonio';
 import { Responsavel } from '../src/models/Responsavel';
 import { TipoMaterial } from '../src/models/TipoMaterial';
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
 describe('Versionamento Sequelize - Controle de Concorrência', () => {
+  let container: StartedPostgreSqlContainer;
+
   beforeAll(async () => {
+    container = await new PostgreSqlContainer('postgres:17')
+      .withDatabase('zelar')
+      .withUsername('zelar')
+      .withPassword('zelar')
+      .start();
+
+    // Reconecta o sequelize no container isolado deste teste
+    const connectionManager = sequelize.connectionManager as unknown as {
+      config: Record<string, unknown>;
+      pool: { drain: () => Promise<void> } | null;
+      initPools: () => void;
+    };
+    if (connectionManager.pool) {
+      await connectionManager.pool.drain();
+    }
+    Object.assign(connectionManager.config, {
+      host: container.getHost(),
+      port: container.getMappedPort(5432),
+      database: container.getDatabase(),
+      username: container.getUsername(),
+      password: container.getPassword(),
+    });
+    connectionManager.initPools();
     await sequelize.sync({ force: true });
-  });
+  }, 60_000);
 
   afterAll(async () => {
     await sequelize.close();
+    await container.stop();
   });
 
   describe('TipoMaterial', () => {

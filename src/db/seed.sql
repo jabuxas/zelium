@@ -9,11 +9,11 @@ INSERT INTO tipo_material (id, organizacao_id, nome) VALUES
     (4, 1, 'Equipamento de Laboratório'),
     (5, 1, 'Equipamento Audiovisual');
 
-INSERT INTO estado_item (id, organizacao_id, nome, descricao) VALUES
-    (1, 1, 'Em condições', 'Item em perfeito estado de uso'),
-    (2, 1, 'Em manutenção', 'Item sob reparo ou manutenção preventiva'),
-    (3, 1, 'Inservível', 'Item sem condições de uso ou recuperação'),
-    (4, 1, 'Descarte pendente', 'Item aguardando processo de descarte');
+INSERT INTO estado_item (id, organizacao_id, nome, descricao, avaria) VALUES
+    (1, 1, 'Em condições', 'Item em perfeito estado de uso', FALSE),
+    (2, 1, 'Em manutenção', 'Item sob reparo ou manutenção preventiva', TRUE),
+    (3, 1, 'Inservível', 'Item sem condições de uso ou recuperação', TRUE),
+    (4, 1, 'Descarte pendente', 'Item aguardando processo de descarte', TRUE);
 
 INSERT INTO fornecedor (id, organizacao_id, nome, cnpj, telefone, email) VALUES
     (1, 1, 'TechSupply Informática', '12.345.678/0001-90', '(48) 3333-4444', 'contato@techsupply.com.br'),

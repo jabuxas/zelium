@@ -23,6 +23,7 @@ CREATE TABLE estado_item (
     organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
     nome VARCHAR(50) NOT NULL,
     descricao TEXT,
+    avaria BOOLEAN NOT NULL DEFAULT FALSE,
     versao INTEGER DEFAULT 1 NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -169,4 +170,16 @@ CREATE TABLE usuario (
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMP NULL
+);
+
+CREATE TABLE notificacao (
+    id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL REFERENCES organizacao(id),
+    tipo VARCHAR(40) NOT NULL,
+    assunto VARCHAR(200) NOT NULL,
+    corpo TEXT NOT NULL,
+    destinatarios JSONB NOT NULL DEFAULT '[]',
+    status VARCHAR(20) NOT NULL DEFAULT 'pendente',
+    erro TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

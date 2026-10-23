@@ -19,6 +19,7 @@ import {
   QrCode,
   DollarSign,
   LogOut,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
 import type { Papel } from "../lib/auth";
@@ -43,6 +44,7 @@ const menuItems: MenuItem[] = [
   { path: "/ambientes", icon: MapPin, label: "Ambientes", papeis: ["gestor", "responsavel", "conferente"] },
   { path: "/relatorios", icon: FileBarChart2, label: "Relatórios", papeis: ["gestor", "responsavel"] },
   { path: "/financeiro", icon: DollarSign, label: "Financeiro", papeis: ["gestor"] },
+  { path: "/notificacoes", icon: Bell, label: "Notificações", papeis: ["gestor"] },
   { path: "/responsaveis", icon: Users, label: "Responsáveis", papeis: ["gestor", "responsavel"] },
   { path: "/conferentes", icon: UserCheck, label: "Conferentes", papeis: ["gestor"] },
   { path: "/fornecedores", icon: Store, label: "Fornecedores", papeis: ["gestor"] },

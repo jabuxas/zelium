@@ -170,6 +170,37 @@ async function ensureOrganizacaoColumns(): Promise<void> {
   `);
 }
 
+async function ensureNotificacaoTable(): Promise<void> {
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS notificacao (
+      id SERIAL PRIMARY KEY,
+      organizacao_id INT NOT NULL REFERENCES organizacao(id),
+      tipo VARCHAR(40) NOT NULL,
+      assunto VARCHAR(200) NOT NULL,
+      corpo TEXT NOT NULL,
+      destinatarios JSONB NOT NULL DEFAULT '[]',
+      status VARCHAR(20) NOT NULL DEFAULT 'pendente',
+      erro TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `);
+}
+
+async function ensureEstadoItemAvariaColumn(): Promise<void> {
+  await sequelize.query(`
+    ALTER TABLE estado_item
+      ADD COLUMN IF NOT EXISTS avaria BOOLEAN NOT NULL DEFAULT FALSE
+  `);
+  // Estados que representam avaria (por nome), para bancos já existentes
+  await sequelize.query(`
+    UPDATE estado_item SET avaria = TRUE
+    WHERE nome ILIKE '%manutenção%'
+       OR nome ILIKE '%manutencao%'
+       OR nome ILIKE '%inserv%'
+       OR nome ILIKE '%descarte%'
+  `);
+}
+
 export async function migrate(): Promise<void> {
   const [{ exists }] = await sequelize.query<{ exists: boolean }>(
     `SELECT EXISTS (
@@ -194,5 +225,7 @@ export async function migrate(): Promise<void> {
   await ensureUsuarioTable();
   await ensureOrganizacaoTable();
   await ensureOrganizacaoColumns();
+  await ensureNotificacaoTable();
+  await ensureEstadoItemAvariaColumn();
   await ensureDefaultUsers();
 }

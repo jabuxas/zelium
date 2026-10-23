@@ -9,6 +9,7 @@ export class EstadoItem extends Model<
   declare organizacao_id: CreationOptional<number>;
   declare nome: string;
   declare descricao: string | null;
+  declare avaria: CreationOptional<boolean>;
   declare versao: CreationOptional<number>;
 }
 
@@ -18,6 +19,7 @@ EstadoItem.init(
     organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
     nome: { type: DataTypes.STRING(50), allowNull: false },
     descricao: { type: DataTypes.TEXT, allowNull: true },
+    avaria: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
     versao: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
   },
   {

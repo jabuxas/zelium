@@ -11,6 +11,9 @@ import { Conferente } from "../models/Conferente";
 import { Solicitacao } from "../models/Solicitacao";
 import { Usuario } from "../models/Usuario";
 import { Organizacao } from "../models/Organizacao";
+// Modelos importados apenas pelo efeito colateral (registro no Sequelize)
+import "../models/AuditLog";
+import "../models/Notificacao";
 
 Organizacao.hasMany(Usuario, { foreignKey: "organizacao_id" });
 Usuario.belongsTo(Organizacao, { foreignKey: "organizacao_id", as: "organizacao" });

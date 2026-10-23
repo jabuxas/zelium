@@ -7,14 +7,47 @@ import { Ambiente } from "../src/models/Ambiente";
 import { EstadoItem } from "../src/models/EstadoItem";
 import { Patrimonio } from "../src/models/Patrimonio";
 import { Responsavel } from "../src/models/Responsavel";
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+
+let container: StartedPostgreSqlContainer;
 
 describe("Testes de integração do log de auditoria", () => {
   beforeAll(async () => {
+    container = await new PostgreSqlContainer("postgres:17")
+      .withDatabase("zelar")
+      .withUsername("zelar")
+      .withPassword("zelar")
+      .start();
+
+    process.env.DB_HOST = container.getHost();
+    process.env.DB_PORT = String(container.getMappedPort(5432));
+    process.env.DB_NAME = container.getDatabase();
+    process.env.DB_USER = container.getUsername();
+    process.env.DB_PASSWORD = container.getPassword();
+
+    // Reconecta o sequelize no container isolado deste teste
+    const connectionManager = sequelize.connectionManager as unknown as {
+      config: Record<string, unknown>;
+      pool: { drain: () => Promise<void> } | null;
+      initPools: () => void;
+    };
+    if (connectionManager.pool) {
+      await connectionManager.pool.drain();
+    }
+    Object.assign(connectionManager.config, {
+      host: container.getHost(),
+      port: container.getMappedPort(5432),
+      database: container.getDatabase(),
+      username: container.getUsername(),
+      password: container.getPassword(),
+    });
+    connectionManager.initPools();
     await sequelize.sync({ force: true });
-  });
+  }, 60_000);
 
   afterAll(async () => {
     await sequelize.close();
+    await container.stop();
   });
 
   beforeEach(async () => {

@@ -3,7 +3,9 @@ import { Op } from 'sequelize';
 import { AuditLog } from '../models/AuditLog';
 import { Patrimonio } from '../models/Patrimonio';
 import { PatrimonioFoto } from '../models/PatrimonioFoto';
+import { EstadoItem } from '../models/EstadoItem';
 import { PatrimonioRepository } from '../repositories/PatrimonioRepository';
+import { NotificacaoService } from './NotificacaoService';
 
 const fotoPrincipalInclude = {
   model: PatrimonioFoto,
@@ -20,6 +22,8 @@ function withFotoPrincipal(patrimonio: Patrimonio): Record<string, unknown> {
   delete json.fotos;
   return json;
 }
+
+const notificacoes = new NotificacaoService();
 
 export class PatrimonioService {
   private repo = new PatrimonioRepository();
@@ -41,8 +45,35 @@ export class PatrimonioService {
     return this.repo.create(data);
   }
 
-  update(id: number, data: Partial<CreationAttributes<Patrimonio>>) {
-    return this.repo.update(id, data);
+  /**
+   * Atualiza o patrimônio e, quando o estado muda para um estado marcado
+   * como AVARIA, dispara e-mail automático para o responsável e gestores.
+   */
+  async update(id: number, data: Partial<CreationAttributes<Patrimonio>>) {
+    const anterior = await Patrimonio.findByPk(id);
+    const atualizado = await this.repo.update(id, data);
+    if (!atualizado || !anterior) return atualizado;
+
+    const estadoMudou =
+      data.estado_item_id !== undefined &&
+      data.estado_item_id !== anterior.estado_item_id;
+
+    if (estadoMudou) {
+      const novoEstado = await EstadoItem.findByPk(data.estado_item_id);
+      if (novoEstado?.avaria) {
+        void notificacoes.notificar({
+          tipo: 'avaria',
+          assunto: `Avaria reportada: patrimônio ${anterior.numero_patrimonio}`,
+          corpo:
+            `O patrimônio ${anterior.numero_patrimonio} (${anterior.descricao}) ` +
+            `teve o estado alterado para "${novoEstado.nome}".\n\n` +
+            `Verifique o item no sistema para dar andamento à manutenção ou substituição.`,
+          responsavelId: anterior.responsavel_id,
+        });
+      }
+    }
+
+    return atualizado;
   }
 
   delete(id: number) {
