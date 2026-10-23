@@ -1,4 +1,4 @@
-import request from 'supertest';
+import { request } from './helpers/request';
 import app from '../src/app';
 import { Patrimonio } from '../src/models/Patrimonio';
 import { EstadoItemService } from '../src/services/EstadoItemService';

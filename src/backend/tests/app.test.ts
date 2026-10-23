@@ -1,4 +1,4 @@
-import request from 'supertest';
+import { request } from './helpers/request';
 import app from '../src/app';
 
 describe('GET /health', () => {

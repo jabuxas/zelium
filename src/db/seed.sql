@@ -55,3 +55,11 @@ SELECT setval('responsavel_id_seq', (SELECT MAX(id) FROM responsavel));
 SELECT setval('conferente_id_seq', (SELECT MAX(id) FROM conferente));
 SELECT setval('ambiente_id_seq', (SELECT MAX(id) FROM ambiente));
 SELECT setval('patrimonio_id_seq', (SELECT MAX(id) FROM patrimonio));
+
+-- Usuários iniciais (senha padrão: Zelium@2026 — troque no primeiro acesso)
+INSERT INTO usuario (id, nome, email, senha_hash, papel, ativo) VALUES
+    (1, 'Gestor Zelium', 'gestor@zelium.com', '$2b$10$cbRZLPMpC5p2.q1EsYT38.eCQTlTCsonhEMvOGAsNkoCnKRrQpJ82', 'gestor', TRUE),
+    (2, 'Responsável Zelium', 'responsavel@zelium.com', '$2b$10$cbRZLPMpC5p2.q1EsYT38.eCQTlTCsonhEMvOGAsNkoCnKRrQpJ82', 'responsavel', TRUE),
+    (3, 'Conferente Zelium', 'conferente@zelium.com', '$2b$10$cbRZLPMpC5p2.q1EsYT38.eCQTlTCsonhEMvOGAsNkoCnKRrQpJ82', 'conferente', TRUE);
+
+SELECT setval('usuario_id_seq', (SELECT MAX(id) FROM usuario));

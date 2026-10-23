@@ -37,6 +37,19 @@ services:
         fromDatabase:
           name: zelium-db
           property: password
+      - key: JWT_SECRET
+        sync: false
+        value: troque-este-segredo-em-producao
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
 
   - type: web
     name: zelium

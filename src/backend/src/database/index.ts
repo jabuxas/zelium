@@ -8,6 +8,7 @@ import { TipoMaterial } from "../models/TipoMaterial";
 import { AuditLog } from "../models/AuditLog";
 import { Conferente } from "../models/Conferente";
 import { Solicitacao } from "../models/Solicitacao";
+import { Usuario } from "../models/Usuario";
 
 Ambiente.belongsTo(Responsavel, { foreignKey: "responsavel_id" });
 Responsavel.hasMany(Ambiente, { foreignKey: "responsavel_id" });

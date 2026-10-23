@@ -1,5 +1,5 @@
 import { rmSync } from 'fs';
-import request from 'supertest';
+import { request } from './helpers/request';
 import app from '../src/app';
 import { UPLOAD_ROOT } from '../src/config/upload';
 import { PatrimonioFotoService } from '../src/services/PatrimonioFotoService';

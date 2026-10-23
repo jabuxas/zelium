@@ -1,4 +1,4 @@
-import request from 'supertest';
+import { request } from './helpers/request';
 import { ForeignKeyConstraintError } from 'sequelize';
 import app from '../src/app';
 import { SolicitacaoService } from '../src/services/SolicitacaoService';

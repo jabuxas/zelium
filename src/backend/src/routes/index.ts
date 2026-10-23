@@ -8,8 +8,17 @@ import responsavelRoutes from "./responsavel.routes";
 import tipoMaterialRoutes from "./tipoMaterial.routes";
 import auditLogRoutes from "./auditLog.routes";
 import solicitacaoRoutes from "./solicitacao.routes";
+import authRoutes from "./auth.routes";
+import usuarioRoutes from "./usuario.routes";
+import { authenticate } from "../middlewares/auth";
 
 const router = Router();
+
+// Login e sessão: acesso público (login) e leitura do usuário logado
+router.use("/auth", authRoutes);
+
+// A partir daqui, toda rota exige um token JWT válido
+router.use(authenticate);
 
 router.use("/ambientes", ambienteRoutes);
 router.use("/conferentes", conferenteRoutes);
@@ -20,5 +29,6 @@ router.use("/responsaveis", responsavelRoutes);
 router.use("/tipo-material", tipoMaterialRoutes);
 router.use("/audit-log", auditLogRoutes);
 router.use("/solicitacoes", solicitacaoRoutes);
+router.use("/usuarios", usuarioRoutes);
 
 export default router;

@@ -1,4 +1,4 @@
-import request from 'supertest';
+import { request } from './helpers/request';
 import { UniqueConstraintError } from 'sequelize';
 import app from '../src/app';
 import { PatrimonioService } from '../src/services/PatrimonioService';

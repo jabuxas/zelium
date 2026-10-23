@@ -56,6 +56,49 @@ async function ensureAmbienteLocalizacaoColumns(): Promise<void> {
   `);
 }
 
+const DEFAULT_SENHA_HASH =
+  '$2b$10$cbRZLPMpC5p2.q1EsYT38.eCQTlTCsonhEMvOGAsNkoCnKRrQpJ82';
+
+async function ensureUsuarioTable(): Promise<void> {
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS usuario (
+      id SERIAL PRIMARY KEY,
+      nome VARCHAR(100) NOT NULL,
+      email VARCHAR(100) NOT NULL UNIQUE,
+      senha_hash VARCHAR(100) NOT NULL,
+      papel VARCHAR(20) NOT NULL DEFAULT 'conferente' CHECK (papel IN ('gestor', 'responsavel', 'conferente')),
+      ativo BOOLEAN NOT NULL DEFAULT TRUE,
+      organizacao_id INT,
+      versao INTEGER DEFAULT 1 NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      deleted_at TIMESTAMP NULL
+    )
+  `);
+}
+
+async function ensureDefaultUsers(): Promise<void> {
+  // Cria os usuários de demonstração apenas se a tabela estiver vazia
+  // (senha padrão: Zelium@2026 — troque no primeiro acesso)
+  const [{ count }] = await sequelize.query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM usuario`,
+    { type: QueryTypes.SELECT }
+  );
+  if (Number(count) > 0) {
+    return;
+  }
+
+  await sequelize.query(
+    `
+    INSERT INTO usuario (nome, email, senha_hash, papel, ativo) VALUES
+      ('Gestor Zelium', 'gestor@zelium.com', '${DEFAULT_SENHA_HASH}', 'gestor', TRUE),
+      ('Responsavel Zelium', 'responsavel@zelium.com', '${DEFAULT_SENHA_HASH}', 'responsavel', TRUE),
+      ('Conferente Zelium', 'conferente@zelium.com', '${DEFAULT_SENHA_HASH}', 'conferente', TRUE)
+  `
+  );
+  console.log('Usuarios padrao criados (gestor@zelium.com / responsavel@zelium.com / conferente@zelium.com).');
+}
+
 export async function migrate(): Promise<void> {
   const [{ exists }] = await sequelize.query<{ exists: boolean }>(
     `SELECT EXISTS (
@@ -77,4 +120,6 @@ export async function migrate(): Promise<void> {
   await ensureSolicitacaoTable();
   await ensurePatrimonioFotosTable();
   await ensureAmbienteLocalizacaoColumns();
+  await ensureUsuarioTable();
+  await ensureDefaultUsers();
 }

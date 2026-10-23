@@ -136,3 +136,17 @@ CREATE TABLE audit_log (
     usuario VARCHAR(100) NOT NULL DEFAULT 'sistema',
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE usuario (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    senha_hash VARCHAR(100) NOT NULL,
+    papel VARCHAR(20) NOT NULL DEFAULT 'conferente' CHECK (papel IN ('gestor', 'responsavel', 'conferente')),
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    organizacao_id INT,
+    versao INTEGER DEFAULT 1 NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP NULL
+);
