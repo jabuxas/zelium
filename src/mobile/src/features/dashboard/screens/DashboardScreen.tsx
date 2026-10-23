@@ -38,7 +38,7 @@ function formatLogDate(iso: string): string {
 export default function DashboardScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { stats, logs, loading, error, isRefreshing, load, refresh, retry } = useDashboard();
+  const { stats, logs, loading, error, atividadesIndisponiveis, isRefreshing, load, refresh, retry } = useDashboard();
 
   useEffect(() => {
     load();
@@ -125,7 +125,11 @@ export default function DashboardScreen() {
         </Text>
 
         <View style={styles.tableCard}>
-          {logs.length === 0 ? (
+          {atividadesIndisponiveis ? (
+            <View style={styles.emptyRow}>
+              <Text style={styles.emptyText}>Atividades indisponíveis no momento. Os indicadores continuam disponíveis.</Text>
+            </View>
+          ) : logs.length === 0 ? (
             <View style={styles.emptyRow}>
               <Text style={styles.emptyText}>Nenhuma movimentação registrada recentemente.</Text>
             </View>

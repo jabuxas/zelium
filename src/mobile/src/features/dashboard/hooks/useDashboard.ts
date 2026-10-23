@@ -8,6 +8,7 @@ export function useDashboard() {
   const [logs, setLogs] = useState<RecentAuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [atividadesIndisponiveis, setAtividadesIndisponiveis] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const load = useCallback(async () => {
@@ -15,6 +16,7 @@ export function useDashboard() {
       const data = await getDashboardData();
       setStats(data.stats);
       setLogs(data.recentLogs);
+      setAtividadesIndisponiveis(data.atividadesIndisponiveis);
       setError(false);
     } catch {
       const cached = await AsyncStorage.getItem('@zelium:dashboard_stats');
@@ -40,5 +42,5 @@ export function useDashboard() {
     load();
   }, [load]);
 
-  return { stats, logs, loading, error, isRefreshing, load, refresh, retry };
+  return { stats, logs, loading, error, atividadesIndisponiveis, isRefreshing, load, refresh, retry };
 }
