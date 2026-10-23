@@ -1,0 +1,138 @@
+# Zelium — Stack de produção
+#
+# Uso (no servidor da equipe):
+#   1. cp deploy/.env.example deploy/.env  e preencha os valores
+#   2. Configure o DuckDNS (veja docs/DEPLOY.md)
+#   3. docker compose --env-file .env -f docker-compose.prod.yml up -d --build
+#
+# O Caddy obtém o certificado SSL automaticamente (Let's Encrypt) para
+# o domínio DuckDNS e renova sozinho.
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-zelar}
+      POSTGRES_USER: ${POSTGRES_USER:-zelar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD é obrigatório}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ../src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../src/db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    # Sem porta exposta: o banco só é acessível dentro da rede docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-zelar} -d ${POSTGRES_DB:-zelar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../src
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-zelar}
+      DB_USER: ${POSTGRES_USER:-zelar}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET é obrigatório}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ../src/front
+      args:
+        # Mesma origem: o Caddy encaminha /api e /uploads para o backend
+        NEXT_PUBLIC_API_URL: /api
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/login || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ZELAR_DOMAIN: ${ZELAR_DOMAIN:?ZELAR_DOMAIN é obrigatório}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+
+  duckdns:
+    # Atualiza o IP do domínio DuckDNS quando o IP público mudar.
+    # Documentação: https://www.duckdns.org/spec.jsp
+    image: linuxserver/duckdns
+    restart: unless-stopped
+    environment:
+      TOKEN: ${DUCKDNS_TOKEN:?DUCKDNS_TOKEN é obrigatório}
+      SUBDOMAINS: ${ZELAR_DOMAIN%%.*}
+      LOG_FILE: "false"
+    volumes:
+      - ./duckdns-config:/config
+
+  backup:
+    # Backup automático: dump diário às 02:00 (UTC) com retenção rotativa.
+    # Restauração: veja deploy/restore.sh e docs/DEPLOY.md
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-zelar}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-zelar}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - backups_data:/backups
+      - ./backup.sh:/backup.sh:ro
+      - ./restore.sh:/restore.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "0 2 * * * /backup.sh" > /tmp/crontab
+        crontab /tmp/crontab
+        echo "Backups agendados para 02:00 UTC (retenção: $${BACKUP_RETENTION_DAYS} dias)"
+        # Roda o cron em primeiro plano; logs de backup vão para /backups/backup.log
+        crond -f -l 8 > /backups/backup.log 2>&1
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  uploads_data:
+  backups_data:
+  caddy_data:
+  caddy_config:

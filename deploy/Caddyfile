@@ -1,0 +1,29 @@
+# Caddy — HTTPS automático (Let's Encrypt) para o domínio DuckDNS
+# O certificado é emitido e renovado automaticamente pelo Caddy.
+
+{$ZELAR_DOMAIN} {
+	encode zstd gzip
+
+	# API e arquivos estáticos (fotos) vão para o backend
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle /uploads/* {
+		reverse_proxy backend:8000
+	}
+
+	handle /health {
+		reverse_proxy backend:8000
+	}
+
+	# Todo o resto é o frontend Next.js
+	handle {
+		reverse_proxy frontend:3000
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

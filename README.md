@@ -231,3 +231,9 @@ docker compose up
 **2. Acesse no navegador:** http://localhost:3000 (site). API em `:8000`, banco em `:5432`.
 
 **3. Desligar:** `Ctrl + C`. Para apagar tudo, inclusive dados: `docker compose down -v`.
+
+## Como publicar em produção
+
+A stack de produção (servidor próprio, DNS DuckDNS, HTTPS automático e backup
+diário) está documentada em **[`docs/DEPLOY.md`](docs/DEPLOY.md)** — configuração em
+[`deploy/`](deploy/).
