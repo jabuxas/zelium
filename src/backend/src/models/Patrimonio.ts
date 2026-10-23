@@ -11,6 +11,9 @@ export class Patrimonio extends Model<
   declare descricao: string;
   declare valor: number;
   declare observacoes: string | null;
+  declare data_aquisicao: string | null;
+  declare vida_util_anos: number | null;
+  declare valor_residual: number | null;
   declare tipo_material_id: number;
   declare estado_item_id: number;
   declare ambiente_id: number;
@@ -27,6 +30,9 @@ Patrimonio.init(
     descricao: { type: DataTypes.TEXT, allowNull: false },
     valor: { type: DataTypes.FLOAT, allowNull: false },
     observacoes: { type: DataTypes.TEXT, allowNull: true },
+    data_aquisicao: { type: DataTypes.DATEONLY, allowNull: true },
+    vida_util_anos: { type: DataTypes.INTEGER, allowNull: true },
+    valor_residual: { type: DataTypes.FLOAT, allowNull: true },
     tipo_material_id: { type: DataTypes.INTEGER, allowNull: false },
     estado_item_id: { type: DataTypes.INTEGER, allowNull: false },
     ambiente_id: { type: DataTypes.INTEGER, allowNull: false },

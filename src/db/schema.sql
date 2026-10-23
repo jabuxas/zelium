@@ -99,6 +99,9 @@ CREATE TABLE patrimonio (
     descricao TEXT NOT NULL,
     valor FLOAT NOT NULL,
     observacoes TEXT,
+    data_aquisicao DATE,
+    vida_util_anos INT,
+    valor_residual FLOAT,
     tipo_material_id INT NOT NULL REFERENCES tipo_material(id),
     estado_item_id INT NOT NULL REFERENCES estado_item(id),
     ambiente_id INT NOT NULL REFERENCES ambiente(id),
@@ -181,5 +184,15 @@ CREATE TABLE notificacao (
     destinatarios JSONB NOT NULL DEFAULT '[]',
     status VARCHAR(20) NOT NULL DEFAULT 'pendente',
     erro TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE conferencia (
+    id SERIAL PRIMARY KEY,
+    organizacao_id INT NOT NULL REFERENCES organizacao(id),
+    patrimonio_id INT NOT NULL REFERENCES patrimonio(id),
+    usuario_id INT NOT NULL REFERENCES usuario(id),
+    estado_item_id INT REFERENCES estado_item(id),
+    observacao TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

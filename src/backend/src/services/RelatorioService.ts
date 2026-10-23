@@ -18,7 +18,8 @@ export type TipoRelatorio =
   | "por-ambiente"
   | "por-responsavel"
   | "por-estado"
-  | "patrimonios";
+  | "patrimonios"
+  | "financeiro";
 
 export class RelatorioService {
   async porAmbiente() {
@@ -131,6 +132,25 @@ export class RelatorioService {
         return { titulo: "Relatório por Estado", linhas: await this.porEstado() };
       case "patrimonios":
         return { titulo: "Relatório de Patrimônios", linhas: await this.patrimonios(filtros) };
+      case "financeiro": {
+        const { DepreciacaoService } = await import("./DepreciacaoService");
+        const resumo = await new DepreciacaoService().resumoFinanceiro();
+        const linhas = resumo.por_ambiente.map((linha) => ({
+          ambiente: linha.ambiente,
+          total_itens: linha.total_itens,
+          valor_aquisicao: linha.valor_aquisicao,
+          depreciacao_acumulada: linha.depreciacao_acumulada,
+          valor_contabil: linha.valor_contabil,
+        }));
+        linhas.push({
+          ambiente: "TOTAL",
+          total_itens: resumo.total.total_itens,
+          valor_aquisicao: resumo.total.valor_aquisicao,
+          depreciacao_acumulada: resumo.total.depreciacao_acumulada,
+          valor_contabil: resumo.total.valor_contabil,
+        });
+        return { titulo: "Relatório Financeiro (Depreciação)", linhas };
+      }
     }
   }
 }

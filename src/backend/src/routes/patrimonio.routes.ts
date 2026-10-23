@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { PatrimonioController } from "../controllers/PatrimonioController";
+import { DepreciacaoController } from "../controllers/DepreciacaoController";
 import { authorize } from "../middlewares/auth";
 import patrimonioFotoRoutes from "./patrimonioFoto.routes";
 import conferenciaRoutes from "./conferencia.routes";
@@ -12,6 +13,7 @@ router.patch("/:id/restaurar", authorize("gestor", "responsavel"), PatrimonioCon
 router.get("/:id/historico-estado", PatrimonioController.historicoEstado);
 router.get("/:id/qrcode", PatrimonioController.qrCode);
 router.get("/:id/etiqueta", PatrimonioController.etiqueta);
+router.get("/:id/depreciacao", DepreciacaoController.detalhe);
 router.get("/:id", PatrimonioController.findById);
 router.post("/", authorize("gestor", "responsavel"), PatrimonioController.create);
 router.put("/:id", authorize("gestor", "responsavel"), PatrimonioController.update);

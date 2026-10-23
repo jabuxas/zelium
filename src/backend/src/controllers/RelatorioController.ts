@@ -14,6 +14,7 @@ const TIPOS: TipoRelatorio[] = [
   "por-responsavel",
   "por-estado",
   "patrimonios",
+  "financeiro",
 ];
 
 function isTipoValido(tipo: unknown): tipo is TipoRelatorio {

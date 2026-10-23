@@ -40,17 +40,17 @@ INSERT INTO ambiente (id, organizacao_id, nome, bloco, andar, responsavel_id) VA
     (5, 1, 'Auditório', 'Bloco A', 'Térreo', 1),
     (6, 1, 'Sala 30 - Coordenação', 'Bloco B', '2º andar', 2);
 
-INSERT INTO patrimonio (id, organizacao_id, numero_patrimonio, descricao, valor, observacoes, tipo_material_id, estado_item_id, ambiente_id, responsavel_id, fornecedor_id) VALUES
-    (1, 1, '2024/001', 'Computador Desktop Dell OptiPlex 7090', 4500.00, 'I7-11700, 16GB RAM, 512GB SSD', 1, 1, 1, 1, 1),
-    (2, 1, '2024/002', 'Monitor LG 24" Full HD', 1200.00, 'Modelo 24MK430H', 1, 1, 1, 1, 1),
-    (3, 1, '2024/003', 'Mesa de trabalho em L', 850.00, NULL, 2, 1, 2, 2, 2),
-    (4, 1, '2024/004', 'Projetor Epson PowerLite X49', 3200.00, 'Lâmpada com 800h de uso', 5, 1, 5, 1, 3),
-    (5, 1, '2024/005', 'Osciloscópio Tektronix TBS1052B', 6800.00, 'Canal 2 com calibração vencida', 4, 2, 3, 3, 4),
-    (6, 1, '2024/006', 'Cadeira estofada giratória', 450.00, 'Com braços reguláveis', 2, 1, 6, 2, 2),
-    (7, 1, '2024/007', 'Notebook Lenovo ThinkPad E14', 5100.00, 'I5-1235U, 8GB RAM, 256GB SSD', 1, 1, 2, 2, 1),
-    (8, 1, '2024/008', 'Impressora HP LaserJet Pro M404dn', 2800.00, NULL, 1, 4, 4, 4, 1),
-    (9, 1, '2024/009', 'Armário de aço 2 portas', 950.00, 'Chave reserva no setor de patrimônio', 2, 3, 4, 4, 2),
-    (10, 1, '2024/010', 'Micro-ondas Electrolux ME41S', 650.00, 'Uso na copa da coordenação', 4, 1, 6, 2, 4);
+INSERT INTO patrimonio (id, organizacao_id, numero_patrimonio, descricao, valor, observacoes, data_aquisicao, vida_util_anos, valor_residual, tipo_material_id, estado_item_id, ambiente_id, responsavel_id, fornecedor_id) VALUES
+    (1, 1, '2024/001', 'Computador Desktop Dell OptiPlex 7090', 4500.00, 'I7-11700, 16GB RAM, 512GB SSD', '2023-03-10', 5, 450.00, 1, 1, 1, 1, 1),
+    (2, 1, '2024/002', 'Monitor LG 24" Full HD', 1200.00, 'Modelo 24MK430H', '2023-03-10', 5, 120.00, 1, 1, 1, 1, 1),
+    (3, 1, '2024/003', 'Mesa de trabalho em L', 850.00, NULL, '2022-06-01', 10, 85.00, 2, 1, 2, 2, 2),
+    (4, 1, '2024/004', 'Projetor Epson PowerLite X49', 3200.00, 'Lâmpada com 800h de uso', '2021-02-15', 5, 320.00, 5, 1, 5, 1, 3),
+    (5, 1, '2024/005', 'Osciloscópio Tektronix TBS1052B', 6800.00, 'Canal 2 com calibração vencida', '2020-09-20', 10, 680.00, 4, 2, 3, 3, 4),
+    (6, 1, '2024/006', 'Cadeira estofada giratória', 450.00, 'Com braços reguláveis', '2022-06-01', 10, 45.00, 2, 1, 6, 2, 2),
+    (7, 1, '2024/007', 'Notebook Lenovo ThinkPad E14', 5100.00, 'I5-1235U, 8GB RAM, 256GB SSD', '2023-08-01', 5, 510.00, 1, 1, 2, 2, 1),
+    (8, 1, '2024/008', 'Impressora HP LaserJet Pro M404dn', 2800.00, NULL, '2021-11-25', 5, 280.00, 1, 4, 4, 4, 1),
+    (9, 1, '2024/009', 'Armário de aço 2 portas', 950.00, 'Chave reserva no setor de patrimônio', '2019-05-10', 15, 95.00, 2, 3, 4, 4, 2),
+    (10, 1, '2024/010', 'Micro-ondas Electrolux ME41S', 650.00, 'Uso na copa da coordenação', '2022-06-01', 10, 65.00, 4, 1, 6, 2, 4);
 
 SELECT setval('tipo_material_id_seq', (SELECT MAX(id) FROM tipo_material));
 SELECT setval('estado_item_id_seq', (SELECT MAX(id) FROM estado_item));

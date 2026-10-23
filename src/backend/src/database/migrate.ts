@@ -215,6 +215,15 @@ async function ensureEstadoItemAvariaColumn(): Promise<void> {
   `);
 }
 
+async function ensureDepreciacaoColumns(): Promise<void> {
+  await sequelize.query(`
+    ALTER TABLE patrimonio
+      ADD COLUMN IF NOT EXISTS data_aquisicao DATE,
+      ADD COLUMN IF NOT EXISTS vida_util_anos INT,
+      ADD COLUMN IF NOT EXISTS valor_residual FLOAT
+  `);
+}
+
 export async function migrate(): Promise<void> {
   const [{ exists }] = await sequelize.query<{ exists: boolean }>(
     `SELECT EXISTS (
@@ -242,5 +251,6 @@ export async function migrate(): Promise<void> {
   await ensureNotificacaoTable();
   await ensureConferenciaTable();
   await ensureEstadoItemAvariaColumn();
+  await ensureDepreciacaoColumns();
   await ensureDefaultUsers();
 }

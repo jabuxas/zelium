@@ -17,6 +17,9 @@ export default function PatrimonioForm() {
   const [numeroPatrimonio, setNumeroPatrimonio] = useState('');
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
+  const [dataAquisicao, setDataAquisicao] = useState('');
+  const [vidaUtilAnos, setVidaUtilAnos] = useState('');
+  const [valorResidual, setValorResidual] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [tipoMaterialId, setTipoMaterialId] = useState('');
   const [estadoItemId, setEstadoItemId] = useState('');
@@ -49,6 +52,9 @@ export default function PatrimonioForm() {
         setNumeroPatrimonio(data.numero_patrimonio ?? '');
         setDescricao(data.descricao ?? '');
         setValor(data.valor != null ? String(data.valor) : '');
+        setDataAquisicao(data.data_aquisicao ?? '');
+        setVidaUtilAnos(data.vida_util_anos != null ? String(data.vida_util_anos) : '');
+        setValorResidual(data.valor_residual != null ? String(data.valor_residual) : '');
         setObservacoes(data.observacoes ?? '');
         setTipoMaterialId(data.tipo_material_id ? String(data.tipo_material_id) : '');
         setEstadoItemId(data.estado_item_id ? String(data.estado_item_id) : '');
@@ -98,6 +104,9 @@ export default function PatrimonioForm() {
       descricao: descricao.trim(),
       valor: Number(valor),
       observacoes: observacoes.trim() || null,
+      data_aquisicao: dataAquisicao.trim() || null,
+      vida_util_anos: vidaUtilAnos.trim() ? Number(vidaUtilAnos) : null,
+      valor_residual: valorResidual.trim() ? Number(valorResidual) : null,
       tipo_material_id: Number(tipoMaterialId),
       estado_item_id: Number(estadoItemId),
       ambiente_id: Number(ambienteId),
@@ -280,7 +289,51 @@ export default function PatrimonioForm() {
 
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações Adicionais</h2>
-            <div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Data de Aquisição
+                </label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  value={dataAquisicao}
+                  onChange={e => setDataAquisicao(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Vida Útil (anos)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  placeholder="Ex: 10"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  value={vidaUtilAnos}
+                  onChange={e => setVidaUtilAnos(e.target.value)}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Usado no cálculo de depreciação linear
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Valor Residual (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Ex: 350.00"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  value={valorResidual}
+                  onChange={e => setValorResidual(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Observações
               </label>

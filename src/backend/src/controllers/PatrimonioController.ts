@@ -120,6 +120,27 @@ export const PatrimonioController = {
       return res.status(400).json({ error: "responsavel_id e obrigatorio" });
     }
 
+    // Campos de depreciação (opcionais)
+    const { data_aquisicao, vida_util_anos, valor_residual } = req.body;
+    if (data_aquisicao !== undefined && data_aquisicao !== null) {
+      const data = new Date(`${data_aquisicao}T00:00:00`);
+      if (Number.isNaN(data.getTime())) {
+        return res.status(400).json({ error: "data_aquisicao invalida (use AAAA-MM-DD)" });
+      }
+    }
+    if (vida_util_anos !== undefined && vida_util_anos !== null) {
+      const vida = Number(vida_util_anos);
+      if (!Number.isInteger(vida) || vida <= 0 || vida > 100) {
+        return res.status(400).json({ error: "vida_util_anos deve ser um inteiro entre 1 e 100" });
+      }
+    }
+    if (valor_residual !== undefined && valor_residual !== null) {
+      const residual = Number(valor_residual);
+      if (Number.isNaN(residual) || residual < 0 || residual > Number(valor)) {
+        return res.status(400).json({ error: "valor_residual deve ser um numero entre 0 e o valor do bem" });
+      }
+    }
+
     try {
       const item = await service.create(req.body);
       res.status(201).json(item);
