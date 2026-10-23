@@ -82,6 +82,16 @@ src/db/seed.sql
 
 Esses arquivos criam as tabelas principais e inserem dados iniciais para teste/demonstração.
 
+### Contas de demonstração (login)
+
+| Papel        | E-mail                  | Senha        |
+| ------------ | ----------------------- | ------------ |
+| Gestor       | `gestor@zelium.com`     | `Zelium@2026` |
+| Responsável  | `responsavel@zelium.com` | `Zelium@2026` |
+| Conferente   | `conferente@zelium.com` | `Zelium@2026` |
+
+> **Troque a senha padrão no primeiro acesso em produção.**
+
 ---
 
 ## 4. Parar a execução local

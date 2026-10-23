@@ -222,6 +222,14 @@ async function ensureDepreciacaoColumns(): Promise<void> {
       ADD COLUMN IF NOT EXISTS vida_util_anos INT,
       ADD COLUMN IF NOT EXISTS valor_residual FLOAT
   `);
+  // Bancos migrados de versões antigas não tinham esses campos:
+  // usa a data de cadastro como aquisição e vida útil padrão de 10 anos
+  await sequelize.query(`
+    UPDATE patrimonio
+    SET data_aquisicao = COALESCE(data_aquisicao, created_at::date),
+        vida_util_anos = COALESCE(vida_util_anos, 10)
+    WHERE data_aquisicao IS NULL OR vida_util_anos IS NULL
+  `);
 }
 
 export async function migrate(): Promise<void> {

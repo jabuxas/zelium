@@ -3,6 +3,21 @@
 > 🚀 **Versão online (deploy):** https://zelium.onrender.com/
 > _Obs.: por ser hospedagem gratuita (Render), o primeiro acesso pode levar até ~1 minuto para "acordar" o servidor._
 
+### Funcionalidades (status)
+
+| # | Funcionalidade | Status |
+|---|---|---|
+| 1 | **Infraestrutura própria** — servidor da equipe, DuckDNS, SSL automático (Caddy/Let's Encrypt) e backup diário com retenção | ✅ [`docs/DEPLOY.md`](docs/DEPLOY.md) |
+| 2 | **Autenticação e perfis** — login JWT, sessão e autorização por papel (Gestor, Responsável, Conferente) | ✅ web + mobile |
+| 3 | **Isolamento multiempresa** — separação por organização em todas as camadas | ✅ [`ADR-0010`](docs/adrs/ADR-0010-isolamento-multiempresa.md) |
+| 4 | **Notificações automáticas** — e-mail em avaria e em solicitação de manutenção (SMTP ou modo simulado) | ✅ página `/notificacoes` |
+| 5 | **Relatórios e exportação** — por ambiente, responsável e estado, com saída PDF/CSV | ✅ página `/relatorios` |
+| 6 | **QR Code e inventário em campo** — etiqueta imprimível, leitura no app e APK distribuível | ✅ [`docs/APK.md`](docs/APK.md) |
+| 7 | **Depreciação e valor do ativo** — método linear, valor residual e visão financeira | ✅ página `/financeiro` |
+
+**Contas de demonstração:** `gestor@zelium.com` · `responsavel@zelium.com` ·
+`conferente@zelium.com` — senha `Zelium@2026` (troque em produção).
+
 ### Índice
 
 - [**Visão do Produto e MVP**](docs/inception.md)
