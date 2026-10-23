@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { FAB } from "react-native-paper";
+import { usePodeGerir } from '@/src/shared/auth/permissions';
 import * as ImagePicker from "expo-image-picker";
 import { usePatrimonios } from "../hooks/usePatrimonios";
 import { usePatrimonioFotos } from "../hooks/usePatrimonioFotos";
@@ -214,6 +215,7 @@ function itemToValues(item?: Patrimonio): Record<string, string> {
 }
 
 export default function PatrimoniosScreen() {
+  const podeGerir = usePodeGerir('patrimonios');
   const {
     filteredData,
     loading,
@@ -507,7 +509,7 @@ export default function PatrimoniosScreen() {
         onRetry={load}
         emptyMessage="Nenhum patrimônio encontrado."
         emptyActionLabel="Criar patrimônio"
-        onEmptyAction={handleOpenCreate}
+        {...(podeGerir ? { onEmptyAction: handleOpenCreate } : {})}
         testID="patrimonios-list"
       >
         {filteredData.map((item) => (
@@ -526,12 +528,14 @@ export default function PatrimoniosScreen() {
                 .then((fotos) => fotos.map((foto) => publicApiUrl(foto.url)))
             }
             onEdit={() => handleOpenEdit(item)}
+            canWrite={podeGerir}
             onDelete={() => handleOpenDelete(item)}
             testID={`patrimonio-card-${item.id}`}
           />
         ))}
       </EntityListScaffold>
       <FAB
+        disabled={!podeGerir}
         icon="plus"
         onPress={handleOpenCreate}
         style={styles.fab}
@@ -539,7 +543,7 @@ export default function PatrimoniosScreen() {
         accessibilityLabel="Criar patrimônio"
       />
       <EntityFormSheet
-        visible={formVisible}
+        visible={formVisible && podeGerir}
         title={formTitle}
         fields={formFields}
         values={formValues}

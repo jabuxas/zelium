@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { FAB } from "react-native-paper";
+import { usePodeGerir } from '@/src/shared/auth/permissions';
 import { useEstadosItem } from "../hooks/useEstadosItem";
 import {
   EntityListScaffold,
@@ -43,6 +44,7 @@ function itemToValues(item?: EstadoItem): Record<string, string> {
 }
 
 export default function EstadosItemScreen() {
+  const podeGerir = usePodeGerir('cadastros');
   const {
     filteredData,
     loading,
@@ -165,7 +167,7 @@ export default function EstadosItemScreen() {
         onRetry={load}
         emptyMessage="Nenhum estado do item encontrado."
         emptyActionLabel="Criar estado do item"
-        onEmptyAction={handleOpenCreate}
+        {...(podeGerir ? { onEmptyAction: handleOpenCreate } : {})}
         testID="estados-item-list"
       >
         {filteredData.map((item) => (
@@ -174,12 +176,14 @@ export default function EstadosItemScreen() {
             title={item.nome}
             metadata={itemToMetadata(item)}
             onEdit={() => handleOpenEdit(item)}
+            canWrite={podeGerir}
             onDelete={() => handleOpenDelete(item)}
             testID={`estado-item-card-${item.id}`}
           />
         ))}
       </EntityListScaffold>
       <FAB
+        disabled={!podeGerir}
         icon="plus"
         onPress={handleOpenCreate}
         style={styles.fab}
@@ -187,7 +191,7 @@ export default function EstadosItemScreen() {
         accessibilityLabel="Criar estado do item"
       />
       <EntityFormSheet
-        visible={formVisible}
+        visible={formVisible && podeGerir}
         title={formTitle}
         fields={FORM_FIELDS}
         values={formValues}

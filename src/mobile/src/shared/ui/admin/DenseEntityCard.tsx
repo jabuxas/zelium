@@ -17,6 +17,7 @@ export type DenseEntityCardProps = {
   testID: string;
   thumbnailUri?: string | null;
   loadImages?: (() => Promise<string[]>) | undefined;
+  canWrite?: boolean;
 };
 
 const MIN_TOUCH_TARGET = 44;
@@ -29,6 +30,7 @@ export function DenseEntityCard({
   testID,
   thumbnailUri,
   loadImages,
+  canWrite = true,
 }: DenseEntityCardProps) {
   const theme = useTheme<AppTheme>();
   const [detailVisible, setDetailVisible] = useState(false);
@@ -91,6 +93,7 @@ export function DenseEntityCard({
               icon="pencil"
               size={20}
               onPress={onEdit}
+              disabled={!canWrite}
               accessibilityLabel={`Editar ${title}`}
               testID={`${testID}-edit`}
               style={styles.iconButton}
@@ -99,6 +102,7 @@ export function DenseEntityCard({
               icon="delete"
               size={20}
               onPress={onDelete}
+              disabled={!canWrite}
               accessibilityLabel={`Excluir ${title}`}
               testID={`${testID}-delete`}
               style={styles.iconButton}
@@ -114,10 +118,10 @@ export function DenseEntityCard({
         thumbnailUri={thumbnailUri}
         loadImages={loadImages}
         onClose={() => setDetailVisible(false)}
-        onEdit={() => {
+        {...(canWrite ? { onEdit: () => {
           setDetailVisible(false);
           onEdit();
-        }}
+        } } : {})}
         testID={`${testID}-detail`}
       />
     </>

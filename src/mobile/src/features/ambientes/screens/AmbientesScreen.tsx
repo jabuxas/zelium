@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { FAB } from "react-native-paper";
+import { usePodeGerir } from '@/src/shared/auth/permissions';
 import * as Location from "expo-location";
 import { useAmbientes } from "../hooks/useAmbientes";
 import {
@@ -117,6 +118,7 @@ function itemToValues(item?: Ambiente): Record<string, string> {
 }
 
 export default function AmbientesScreen() {
+  const podeGerir = usePodeGerir('ambientes');
   const {
     filteredData,
     loading,
@@ -370,7 +372,7 @@ export default function AmbientesScreen() {
         onRetry={load}
         emptyMessage="Nenhum ambiente encontrado."
         emptyActionLabel="Criar ambiente"
-        onEmptyAction={handleOpenCreate}
+        {...(podeGerir ? { onEmptyAction: handleOpenCreate } : {})}
         testID="ambientes-list"
       >
         {filteredData.map((item) => (
@@ -379,12 +381,14 @@ export default function AmbientesScreen() {
             title={item.nome}
             metadata={itemToMetadata(item, responsaveis)}
             onEdit={() => handleOpenEdit(item)}
+            canWrite={podeGerir}
             onDelete={() => handleOpenDelete(item)}
             testID={`ambiente-card-${item.id}`}
           />
         ))}
       </EntityListScaffold>
       <FAB
+        disabled={!podeGerir}
         icon="plus"
         onPress={handleOpenCreate}
         style={styles.fab}
@@ -392,7 +396,7 @@ export default function AmbientesScreen() {
         accessibilityLabel="Criar ambiente"
       />
       <EntityFormSheet
-        visible={formVisible}
+        visible={formVisible && podeGerir}
         title={formTitle}
         fields={formFields}
         values={formValues}

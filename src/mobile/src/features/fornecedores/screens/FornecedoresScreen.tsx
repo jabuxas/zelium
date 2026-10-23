@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { FAB } from "react-native-paper";
+import { usePodeGerir } from '@/src/shared/auth/permissions';
 import { useFornecedores } from "../hooks/useFornecedores";
 import {
   EntityListScaffold,
@@ -50,6 +51,7 @@ function itemToValues(item?: Fornecedor): Record<string, string> {
 }
 
 export default function FornecedoresScreen() {
+  const podeGerir = usePodeGerir('cadastros');
   const {
     filteredData,
     loading,
@@ -169,7 +171,7 @@ export default function FornecedoresScreen() {
         onRetry={load}
         emptyMessage="Nenhum fornecedor encontrado."
         emptyActionLabel="Criar fornecedor"
-        onEmptyAction={handleOpenCreate}
+        {...(podeGerir ? { onEmptyAction: handleOpenCreate } : {})}
         testID="fornecedores-list"
       >
         {filteredData.map((item) => (
@@ -178,12 +180,14 @@ export default function FornecedoresScreen() {
             title={item.nome}
             metadata={itemToMetadata(item)}
             onEdit={() => handleOpenEdit(item)}
+            canWrite={podeGerir}
             onDelete={() => handleOpenDelete(item)}
             testID={`fornecedor-card-${item.id}`}
           />
         ))}
       </EntityListScaffold>
       <FAB
+        disabled={!podeGerir}
         icon="plus"
         onPress={handleOpenCreate}
         style={styles.fab}
@@ -191,7 +195,7 @@ export default function FornecedoresScreen() {
         accessibilityLabel="Criar fornecedor"
       />
       <EntityFormSheet
-        visible={formVisible}
+        visible={formVisible && podeGerir}
         title={formTitle}
         fields={FORM_FIELDS}
         values={formValues}

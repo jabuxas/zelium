@@ -1,6 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
+import { PermissionProvider } from '@/src/shared/auth/permissions';
 
 jest.mock("expo-status-bar", () => ({
   StatusBar: () => null,
@@ -68,7 +69,7 @@ let mockHook = { ...defaultHook };
 function renderScreen() {
   return render(
     <PaperProvider>
-      <FornecedoresScreen />
+      <PermissionProvider papel="gestor"><FornecedoresScreen /></PermissionProvider>
     </PaperProvider>,
   );
 }

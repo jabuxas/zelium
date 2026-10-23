@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { FAB } from "react-native-paper";
+import { usePodeGerir } from '@/src/shared/auth/permissions';
 import { useResponsaveis } from "../hooks/useResponsaveis";
 import {
   EntityListScaffold,
@@ -54,6 +55,7 @@ function itemToValues(item?: Responsavel): Record<string, string> {
 }
 
 export default function ResponsaveisScreen() {
+  const podeGerir = usePodeGerir('cadastros');
   const {
     filteredData,
     loading,
@@ -173,7 +175,7 @@ export default function ResponsaveisScreen() {
         onRetry={load}
         emptyMessage="Nenhum responsável encontrado."
         emptyActionLabel="Criar responsável"
-        onEmptyAction={handleOpenCreate}
+        {...(podeGerir ? { onEmptyAction: handleOpenCreate } : {})}
         testID="responsaveis-list"
       >
         {filteredData.map((item) => (
@@ -182,12 +184,14 @@ export default function ResponsaveisScreen() {
             title={item.nome}
             metadata={itemToMetadata(item)}
             onEdit={() => handleOpenEdit(item)}
+            canWrite={podeGerir}
             onDelete={() => handleOpenDelete(item)}
             testID={`responsavel-card-${item.id}`}
           />
         ))}
       </EntityListScaffold>
       <FAB
+        disabled={!podeGerir}
         icon="plus"
         onPress={handleOpenCreate}
         style={styles.fab}
@@ -195,7 +199,7 @@ export default function ResponsaveisScreen() {
         accessibilityLabel="Criar responsável"
       />
       <EntityFormSheet
-        visible={formVisible}
+        visible={formVisible && podeGerir}
         title={formTitle}
         fields={FORM_FIELDS}
         values={formValues}

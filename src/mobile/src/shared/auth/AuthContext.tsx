@@ -8,6 +8,7 @@ import {
 } from "react";
 import { apiBaseUrl } from "@/src/shared/config/env";
 import { setAuthToken } from "@/src/shared/auth/tokenStore";
+import { PermissionProvider } from './permissions';
 import {
   clearSession,
   getToken,
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
       }}
     >
-      {children}
+      <PermissionProvider papel={usuario?.papel ?? null}>{children}</PermissionProvider>
     </AuthContext.Provider>
   );
 }

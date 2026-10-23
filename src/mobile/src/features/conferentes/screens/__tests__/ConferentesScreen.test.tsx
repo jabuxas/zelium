@@ -1,6 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
+import { PermissionProvider } from '@/src/shared/auth/permissions';
+import type { Papel } from '@/src/shared/auth/session';
 
 jest.mock("expo-status-bar", () => ({
   StatusBar: () => null,
@@ -65,10 +67,10 @@ const defaultHook: {
 
 let mockHook = { ...defaultHook };
 
-function renderScreen() {
+function renderScreen(papel: Papel = 'gestor') {
   return render(
     <PaperProvider>
-      <ConferentesScreen />
+      <PermissionProvider papel={papel}><ConferentesScreen /></PermissionProvider>
     </PaperProvider>,
   );
 }
@@ -85,6 +87,19 @@ describe("ConferentesScreen", () => {
     expect(screen.getByText("Conferente A")).toBeTruthy();
     expect(screen.getByText("Conferente B")).toBeTruthy();
     expect(screen.getAllByText("Email").length).toBeGreaterThan(0);
+  });
+
+  it.each(['responsavel', 'conferente'] as const)('%s consulta mas não altera cadastros', async papel => {
+    renderScreen(papel);
+    expect(screen.getByLabelText('Criar conferente')).toBeDisabled();
+    expect(screen.getByLabelText('Editar Conferente A')).toBeDisabled();
+    expect(screen.getByLabelText('Excluir Conferente A')).toBeDisabled();
+    fireEvent.press(screen.getByLabelText('Criar conferente'));
+    fireEvent.press(screen.getByLabelText('Editar Conferente A'));
+    expect(screen.queryByText('Novo Conferente')).toBeNull();
+    expect(mockHook.create).not.toHaveBeenCalled();
+    expect(mockHook.update).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText('Conferente A')).toBeTruthy());
   });
 
   it("shows search and form labels", async () => {

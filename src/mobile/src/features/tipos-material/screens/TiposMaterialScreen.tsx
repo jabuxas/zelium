@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { FAB } from "react-native-paper";
+import { usePodeGerir } from '@/src/shared/auth/permissions';
 import { useTiposMaterial } from "../hooks/useTiposMaterial";
 import {
   EntityListScaffold,
@@ -43,6 +44,7 @@ function itemToValues(item?: TipoMaterial): Record<string, string> {
 }
 
 export default function TiposMaterialScreen() {
+  const podeGerir = usePodeGerir('cadastros');
   const {
     filteredData,
     loading,
@@ -167,7 +169,7 @@ export default function TiposMaterialScreen() {
         onRetry={load}
         emptyMessage="Nenhum tipo de material encontrado."
         emptyActionLabel="Criar tipo de material"
-        onEmptyAction={handleOpenCreate}
+        {...(podeGerir ? { onEmptyAction: handleOpenCreate } : {})}
         testID="tipos-material-list"
       >
         {filteredData.map((item) => (
@@ -176,12 +178,14 @@ export default function TiposMaterialScreen() {
             title={item.nome}
             metadata={itemToMetadata(item)}
             onEdit={() => handleOpenEdit(item)}
+            canWrite={podeGerir}
             onDelete={() => handleOpenDelete(item)}
             testID={`tipo-material-card-${item.id}`}
           />
         ))}
       </EntityListScaffold>
       <FAB
+        disabled={!podeGerir}
         icon="plus"
         onPress={handleOpenCreate}
         style={styles.fab}
@@ -189,7 +193,7 @@ export default function TiposMaterialScreen() {
         accessibilityLabel="Criar tipo de material"
       />
       <EntityFormSheet
-        visible={formVisible}
+        visible={formVisible && podeGerir}
         title={formTitle}
         fields={FORM_FIELDS}
         values={formValues}
