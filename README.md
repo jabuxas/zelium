@@ -31,6 +31,7 @@
 - [**Riscos e Plano de Resposta**](docs/riscos.md)
 - [**Fluxo de Trabalho Colaborativo**](docs/fluxo-de-trabalho.md)
 - [**Como rodar o projeto**](docs/instalacao.md)
+- [**Guia de Testes e Operação**](docs/GUIA_TESTES.md) ← teste as features e veja o que falta
 - [**Critérios de Qualidade (ISO 25010)**](docs/qualidade.md)
 - [**Exemplo de Pull Request**](https://github.com/IFSC-ES2/projeto-zelar/pull/1)
 - [**Acesso ao nosso Board e Backlog**](https://github.com/orgs/IFSC-ES2/projects/27)
