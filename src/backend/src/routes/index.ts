@@ -11,6 +11,7 @@ import solicitacaoRoutes from "./solicitacao.routes";
 import authRoutes from "./auth.routes";
 import usuarioRoutes from "./usuario.routes";
 import notificacaoRoutes from "./notificacao.routes";
+import relatorioRoutes from "./relatorio.routes";
 import { authenticate, withUserContext } from "../middlewares/auth";
 
 const router = Router();
@@ -34,5 +35,6 @@ router.use("/audit-log", auditLogRoutes);
 router.use("/solicitacoes", solicitacaoRoutes);
 router.use("/usuarios", usuarioRoutes);
 router.use("/notificacoes", notificacaoRoutes);
+router.use("/relatorios", relatorioRoutes);
 
 export default router;
