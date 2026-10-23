@@ -71,20 +71,30 @@ docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 | Responsável | `responsavel@zelium.com` | `Zelium@2026` |
 | Conferente | `conferente@zelium.com` | `Zelium@2026` |
 
-**Matriz de permissões** (a API é a fonte da verdade; o menu escondido é só UX):
+**Matriz de permissões** (a API é a fonte da verdade; controles e guardas de página são UX):
 
 | Ação | Gestor | Responsável | Conferente |
 | --- | :-: | :-: | :-: |
 | Ver patrimônios/ambientes | ✅ | ✅ | ✅ |
-| Criar/editar patrimônios e ambientes | ✅ | ✅ | ❌ |
+| Criar/editar/excluir/restaurar patrimônios e ambientes | ✅ | ✅ | ❌ |
 | Abrir solicitações | ✅ | ✅ | ✅ |
 | Mudar status de solicitação | ✅ | ✅ | ❌ |
 | Registrar conferência em campo (app) | ✅ | ✅ | ✅ |
-| Cadastros (responsáveis, fornecedores, tipos, estados) | ✅ | ❌ | ❌ |
+| Gerir cadastros (responsáveis, conferentes, fornecedores, tipos, estados) | ✅ | ❌ | ❌ |
 | Usuários | ✅ | ❌ | ❌ |
 | Relatórios | ✅ | ✅ | ❌ |
 | Financeiro e notificações | ✅ | ❌ | ❌ |
-| Audit log | ✅ | ❌ | ❌ |
+| Histórico operacional e inspeção de registros | ✅ | ✅ | ✅ |
+| Auditoria administrativa (cadastros/usuários) | ✅ | ❌ | ❌ |
+
+O **Conferente abre e acompanha solicitações**, mas iniciar, concluir, cancelar ou
+reabrir exige Gestor/Responsável. Criar uma solicitação já concluída também é
+bloqueado pela API. A conferência em campo continua permitida aos três perfis;
+ela não equivale à edição geral do patrimônio.
+
+Web e mobile negam escrita sem sessão. No mobile, criação, edição e exclusão
+seguem a mesma matriz; a consulta dos detalhes continua disponível. Os dashboards
+mantêm seus indicadores se a consulta de atividades falhar, com aviso localizado.
 
 ---
 
@@ -144,10 +154,17 @@ que deve.
 2. Entre com cada uma das 3 contas e compare o menu lateral:
    - Gestor vê todos os itens (incluindo Financeiro, Notificações, Relatórios)
    - Responsável não vê Fornecedores/Tipos/Estados/Financeiro/Notificações
-   - Conferente vê apenas Dashboard, Patrimônios, Solicitações e Ambientes
+   - Os três veem Histórico; Conferente também vê Dashboard, Patrimônios, Solicitações e Ambientes
 3. Como conferente, tente `PUT /api/patrimonios/1` → `403`.
 4. Feche e reabra o navegador → sessão mantida (JWT no localStorage).
 5. "Sair" → volta para `/login`.
+6. Como Conferente, abra uma solicitação: ela aparece como **Aberta**, com
+   controles de status desabilitados e explicação da restrição.
+7. Como Responsável, inicie/conclua a solicitação e confira o autor no Histórico.
+8. Acesso direto a `/patrimonios/novo` como Conferente ou `/fornecedores/novo`
+   como Responsável mostra **Acesso restrito**, sem montar o formulário.
+9. No mobile, entre como Responsável/Conferente e confira os controles de escrita
+   das sete listas; tocar no cartão ainda abre seus detalhes.
 
 ```bash
 # 401 sem token / 403 sem permissão
@@ -214,6 +231,7 @@ mas em vez de enviar, o sistema grava em `notificacao` (visível em `/notificaco
 **Critérios de aceite:**
 - [ ] Notificação criada com destinatários corretos e status (`simulada`/`enviada`)
 - [ ] Falha de SMTP não derruba a operação principal
+- [ ] Datas da página aceitam `createdAt` e `created_at`; valores ausentes/inválidos mostram "Data não informada"
 - [ ] Em produção com `SMTP_*` configurado, os e-mails chegam de verdade
 
 ### 4.5 Relatórios e exportação
@@ -287,6 +305,59 @@ valor contábil     = valor − acumulada (nunca abaixo do residual)
 - [ ] Valor contábil nunca fica abaixo do valor residual
 - [ ] Totais do `/financeiro` batem com a soma por ambiente
 
+### 4.8 Histórico de atividades e inspeção
+
+1. No dashboard, **Atividades Recentes** mostra eventos operacionais formatados,
+   autor, data, principais alterações e **Inspecionar**. Eventos de e-mail não
+   aparecem aqui (nem no Histórico); ficam em Notificações.
+2. Abra **Histórico** (`/audit-log`) ou **Ver histórico completo**. Combine entidade,
+   ID, ação, autor, número/nome/descrição e período; use **Aplicar filtros**,
+   **Limpar**, **Anterior** e **Próxima**.
+3. Inspecione uma solicitação pela lista ou pelo histórico: os dados atuais, o
+   vínculo com o patrimônio e o histórico próprio aparecem em `/solicitacoes/:id`.
+   Somente Gestor/Responsável têm controles de status habilitados.
+4. Inspecione um patrimônio em `/patrimonios/:id`: o histórico inclui também
+   solicitações, fotos e conferências vinculadas ao bem. Os filtros locais
+   preservam esse vínculo. Ambientes também têm inspeção em `/ambientes/:id`.
+5. Remova um registro de teste como Gestor e siga seu link no Histórico: o estado
+   atual fica indisponível, mas os eventos históricos permanecem consultáveis.
+6. Confira em uma tela estreita: o menu começa recolhido e não comprime os filtros;
+   pode ser aberto pelo botão de navegação e fechado por seleção ou Escape.
+
+**API de auditoria:**
+
+```bash
+# Filtros combináveis; período inclusivo por dia UTC
+curl -s "http://localhost:8000/api/audit-log?tabela=solicitacao&acao=UPDATE&page=1&limit=10&de=2026-10-01&ate=2026-10-31" \
+  -H "Authorization: Bearer $TOKEN"
+
+# Eventos do patrimônio 1 e de seus registros relacionados
+curl -s "http://localhost:8000/api/audit-log?tabela=patrimonio&registro_id=1&relacionados=true" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+- Parâmetros adicionais: `usuario` (nome/ID do autor), `busca` (número, nome ou
+  descrição nos snapshots), `operacional=true` (apenas eventos operacionais).
+- Ações: `CREATE`, `UPDATE`, `DELETE`, `RESTORE`. Página começa em 1; limite
+  padrão 10, máximo 100. Filtros inválidos retornam `400`.
+- A resposta preserva `total`, `pages`, `currentPage`, `limit` e `data`; cada evento
+  traz `registro_nome`, `patrimonio_id` e `alteracoes` com campo/valor anterior/novo.
+  Totais e páginas também são isolados por organização.
+- `GET /api/audit-log/:tabela/:registroId` mantém a consulta direta ao histórico
+  da entidade; auditoria administrativa retorna `403` para os outros perfis.
+- Credenciais são removidas na gravação e na resposta, inclusive de snapshots
+  antigos. Eventos anteriores sem autor continuam como **Sistema / registro
+  anterior**: não há atribuição retroativa. Referências são resolvidas pelos nomes
+  atuais dos cadastros, inclusive arquivados.
+
+**Critérios de aceite:**
+- [ ] Dashboard carrega com os três perfis e não depende da disponibilidade da auditoria
+- [ ] Conferente abre solicitações sem receber `403` por ações oferecidas pela interface
+- [ ] Histórico operacional acessível aos três perfis; administrativo apenas ao Gestor
+- [ ] Filtros e paginação não misturam organizações ou registros
+- [ ] Inspeção permite seguir solicitação → patrimônio → eventos relacionados
+- [ ] Alterações são legíveis, sem JSON técnico ou credenciais na interface
+
 ---
 
 ## 5. Testes automatizados
@@ -295,9 +366,9 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test` | 207 testes: CRUDs, RBAC, multiempresa, notificações, relatórios (CSV/PDF), QR/conferência, depreciação, auditoria, versionamento |
-| Frontend | `cd src/front && pnpm test` | 76 testes de componentes (listas, formulários, dashboard, registros) |
-| Mobile | `cd src/mobile && npm test` | 199 testes: telas, repositórios, hooks, parser do QR, escaneamento |
+| Backend | `cd src/backend && npm test -- --runInBand` | 224 testes: CRUDs, RBAC, multiempresa, notificações, relatórios (CSV/PDF), QR/conferência, depreciação, auditoria, versionamento |
+| Frontend | `cd src/front && pnpm test --runInBand` | 102 testes: listas, formulários, dashboard, permissões, notificações, inspeção, histórico e navegação |
+| Mobile | `cd src/mobile && npm test -- --runInBand` | 205 testes: telas, permissões, repositórios, hooks, dashboard, parser do QR, escaneamento |
 
 > Os testes de banco do backend usam **containers isolados** (Testcontainers) —
 > não dependem de um PostgreSQL local. É preciso ter Docker rodando.
@@ -317,7 +388,7 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 | **UI de gestão de usuários** | O CRUD `/api/usuarios` existe, mas não há página no frontend — gestão é via API/SQL |
 | **UI de gestão de organizações** | Criar org só via SQL; não há tela de multiempresa para o operador |
 | **Paginação nas listas web** | Listas carregam tudo de uma vez; com milhares de bens ficará lento |
-| **Job mobile no CI** | Os 199 testes do app não rodam no GitHub Actions |
+| **Job mobile no CI** | Os testes do app não rodam no GitHub Actions |
 | **E-mail real homologado** | O fluxo SMTP está pronto, mas não foi testado com um provedor real de e-mail |
 | **Deploy real no servidor** | A stack de produção está pronta, mas a migração física do Render para o servidor da equipe ainda não foi executada |
 | **APK real distribuído** | O perfil EAS existe, mas o build ainda não foi executado (requer conta expo.dev) |
