@@ -6,6 +6,10 @@ import AdminHubScreen from "../AdminHubScreen";
 
 const mockTopInset = 32;
 
+jest.mock("@/src/shared/config/env", () => ({
+  apiBaseUrl: "http://localhost:8000/api",
+}));
+
 jest.mock("react-native-safe-area-context", () => {
   const React = require("react");
 

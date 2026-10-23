@@ -1,4 +1,5 @@
 import { apiBaseUrl } from "@/src/shared/config/env";
+import { getAuthToken } from "@/src/shared/auth/tokenStore";
 
 import {
   ApiError,
@@ -60,6 +61,11 @@ export async function apiClient(
   options: RequestInit = {},
 ): Promise<unknown> {
   const headers = new Headers(options.headers);
+
+  const token = getAuthToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
 
   const isFormData =
     typeof FormData !== "undefined" && options.body instanceof FormData;

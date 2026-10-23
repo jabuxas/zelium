@@ -11,6 +11,7 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/components/useColorScheme";
 import { buildPaperTheme } from "@/src/shared/theme/tokens";
 import { ToastProvider } from "@/src/shared/ui/toast";
+import { AuthProvider, useAuth } from "@/src/shared/auth/AuthContext";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -40,12 +41,17 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
 }
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const paperTheme = buildPaperTheme(colorScheme);
+  const { autenticado, carregando } = useAuth();
   const navTheme = {
     ...DefaultTheme,
     colors: {
@@ -64,8 +70,19 @@ function RootLayoutNav() {
         <ToastProvider>
           <ThemeProvider value={navTheme}>
             <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+              {carregando ? (
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              ) : (
+                <>
+                  <Stack.Protected guard={autenticado}>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  </Stack.Protected>
+                  <Stack.Protected guard={!autenticado}>
+                    <Stack.Screen name="login" options={{ headerShown: false }} />
+                  </Stack.Protected>
+                  <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+                </>
+              )}
             </Stack>
           </ThemeProvider>
         </ToastProvider>
