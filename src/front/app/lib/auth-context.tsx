@@ -19,29 +19,8 @@ import {
   type Papel,
   type UsuarioSessao,
 } from "./auth";
-
-export type Recurso =
-  | "patrimonios"
-  | "ambientes"
-  | "solicitacoes"
-  | "cadastros"
-  | "usuarios"
-  | "relatorios"
-  | "financeiro";
-
-const PERMISSOES_ESCRITA: Record<Papel, Recurso[]> = {
-  gestor: [
-    "patrimonios",
-    "ambientes",
-    "solicitacoes",
-    "cadastros",
-    "usuarios",
-    "relatorios",
-    "financeiro",
-  ],
-  responsavel: ["patrimonios", "ambientes", "solicitacoes", "relatorios"],
-  conferente: ["solicitacoes"],
-};
+import { podeEscreverRecurso, type Recurso } from './permissions';
+export type { Recurso } from './permissions';
 
 interface AuthContextValue {
   usuario: UsuarioSessao | null;
@@ -53,14 +32,14 @@ interface AuthContextValue {
   podeEscrever: (recurso: Recurso) => boolean;
 }
 
-const AuthContext = createContext<AuthContextValue>({
+export const AuthContext = createContext<AuthContextValue>({
   usuario: null,
   organizacao: null,
   papel: null,
   carregando: false,
   login: async () => {},
   logout: () => {},
-  podeEscrever: () => true, // sem provider (testes), mantém UI otimista; API é quem autoriza
+  podeEscrever: () => false,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -107,8 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const podeEscrever = useCallback(
     (recurso: Recurso) => {
-      if (!usuario) return true; // otimista; a API aplica a regra real
-      return PERMISSOES_ESCRITA[usuario.papel]?.includes(recurso) ?? false;
+      return podeEscreverRecurso(usuario?.papel ?? null, recurso);
     },
     [usuario]
   );

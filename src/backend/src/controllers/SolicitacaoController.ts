@@ -70,6 +70,10 @@ export const SolicitacaoController = {
       return res.status(400).json({ error: 'status invalido' });
     }
 
+    if (req.user?.papel === 'conferente' && status !== undefined && status !== 'aberta') {
+      return res.status(403).json({ error: 'Conferente pode abrir solicitações, mas não gerenciar seu status' });
+    }
+
     try {
       const item = await service.create({ ...req.body, patrimonio_id: patrimonioId });
       res.status(201).json(item);

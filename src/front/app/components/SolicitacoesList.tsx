@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { CheckCircle, Clock, PlayCircle, Plus, RotateCcw, Search, XCircle } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { API_URL } from '../lib/api';
 import { apiFetch } from '../lib/api-client';
 import { useAuth } from '../lib/auth-context';
 import { useToast } from './Toast';
+import SolicitacaoAcoes from './SolicitacaoAcoes';
 
 type SolicitacaoStatus = 'aberta' | 'em_andamento' | 'concluida' | 'cancelada';
 type SolicitacaoTipo = 'manutencao' | 'substituicao';
@@ -84,6 +85,7 @@ export default function SolicitacoesList() {
   const [erro, setErro] = useState<string | null>(null);
   const { toast } = useToast();
   const { podeEscrever } = useAuth();
+  const [atualizando, setAtualizando] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -103,6 +105,8 @@ export default function SolicitacoesList() {
   }, []);
 
   async function alterarStatus(id: number, status: SolicitacaoStatus) {
+    if (!podeEscrever('solicitacoes') || atualizando !== null) return;
+    setAtualizando(id);
     try {
       const res = await apiFetch(`${API_URL}/solicitacoes/${id}/status`, {
         method: 'PATCH',
@@ -121,6 +125,8 @@ export default function SolicitacoesList() {
       toast('Status da solicitacao atualizado', 'success');
     } catch {
       toast('Erro ao atualizar solicitacao', 'error');
+    } finally {
+      setAtualizando(null);
     }
   }
 
@@ -178,6 +184,7 @@ export default function SolicitacoesList() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Solicitações</h1>
         <p className="text-gray-600">Acompanhe manutenções e substituições abertas para patrimônios</p>
+        {!podeEscrever('solicitacoes') && <p className="text-sm text-gray-500 mt-2">Você pode abrir e acompanhar solicitações. A gestão de status é feita pelo Gestor ou Responsável.</p>}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -357,72 +364,7 @@ export default function SolicitacoesList() {
                     {formatarData(solicitacao.createdAt ?? solicitacao.created_at)}
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex flex-col items-end gap-2">
-                      {podeEscrever('solicitacoes') && (
-                      <select
-                        aria-label={`Alterar status da solicitacao ${solicitacao.id}`}
-                        className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        value={solicitacao.status}
-                        onChange={e => alterarStatus(solicitacao.id, e.target.value as SolicitacaoStatus)}
-                      >
-                        <option value="aberta">Aberta</option>
-                        <option value="em_andamento">Em andamento</option>
-                        <option value="concluida">Concluida</option>
-                        <option value="cancelada">Cancelada</option>
-                      </select>
-                      )}
-
-                      {podeEscrever('solicitacoes') && (
-                      <div className="flex flex-wrap justify-end gap-2">
-                        {solicitacao.status === 'aberta' && (
-                          <button
-                            onClick={() => alterarStatus(solicitacao.id, 'em_andamento')}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-lg"
-                            aria-label={`Iniciar solicitacao ${solicitacao.id}`}
-                          >
-                            <PlayCircle size={16} />
-                            Iniciar
-                          </button>
-                        )}
-                        {solicitacao.status === 'em_andamento' && (
-                          <span className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg">
-                            <Clock size={16} />
-                            Em andamento
-                          </span>
-                        )}
-                        {(solicitacao.status === 'aberta' || solicitacao.status === 'em_andamento') && (
-                          <>
-                            <button
-                              onClick={() => alterarStatus(solicitacao.id, 'concluida')}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-green-700 bg-green-50 border border-green-200 hover:bg-green-100 rounded-lg"
-                              aria-label={`Concluir solicitacao ${solicitacao.id}`}
-                            >
-                              <CheckCircle size={16} />
-                              Concluir
-                            </button>
-                            <button
-                              onClick={() => alterarStatus(solicitacao.id, 'cancelada')}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-lg"
-                              aria-label={`Cancelar solicitacao ${solicitacao.id}`}
-                            >
-                              <XCircle size={16} />
-                              Cancelar
-                            </button>
-                          </>
-                        )}
-                        {(solicitacao.status === 'concluida' || solicitacao.status === 'cancelada') && (
-                          <button
-                            onClick={() => alterarStatus(solicitacao.id, 'aberta')}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-lg"
-                            aria-label={`Reabrir solicitacao ${solicitacao.id}`}
-                          >
-                            <RotateCcw size={16} />
-                            Reabrir
-                          </button>
-                        )}
-                      </div>
-                      )}
-                    </div>
+                    <SolicitacaoAcoes id={solicitacao.id} status={solicitacao.status} ocupado={atualizando === solicitacao.id} onChange={status => alterarStatus(solicitacao.id, status)} />
                   </td>
                 </tr>
               ))}

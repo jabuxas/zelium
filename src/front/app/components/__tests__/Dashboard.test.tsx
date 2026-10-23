@@ -131,4 +131,11 @@ describe("Dashboard", () => {
       expect(screen.getByText(/nenhuma atividade recente encontrada/i)).toBeInTheDocument(),
     );
   });
+
+  it('mantém os indicadores quando a auditoria está indisponível', async () => {
+    mockFetch(url => url.includes('/audit-log') ? { status: 403, body: { error: 'Acesso negado' } } : { status: 200, body: routeBody(url) });
+    render(<Dashboard />);
+    await waitFor(() => expectStat('Total de Patrimônios', '3'));
+    expect(screen.getByText(/atividades indisponíveis/i)).toBeInTheDocument();
+  });
 });

@@ -99,6 +99,7 @@ export default function Dashboard() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [erroAtividades, setErroAtividades] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -106,17 +107,21 @@ export default function Dashboard() {
       buscarJson<Opcao[]>(`${API_URL}/ambientes`),
       buscarJson<Opcao[]>(`${API_URL}/responsaveis`),
       buscarJson<Opcao[]>(`${API_URL}/estados-item`),
-      buscarJson<AuditLogResponse>(`${API_URL}/audit-log?limit=5`),
     ])
-      .then(([pats, ambs, resps, ests, auditLogs]) => {
+      .then(([pats, ambs, resps, ests]) => {
         setPatrimonios(pats);
         setAmbientes(ambs);
         setResponsaveis(resps);
         setEstados(ests);
-        setLogs(auditLogs.data ?? []);
       })
       .catch(() => setErro('Erro ao carregar dados do dashboard'))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    buscarJson<AuditLogResponse>(`${API_URL}/audit-log?limit=5`)
+      .then(auditLogs => setLogs(auditLogs.data ?? []))
+      .catch(() => setErroAtividades(true));
   }, []);
 
   const estadosManutencao = new Set(
@@ -171,6 +176,7 @@ export default function Dashboard() {
               <h2 className="text-lg font-semibold text-gray-900">Atividades Recentes</h2>
             </div>
             <div className="divide-y divide-gray-200">
+              {erroAtividades && <p role="status" className="p-4 text-gray-600">Atividades indisponíveis no momento. Os indicadores continuam disponíveis.</p>}
               {logs.map((activity) => (
                 <div key={activity.id} className="p-4 hover:bg-gray-50">
                   <div className="flex justify-between items-start gap-4">

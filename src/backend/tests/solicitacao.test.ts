@@ -1,4 +1,5 @@
 import { request } from './helpers/request';
+import { rawRequest, bearerToken } from './helpers/request';
 import { ForeignKeyConstraintError } from 'sequelize';
 import app from '../src/app';
 import { SolicitacaoService } from '../src/services/SolicitacaoService';
@@ -55,6 +56,12 @@ describe('Solicitacoes', () => {
 
       expect(res.status).toBe(400);
     });
+
+    it('conferente não contorna a gestão de status ao criar uma solicitação', async () => {
+      const res = await rawRequest(app).post('/api/solicitacoes').set(bearerToken('conferente')).send({ ...validBody, status: 'concluida' });
+      expect(res.status).toBe(403);
+      expect(MockedService.prototype.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('GET /api/solicitacoes', () => {
@@ -83,6 +90,11 @@ describe('Solicitacoes', () => {
   });
 
   describe('PATCH /api/solicitacoes/:id/status', () => {
+    it.each(['em_andamento', 'concluida', 'cancelada', 'aberta'])('conferente não pode mudar status para %s', async (status) => {
+      const res = await rawRequest(app).patch('/api/solicitacoes/1/status').set(bearerToken('conferente')).send({ status });
+      expect(res.status).toBe(403);
+      expect(MockedService.prototype.updateStatus).not.toHaveBeenCalled();
+    });
     it('atualiza status da solicitacao', async () => {
       const updated = { id: 1, ...validBody, status: 'concluida' };
       (MockedService.prototype.updateStatus as jest.Mock).mockResolvedValue(updated);

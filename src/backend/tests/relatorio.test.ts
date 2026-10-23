@@ -139,4 +139,9 @@ describe('Relatórios', () => {
     const res = await rawRequest(app).get('/api/relatorios/por-ambiente').set(bearerToken('conferente'));
     expect(res.status).toBe(403);
   });
+
+  it.each(['csv', 'pdf'])('responsável não pode exportar dados financeiros via %s', async (formato) => {
+    const res = await rawRequest(app).get(`/api/relatorios/exportar/${formato}`).query({ tipo: 'financeiro' }).set(bearerToken('responsavel'));
+    expect(res.status).toBe(403);
+  });
 });

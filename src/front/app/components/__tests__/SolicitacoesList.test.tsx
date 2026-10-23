@@ -1,6 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { render } from '../../testing/auth';
 import userEvent from '@testing-library/user-event';
 import SolicitacoesList from '../SolicitacoesList';
+import { AuthContext } from '../../lib/auth-context';
+import { authValue } from '../../testing/auth';
 
 const mockToast = jest.fn();
 jest.mock('../Toast', () => ({
@@ -157,5 +160,17 @@ describe('SolicitacoesList', () => {
     await waitFor(() =>
       expect(screen.getByText(/erro ao carregar solicitacoes/i)).toBeInTheDocument(),
     );
+  });
+
+  it('conferente abre solicitações, mas os controles de gestão ficam desabilitados', async () => {
+    mockFetch(url => ({ status: 200, body: routeBody(url) }));
+    render(<AuthContext.Provider value={authValue('conferente')}><SolicitacoesList /></AuthContext.Provider>);
+    const iniciar = await screen.findByRole('button', { name: /iniciar solicitacao 1/i });
+    expect(iniciar).toBeDisabled();
+    expect(screen.getByRole('button', { name: /concluir solicitacao 1/i })).toBeDisabled();
+    expect(screen.getByLabelText('Alterar status da solicitacao 1')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /abrir solicitação/i })).toBeEnabled();
+    await userEvent.click(iniciar);
+    expect((global.fetch as jest.Mock).mock.calls.some(([, opts]) => opts?.method === 'PATCH')).toBe(false);
   });
 });

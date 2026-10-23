@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
 import type { Papel } from "../lib/auth";
+import AcessoPagina from './AcessoPagina';
 
 const PAPEL_LABEL: Record<Papel, string> = {
   gestor: "Gestor",
@@ -132,7 +133,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
         </header>
 
         <main className="flex-1 overflow-auto p-6">
-          {children}
+          <AcessoPagina path={pathname}>{children}</AcessoPagina>
         </main>
       </div>
     </div>

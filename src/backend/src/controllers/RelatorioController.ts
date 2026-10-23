@@ -65,6 +65,7 @@ export const RelatorioController = {
 
   async exportarCsv(req: Request, res: Response, next: NextFunction) {
     const { tipo } = req.query;
+    if (tipo === 'financeiro' && req.user?.papel !== 'gestor') return res.status(403).json({ error: 'Relatório financeiro exclusivo do Gestor' });
     if (!isTipoValido(tipo)) {
       return res.status(400).json({ error: "tipo invalido" });
     }
@@ -88,6 +89,7 @@ export const RelatorioController = {
 
   async exportarPdf(req: Request, res: Response, next: NextFunction) {
     const { tipo } = req.query;
+    if (tipo === 'financeiro' && req.user?.papel !== 'gestor') return res.status(403).json({ error: 'Relatório financeiro exclusivo do Gestor' });
     if (!isTipoValido(tipo)) {
       return res.status(400).json({ error: "tipo invalido" });
     }
