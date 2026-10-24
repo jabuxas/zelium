@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { TextInput as NativeTextInput } from 'react-native';
 import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  ScrollView,
   View,
 } from "react-native";
 import { Button, Text, TextInput, useTheme } from "react-native-paper";
@@ -10,11 +12,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/src/shared/auth/AuthContext";
 import { ZeliumBrand } from '@/src/shared/brand/ZeliumBrand';
+import { radii, spacing, type AppTheme } from '@/src/shared/theme/tokens';
 
 export default function LoginScreen() {
-  const theme = useTheme();
+  const theme = useTheme<AppTheme>();
   const insets = useSafeAreaInsets();
-  const { login } = useAuth();
+  const { login, logout, erroSessao } = useAuth();
+  const senhaRef = useRef<NativeTextInput>(null);
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -22,6 +26,7 @@ export default function LoginScreen() {
   const [enviando, setEnviando] = useState(false);
 
   async function handleLogin() {
+    if (enviando || !email.trim() || !senha) return;
     setErro(null);
     setEnviando(true);
     try {
@@ -38,13 +43,15 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={[
         styles.container,
-        { backgroundColor: theme.colors.background, paddingTop: insets.top },
+        { backgroundColor: theme.colors.background, paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}
     >
-      <View style={styles.card}>
-        <View style={{ alignItems: 'center' }}><ZeliumBrand /></View>
-        <Text variant="bodyMedium" style={styles.subtitle}>
-          Gestão Patrimonial — entre com sua conta
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+      <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+        <ZeliumBrand />
+        <Text variant="headlineSmall" style={styles.title}>Entre na sua conta</Text>
+        <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+          Acesse os patrimônios e as conferências da sua organização.
         </Text>
 
         <TextInput
@@ -52,26 +59,34 @@ export default function LoginScreen() {
           accessibilityLabel="E-mail"
           mode="outlined"
           autoCapitalize="none"
+          autoCorrect={false}
           keyboardType="email-address"
           autoComplete="email"
           value={email}
           onChangeText={setEmail}
+          disabled={enviando}
+          returnKeyType="next"
+          onSubmitEditing={() => senhaRef.current?.focus()}
           style={styles.input}
         />
 
         <TextInput
           label="Senha"
           accessibilityLabel="Senha"
+          ref={senhaRef}
           mode="outlined"
           secureTextEntry
           autoComplete="current-password"
           value={senha}
           onChangeText={setSenha}
+          disabled={enviando}
+          returnKeyType="go"
           onSubmitEditing={handleLogin}
           style={styles.input}
         />
 
-        {erro && <Text style={styles.erro}>{erro}</Text>}
+        {(erro || erroSessao) && <Text accessibilityRole="alert" style={{ color: theme.colors.error }}>{erro ?? erroSessao}</Text>}
+        {erroSessao && <Button disabled={enviando} onPress={() => { void logout(); }}>Limpar sessão salva</Button>}
 
         <Button
           mode="contained"
@@ -79,14 +94,16 @@ export default function LoginScreen() {
           loading={enviando}
           disabled={enviando || !email.trim() || !senha}
           style={styles.button}
+          contentStyle={{ minHeight: 48 }}
         >
           Entrar
         </Button>
 
-        <Text variant="bodySmall" style={styles.hint}>
+        <Text variant="bodySmall" style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
           Perfis: Gestor, Responsável e Conferente
         </Text>
       </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -94,35 +111,36 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
     justifyContent: "center",
-    padding: 24,
+    padding: spacing.lg,
   },
   card: {
-    gap: 12,
+    gap: spacing.md,
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderRadius: radii.medium,
   },
   title: {
     fontWeight: "700",
-    textAlign: "center",
   },
   subtitle: {
-    textAlign: "center",
-    marginBottom: 16,
-    opacity: 0.7,
+    marginBottom: spacing.xs,
   },
   input: {
     marginBottom: 4,
   },
-  erro: {
-    color: "#dc2626",
-    textAlign: "center",
-  },
   button: {
-    marginTop: 8,
-    paddingVertical: 6,
+    marginTop: spacing.xs,
+    borderRadius: radii.small,
   },
   hint: {
     textAlign: "center",
     marginTop: 8,
-    opacity: 0.6,
   },
 });
