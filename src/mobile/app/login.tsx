@@ -50,6 +50,7 @@ export default function LoginScreen() {
 
         <TextInput
           label="E-mail"
+          accessibilityLabel="E-mail"
           mode="outlined"
           autoCapitalize="none"
           keyboardType="email-address"
@@ -61,6 +62,7 @@ export default function LoginScreen() {
 
         <TextInput
           label="Senha"
+          accessibilityLabel="Senha"
           mode="outlined"
           secureTextEntry
           autoComplete="current-password"

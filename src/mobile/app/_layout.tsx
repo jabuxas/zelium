@@ -4,7 +4,8 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { PaperProvider } from "react-native-paper";
+import { ActivityIndicator, PaperProvider, Text } from "react-native-paper";
+import { View } from 'react-native';
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "react-native-reanimated";
 
@@ -68,12 +69,11 @@ function RootLayoutNav() {
     <SafeAreaProvider>
       <PaperProvider theme={paperTheme}>
         <ToastProvider>
-          <ThemeProvider value={navTheme}>
+          {carregando ? <View testID="session-loading" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
+            <ActivityIndicator accessibilityLabel="Restaurando sessão" />
+            <Text>Preparando sua sessão...</Text>
+          </View> : <ThemeProvider value={navTheme}>
             <Stack>
-              {carregando ? (
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              ) : (
-                <>
                   <Stack.Protected guard={autenticado}>
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   </Stack.Protected>
@@ -81,10 +81,8 @@ function RootLayoutNav() {
                     <Stack.Screen name="login" options={{ headerShown: false }} />
                   </Stack.Protected>
                   <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-                </>
-              )}
             </Stack>
-          </ThemeProvider>
+          </ThemeProvider>}
         </ToastProvider>
       </PaperProvider>
     </SafeAreaProvider>
