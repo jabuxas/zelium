@@ -38,7 +38,7 @@ function formatLogDate(iso: string): string {
 export default function DashboardScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { stats, logs, loading, error, atividadesIndisponiveis, isRefreshing, load, refresh, retry } = useDashboard();
+  const { stats, logs, loading, error, atividadesIndisponiveis, dadosEmCache, isRefreshing, load, refresh, retry } = useDashboard();
 
   useEffect(() => {
     load();
@@ -84,6 +84,7 @@ export default function DashboardScreen() {
         </Text>
       </View>
 
+      {dadosEmCache && <Text style={{ paddingHorizontal: 16 }}>Sem atualização do servidor. Mostrando indicadores salvos desta conta.</Text>}
       <View style={styles.cardsGrid}>
         <DashboardCard 
           title="Patrimônios" 
