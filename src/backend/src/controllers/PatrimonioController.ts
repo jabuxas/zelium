@@ -5,6 +5,11 @@ import { gerarQrCodeSvg, qrConteudoPatrimonio } from "../utils/qrcode";
 
 const service = new PatrimonioService();
 
+function textoHtml(value: unknown): string {
+  const entidades: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(value ?? '').replace(/[&<>"']/g, character => entidades[character]);
+}
+
 export const PatrimonioController = {
   async findAll(req: Request, res: Response) {
     const { numero } = req.query;
@@ -53,8 +58,8 @@ export const PatrimonioController = {
       const svg = await gerarQrCodeSvg(
         qrConteudoPatrimonio(String(item.numero_patrimonio))
       );
-      const numero = String(item.numero_patrimonio);
-      const descricao = String(item.descricao ?? "");
+      const numero = textoHtml(item.numero_patrimonio);
+      const descricao = textoHtml(item.descricao);
 
       res.type("text/html").send(`<!DOCTYPE html>
 <html lang="pt-BR">

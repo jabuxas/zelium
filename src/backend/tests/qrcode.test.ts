@@ -95,6 +95,19 @@ describe('QR Code e inventário em campo', () => {
     expect(res.text).toContain('Imprimir etiqueta');
   });
 
+  it('trata número e descrição como texto, nunca como HTML executável na etiqueta', async () => {
+    const item = await Patrimonio.create({ numero_patrimonio: '<svg onload=alert(1)>',
+      descricao: '<img src=x onerror=alert(2)> & "texto"', valor: 1,
+      tipo_material_id: 1, estado_item_id: 1, ambiente_id: 1, responsavel_id: 1, organizacao_id: 1,
+    });
+    const res = await rawRequest(app).get(`/api/patrimonios/${item.id}/etiqueta`).set(TOKEN_GESTOR);
+    expect(res.status).toBe(200);
+    expect(res.text).not.toContain('<svg onload=');
+    expect(res.text).not.toContain('<img src=');
+    expect(res.text).toContain('&lt;svg onload=alert(1)&gt;');
+    expect(res.text).toContain('&lt;img src=x onerror=alert(2)&gt; &amp; &quot;texto&quot;');
+  });
+
   it('busca patrimonio pelo numero (fluxo do scanner)', async () => {
     const res = await rawRequest(app)
       .get('/api/patrimonios')
