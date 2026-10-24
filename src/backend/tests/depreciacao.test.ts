@@ -3,7 +3,7 @@ import type { Sequelize } from 'sequelize';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
 import { bearerToken, rawRequest } from './helpers/request';
-import { calcularDepreciacao } from '../src/services/DepreciacaoService';
+let calcularDepreciacao: typeof import('../src/services/DepreciacaoService').calcularDepreciacao;
 
 let app: Express;
 let sequelize: Sequelize;
@@ -30,8 +30,11 @@ beforeAll(async () => {
   process.env.DB_USER = container.getUsername();
   process.env.DB_PASSWORD = container.getPassword();
 
+  // O serviço importa a conexão: só pode ser carregado após configurar o container.
+  ({ calcularDepreciacao } = await import('../src/services/DepreciacaoService'));
   const connection = await import('../src/database/connection');
   sequelize = connection.sequelize;
+  expect(sequelize.config).toMatchObject({ host: container.getHost(), port: container.getMappedPort(5432), database: container.getDatabase() });
 
   Organizacao = (await import('../src/models/Organizacao')).Organizacao;
   TipoMaterial = (await import('../src/models/TipoMaterial')).TipoMaterial;
