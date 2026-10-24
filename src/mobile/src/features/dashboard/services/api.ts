@@ -5,16 +5,18 @@ import { DashboardStats } from '../types/dashboard';
 const auditLogRepository = new AuditLogRepositoryImpl();
 
 export async function getDashboardData() {
-  const [patrimonios, ambientes, conferentes, atividades] = await Promise.all([
-    apiClient('/patrimonios'),
-    apiClient('/ambientes'),
-    apiClient('/conferentes'),
+  const [patrimonios, ambientes, conferentes, estados, atividades] = await Promise.all([
+    apiClient('/patrimonios') as Promise<{ estado_item_id: number }[]>,
+    apiClient('/ambientes') as Promise<unknown[]>,
+    apiClient('/conferentes') as Promise<unknown[]>,
+    apiClient('/estados-item') as Promise<{ id: number; avaria: boolean }[]>,
     auditLogRepository.list({ limit: 5, operacional: true })
       .then(logs => ({ logs, indisponivel: false }))
       .catch(() => ({ logs: [], indisponivel: true })),
-  ]) as [{ estado_item_id: number }[], unknown[], unknown[], { logs: Awaited<ReturnType<AuditLogRepositoryImpl['list']>>; indisponivel: boolean }];
+  ]);
 
-  const alertas = patrimonios.filter(p => p.estado_item_id === 2 || p.estado_item_id === 3).length;
+  const estadosComAvaria = new Set(estados.filter(estado => estado.avaria).map(estado => estado.id));
+  const alertas = patrimonios.filter(p => estadosComAvaria.has(p.estado_item_id)).length;
 
   const stats: DashboardStats = {
     totalPatrimonios: patrimonios.length,
