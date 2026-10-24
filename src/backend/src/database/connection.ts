@@ -54,7 +54,7 @@ const ORG_FKS: Record<string, string[]> = {
   conferencia: ["patrimonio_id", "usuario_id", "estado_item_id"],
 };
 
-sequelize.addHook("beforeFind", function (this: OrgScopedModel, options: any) {
+function aplicarEscopo(this: OrgScopedModel, options: any) {
   const model = this;
   if (!orgOfModel(model)) return;
   const orgId = currentOrgId();
@@ -64,15 +64,26 @@ sequelize.addHook("beforeFind", function (this: OrgScopedModel, options: any) {
   options.where = options.where
     ? { [Op.and]: [options.where, orgWhere] }
     : orgWhere;
-});
+}
+
+sequelize.addHook('beforeFind', aplicarEscopo);
+sequelize.addHook('beforeCount', aplicarEscopo);
+
+function atribuirOrganizacao(instance: ModelWithOrg) {
+  const orgId = currentOrgId();
+  if (orgId !== undefined && instance.organizacao_id != null && instance.organizacao_id !== orgId) {
+    throw new ReferenciaDeOutraOrganizacaoError('Organizacao do registro difere da sessao autenticada');
+  }
+  if (instance.organizacao_id == null) {
+    instance.set('organizacao_id' as any, orgId ?? DEFAULT_ORG_ID);
+  }
+}
 
 sequelize.addHook("beforeCreate", function (instance: ModelWithOrg) {
   const model = instance.constructor as OrgScopedModel;
   if (!orgOfModel(model)) return;
 
-  if (instance.organizacao_id === undefined || instance.organizacao_id === null) {
-    instance.set("organizacao_id" as any, currentOrgId() ?? DEFAULT_ORG_ID);
-  }
+  atribuirOrganizacao(instance);
 });
 
 sequelize.addHook("beforeUpdate", function (instance: ModelWithOrg) {
@@ -82,7 +93,7 @@ sequelize.addHook("beforeUpdate", function (instance: ModelWithOrg) {
   // Um usuário jamais pode mover um registro para outra organização
   const orgId = currentOrgId();
   if (orgId !== undefined && instance.organizacao_id !== orgId) {
-    throw new Error("Registro de outra organizacao");
+    throw new ReferenciaDeOutraOrganizacaoError("Registro de outra organizacao");
   }
 });
 
@@ -100,9 +111,7 @@ sequelize.addHook("beforeValidate", async function (instance: ModelWithOrg) {
   if (!orgOfModel(model)) return;
 
   // Preenche a organizacao ANTES da validacao notNull
-  if (instance.organizacao_id === undefined || instance.organizacao_id === null) {
-    instance.set("organizacao_id" as any, currentOrgId() ?? DEFAULT_ORG_ID);
-  }
+  atribuirOrganizacao(instance);
 
   const fks = ORG_FKS[model.getTableName() as string];
   if (!fks || fks.length === 0) return;

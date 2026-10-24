@@ -4,6 +4,7 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers
 import bcrypt from 'bcryptjs';
 
 import { bearerToken, rawRequest } from './helpers/request';
+import { runWithContext } from '../src/context/requestContext';
 
 let app: Express;
 let sequelize: Sequelize;
@@ -83,6 +84,24 @@ async function login(email: string): Promise<string> {
 }
 
 describe('Isolamento multiempresa', () => {
+  it('não aceita criar um cadastro em outra organização pelo corpo da requisição', async () => {
+    const res = await rawRequest(app).post('/api/tipo-material')
+      .set(bearerToken('gestor', '1', 1))
+      .send({ nome: 'Injeção cruzada', organizacao_id: 2 });
+    expect(res.status).toBe(400);
+    expect(await TipoMaterial.count({ where: { nome: 'Injeção cruzada' } })).toBe(0);
+    const { AuditLog } = await import('../src/models/AuditLog');
+    expect(await AuditLog.count({ where: { 'dados_novos.nome': 'Injeção cruzada' } })).toBe(0);
+  });
+
+  it('COUNT e findAndCountAll respeitam a mesma organização das consultas', async () => {
+    await runWithContext({ usuarioId: 1, papel: 'gestor', organizacaoId: 1 }, async () => {
+      expect(await TipoMaterial.count()).toBe(1);
+      const result = await TipoMaterial.findAndCountAll();
+      expect(result.count).toBe(result.rows.length);
+      expect(result.rows.every((item: { organizacao_id: number }) => item.organizacao_id === 1)).toBe(true);
+    });
+  });
   it('usuario da Alfa ve apenas dados da Alfa', async () => {
     const token = await login('gestor@alfa.com');
     const auth = { Authorization: `Bearer ${token}` };
