@@ -9,8 +9,8 @@ import {
   TextInput,
   useTheme,
 } from "react-native-paper";
-import { CameraView } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import CameraView from '../components/ScannerCamera';
 
 import { useToast } from "@/src/shared/ui/toast";
 import {
