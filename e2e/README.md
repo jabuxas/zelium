@@ -28,6 +28,7 @@ npm test -- --project=web
 npm test -- --project=mobile
 npm test -- --project=api
 npm run test:production
+npm run test:infrastructure
 npm run report
 ```
 
@@ -43,3 +44,9 @@ Relatório HTML, screenshots e traces ficam em diretórios ignorados pelo Git.
 Traces podem conter credenciais **de demonstração** e tokens do banco descartável;
 não publique esses arquivos indiscriminadamente. Asserções e seed usam somente
 contas de teste, nunca credenciais reais.
+
+`test:infrastructure` verifica o encerramento dos processos filhos/netos da UI sem
+iniciar Next, Expo ou Docker. Os servidores recebem SIGTERM e encerram o grupo
+exclusivo criado para o pnpm. Uma interrupção forçada do runner pode exigir
+limpeza dos processos descartáveis identificados; não encerre serviços apenas
+por estarem usando uma porta esperada.

@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "test": "playwright test",
+    "test:infrastructure": "node --test support/ui-server.test.cjs",
     "test:api": "E2E_API_ONLY=1 playwright test --project=api",
     "test:production": "E2E_PRODUCTION=1 playwright test",
     "report": "playwright show-report"
