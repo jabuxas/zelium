@@ -1,5 +1,5 @@
 import { apiBaseUrl } from "@/src/shared/config/env";
-import { getAuthToken } from "@/src/shared/auth/tokenStore";
+import { authGeneration, expireSession, getAuthToken } from "@/src/shared/auth/tokenStore";
 
 import {
   ApiError,
@@ -63,6 +63,7 @@ export async function apiClient(
   const headers = new Headers(options.headers);
 
   const token = getAuthToken();
+  const generation = authGeneration();
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
@@ -92,5 +93,6 @@ export async function apiClient(
   }
 
   const payload = await parseResponseBody(response);
+  if (response.status === 401 && token) expireSession(generation);
   throw createErrorFromPayload(response.status, payload);
 }

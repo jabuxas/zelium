@@ -3,11 +3,12 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { apiBaseUrl } from "@/src/shared/config/env";
-import { setAuthToken } from "@/src/shared/auth/tokenStore";
+import { onSessionExpired, setAuthToken } from "@/src/shared/auth/tokenStore";
 import { PermissionProvider } from './permissions';
 import {
   clearSession,
@@ -21,6 +22,7 @@ interface AuthContextValue {
   usuario: UsuarioSessao | null;
   autenticado: boolean;
   carregando: boolean;
+  erroSessao: string | null;
   login: (email: string, senha: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -29,6 +31,7 @@ const AuthContext = createContext<AuthContextValue>({
   usuario: null,
   autenticado: false,
   carregando: true,
+  erroSessao: null,
   login: async () => {},
   logout: async () => {},
 });
@@ -36,8 +39,37 @@ const AuthContext = createContext<AuthContextValue>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioSessao | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [erroSessao, setErroSessao] = useState<string | null>(null);
+  const revision = useRef(0);
+  const storageQueue = useRef(Promise.resolve());
+
+  // Serializa a persistência para uma gravação antiga não ressuscitar após logout.
+  const persistir = useCallback((operation: number, action: () => Promise<void>) => {
+    const task = storageQueue.current.catch(() => {}).then(async () => {
+      if (revision.current === operation) await action();
+    });
+    storageQueue.current = task;
+    return task;
+  }, []);
+
+  const encerrar = useCallback(async (mensagem: string | null = null) => {
+    const operation = ++revision.current;
+    setAuthToken(null);
+    setUsuario(null);
+    setCarregando(false);
+    setErroSessao(mensagem);
+    try {
+      await persistir(operation, clearSession);
+    } catch {
+      if (revision.current === operation) setErroSessao('Sessão encerrada neste app, mas não foi possível apagar os dados salvos. Tente limpar a sessão novamente.');
+    }
+  }, [persistir]);
+
+  useEffect(() => onSessionExpired(() => { void encerrar('Sua sessão expirou. Entre novamente.'); }), [encerrar]);
 
   useEffect(() => {
+    let active = true;
+    const operation = revision.current;
     (async () => {
       try {
         const [token, usuarioSalvo] = await Promise.all([
@@ -45,16 +77,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           getUsuario(),
         ]);
         if (token && usuarioSalvo) {
-          setAuthToken(token);
-          setUsuario(usuarioSalvo);
+          const res = await fetch(`${apiBaseUrl}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+          if (!active || revision.current !== operation) return;
+          if (!res.ok) {
+            await persistir(operation, clearSession);
+            throw new Error('Não foi possível validar a sessão salva. Entre novamente.');
+          }
+          if (active && revision.current === operation) {
+            setAuthToken(token);
+            setUsuario(usuarioSalvo);
+          }
         }
+      } catch {
+        if (active && revision.current === operation) setErroSessao('Não foi possível validar a sessão salva. Entre novamente.');
       } finally {
-        setCarregando(false);
+        if (active && revision.current === operation) setCarregando(false);
       }
     })();
-  }, []);
+    return () => { active = false; };
+  }, [persistir]);
 
   const login = useCallback(async (email: string, senha: string) => {
+    const operation = ++revision.current;
+    setErroSessao(null);
     const res = await fetch(`${apiBaseUrl}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -72,16 +117,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error ?? "Email ou senha invalidos");
     }
 
+    if (revision.current !== operation) return;
+    await persistir(operation, () => saveSession(data.token!, data.usuario!, data.organizacao));
+    if (revision.current !== operation) return;
     setAuthToken(data.token);
-    await saveSession(data.token, data.usuario, data.organizacao);
     setUsuario(data.usuario);
-  }, []);
+    setCarregando(false);
+  }, [persistir]);
 
   const logout = useCallback(async () => {
-    setAuthToken(null);
-    await clearSession();
-    setUsuario(null);
-  }, []);
+    await encerrar();
+  }, [encerrar]);
 
   return (
     <AuthContext.Provider
@@ -89,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         usuario,
         autenticado: usuario !== null,
         carregando,
+        erroSessao,
         login,
         logout,
       }}
