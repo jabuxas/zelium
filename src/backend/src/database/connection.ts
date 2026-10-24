@@ -3,6 +3,7 @@ import { dbConfig } from "../config/database";
 import { currentContext, currentOrgId, DEFAULT_ORG_ID } from "../context/requestContext";
 import { ReferenciaDeOutraOrganizacaoError } from "../context/errors";
 import { sanitizarAuditoria } from '../services/auditData';
+import { autorAuditoria } from '../services/auditAuthor';
 
 declare module "sequelize" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -201,7 +202,7 @@ const logAction = async (
         dados_anteriores: sanitizarAuditoria(dadosAnteriores),
         dados_novos: sanitizarAuditoria(dadosNovos),
         campos_alterados: camposAlterados?.filter((campo: string) => !/senha|password|token|secret/i.test(campo)) ?? null,
-        usuario: currentContext() ? `${currentContext()!.usuarioNome ?? 'Usuário'} (#${currentContext()!.usuarioId})` : "sistema",
+        usuario: currentContext() ? autorAuditoria(currentContext()!.usuarioNome ?? 'Usuário', currentContext()!.usuarioId) : "sistema",
         organizacao_id:
           instance.getDataValue("organizacao_id") ?? currentOrgId() ?? null,
       },

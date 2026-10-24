@@ -1,5 +1,6 @@
 import { request } from "./helpers/request";
 import { rawRequest, bearerToken } from "./helpers/request";
+import { runWithContext } from '../src/context/requestContext';
 import app from "../src/app";
 import { sequelize } from "../src/database/connection";
 import { TipoMaterial } from "../src/models/TipoMaterial";
@@ -236,6 +237,14 @@ describe("Testes de integração do log de auditoria", () => {
     await AuditLog.create({ tabela: 'usuario', registro_id: 1, acao: 'UPDATE', organizacao_id: 1, dados_novos: { nome: 'Ana', senha_hash: 'segredo', token: 'jwt' } });
     const res = await request(app).get('/api/audit-log');
     expect(JSON.stringify(res.body)).not.toMatch(/segredo|jwt/);
+  });
+
+  it('não perde o evento quando o autor tem um nome de 100 caracteres', async () => {
+    const item = await runWithContext({ usuarioId: 123, usuarioNome: 'N'.repeat(100), papel: 'gestor', organizacaoId: 1 },
+      () => TipoMaterial.create({ nome: 'Autor de nome longo' }));
+    const evento = await AuditLog.findOne({ where: { tabela: 'tipo_material', registro_id: item.id } });
+    expect(evento).not.toBeNull();
+    expect(evento!.usuario).toMatch(/\(#123\)$/);
   });
 
   it('histórico de um bem reúne solicitações e conferências relacionadas sem misturar outros bens', async () => {
