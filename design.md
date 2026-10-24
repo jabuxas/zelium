@@ -21,7 +21,7 @@ acessível. Ícones funcionais não são logos.
 
 ## Tokens
 
-- Acento: azul institucional já usado nas ações web, `#2563eb`.
+- Acento: azul funcional já usado nas ações web, `#2563eb` (não é um manual oficial da marca).
 - Fundo claro `#f8fafc`; superfície `#ffffff`; texto `#0f172a`; secundário `#475569`;
   bordas `#cbd5e1`; superfícies suaves `#eff6ff`.
 - Erro `#b42318`, sucesso `#166534`, alerta `#92400e`, sempre com texto/ícone.

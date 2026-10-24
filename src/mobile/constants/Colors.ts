@@ -1,19 +1,18 @@
-const tintColorLight = '#2f95dc';
-const tintColorDark = '#fff';
+import { palettes } from '@/src/shared/theme/palette';
 
 export default {
   light: {
-    text: '#000',
-    background: '#fff',
-    tint: tintColorLight,
-    tabIconDefault: '#ccc',
-    tabIconSelected: tintColorLight,
+    text: palettes.light.text,
+    background: palettes.light.background,
+    tint: palettes.light.primary,
+    tabIconDefault: palettes.light.secondaryText,
+    tabIconSelected: palettes.light.primary,
   },
   dark: {
-    text: '#fff',
-    background: '#000',
-    tint: tintColorDark,
-    tabIconDefault: '#ccc',
-    tabIconSelected: tintColorDark,
+    text: palettes.dark.text,
+    background: palettes.dark.background,
+    tint: palettes.dark.primary,
+    tabIconDefault: palettes.dark.secondaryText,
+    tabIconSelected: palettes.dark.primary,
   },
 };
