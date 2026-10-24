@@ -7,6 +7,7 @@ import { PatrimonioFotoService } from '../src/services/PatrimonioFotoService';
 jest.mock('../src/services/PatrimonioFotoService');
 
 const MockedService = PatrimonioFotoService as jest.MockedClass<typeof PatrimonioFotoService>;
+const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
 
 const fotoExemplo = {
   id: 1,
@@ -55,9 +56,9 @@ describe('POST /api/patrimonios/:patrimonioId/fotos', () => {
 
     const res = await request(app)
       .post('/api/patrimonios/12/fotos')
-      .attach('foto', Buffer.from([0xff, 0xd8, 0xff]), {
-        filename: 'notebook.jpg',
-        contentType: 'image/jpeg',
+      .attach('foto', png, {
+        filename: 'notebook.png',
+        contentType: 'image/png',
       });
 
     expect(res.status).toBe(201);
@@ -72,6 +73,14 @@ describe('POST /api/patrimonios/:patrimonioId/fotos', () => {
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: 'foto e obrigatoria' });
+    expect(MockedService.prototype.create).not.toHaveBeenCalled();
+  });
+
+  it.each([Buffer.from('<html>não é imagem</html>'), Buffer.from([0xff, 0xd8, 0xff])])('400 para conteúdo falso ou truncado mesmo com MIME permitido', async conteudo => {
+    (MockedService.prototype.patrimonioExists as jest.Mock).mockResolvedValue(true);
+    const res = await request(app).post('/api/patrimonios/12/fotos')
+      .attach('foto', conteudo, { filename: 'falsa.png', contentType: 'image/png' });
+    expect(res.status).toBe(400);
     expect(MockedService.prototype.create).not.toHaveBeenCalled();
   });
 

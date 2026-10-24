@@ -271,6 +271,13 @@ curl -s "http://localhost:8000/api/relatorios/exportar/pdf?tipo=por-ambiente" \
    é disparada.
 5. `GET /api/patrimonios/1/conferencias` lista o histórico.
 
+**Fotos privadas:** upload em `POST /api/patrimonios/:id/fotos` aceita JPEG, PNG e
+WebP íntegros de até 5 MB e 20 megapixels. O conteúdo é decodificado e metadados
+(inclusive GPS) são removidos. A URL retornada em `/uploads/patrimonios/...` também
+exige `Authorization: Bearer ...`: sem sessão retorna `401`, outra organização ou
+bem arquivado retorna `404`. Nunca coloque tokens na URL. O app já autentica as
+miniaturas e o visualizador; imagens locais pendentes não recebem credenciais.
+
 **Critérios de aceite:**
 - [ ] QR da etiqueta é lido pelo app e abre o bem certo
 - [ ] Conferência grava usuário, estado e observação

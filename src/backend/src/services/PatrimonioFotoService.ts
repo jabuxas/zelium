@@ -31,6 +31,11 @@ export class PatrimonioFotoService {
     return patrimonio !== null;
   }
 
+  async findByFilename(filename: string): Promise<PatrimonioFoto | null> {
+    const foto = await PatrimonioFoto.findOne({ where: { nome_arquivo: filename } });
+    return foto && await this.patrimonioExists(foto.patrimonio_id) ? foto : null;
+  }
+
   listByPatrimonio(patrimonioId: number): Promise<PatrimonioFoto[]> {
     return this.repo.findByPatrimonio(patrimonioId);
   }

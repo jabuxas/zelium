@@ -28,7 +28,9 @@ export default defineConfig({
   ],
   webServer: [
     { command: 'node support/api-server.cjs', url: `${API_URL}/health`, timeout: 120_000, reuseExistingServer: false, gracefulShutdown: { signal: 'SIGTERM', timeout: 10_000 } },
-    { command: 'node support/ui-server.cjs web', url: `${WEB_URL}/login`, timeout: 240_000, reuseExistingServer: false },
-    { command: 'node support/ui-server.cjs mobile', url: `${MOBILE_URL}/login`, timeout: 240_000, reuseExistingServer: false },
+    ...(process.env.E2E_API_ONLY === '1' ? [] : [
+      { command: 'node support/ui-server.cjs web', url: `${WEB_URL}/login`, timeout: 240_000, reuseExistingServer: false },
+      { command: 'node support/ui-server.cjs mobile', url: `${MOBILE_URL}/login`, timeout: 240_000, reuseExistingServer: false },
+    ]),
   ],
 });

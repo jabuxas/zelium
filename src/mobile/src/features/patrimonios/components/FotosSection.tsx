@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Image, ScrollView, Pressable, StyleSheet } from "react-native";
+import { View, ScrollView, Pressable, StyleSheet } from "react-native";
+import { AuthenticatedImage } from '@/src/shared/ui/AuthenticatedImage';
 import { Text, Button, IconButton, Portal, useTheme } from "react-native-paper";
 import type { AppTheme } from "@/src/shared/theme/tokens";
 import type { PatrimonioFoto } from "../domain/types";
@@ -58,8 +59,8 @@ export function FotosSection({
                 accessibilityLabel="Ampliar foto"
                 testID={`${testID}-open-${foto.id}`}
               >
-                <Image
-                  source={{ uri: resolveUrl(foto.url) }}
+                <AuthenticatedImage
+                  uri={resolveUrl(foto.url)}
                   style={[
                     styles.fotoImage,
                     foto.principal
@@ -89,8 +90,8 @@ export function FotosSection({
                 accessibilityLabel="Ampliar foto"
                 testID={`${testID}-pending-open-${index}`}
               >
-                <Image
-                  source={{ uri: foto.uri }}
+                <AuthenticatedImage
+                  uri={foto.uri}
                   style={styles.fotoImage}
                   testID={`${testID}-pending-img-${index}`}
                 />
@@ -151,8 +152,8 @@ export function FotosSection({
             accessibilityLabel="Fechar foto ampliada"
             testID={`${testID}-preview`}
           >
-            <Image
-              source={{ uri: previewUri }}
+            <AuthenticatedImage
+              uri={previewUri}
               style={styles.previewImage}
               resizeMode="contain"
             />

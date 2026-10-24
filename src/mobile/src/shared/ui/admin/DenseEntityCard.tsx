@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { View, Image, Pressable, StyleSheet } from "react-native";
+import { View, Pressable, StyleSheet } from "react-native";
+import { AuthenticatedImage } from '../AuthenticatedImage';
 import { Card, Text, IconButton, useTheme } from "react-native-paper";
 import type { AppTheme } from "@/src/shared/theme/tokens";
 import { EntityDetailDialog } from "./EntityDetailDialog";
@@ -52,8 +53,8 @@ export function DenseEntityCard({
           >
             <View style={styles.headerRow}>
               {thumbnailUri ? (
-                <Image
-                  source={{ uri: thumbnailUri }}
+                <AuthenticatedImage
+                  uri={thumbnailUri}
                   style={styles.thumbnail}
                   testID={`${testID}-thumbnail`}
                 />

@@ -9,6 +9,7 @@ import {
   uploadFoto,
 } from '../config/upload';
 import { PatrimonioFotoService } from '../services/PatrimonioFotoService';
+import { InvalidPhotoError, validatePhoto } from '../services/validatePhoto';
 
 const service = new PatrimonioFotoService();
 
@@ -55,6 +56,20 @@ export function uploadFotoMiddleware(req: Request, res: Response, next: NextFunc
 }
 
 export const PatrimonioFotoController = {
+  async file(req: Request, res: Response, next: NextFunction) {
+    const filename = req.params.filename;
+    if (filename !== path.basename(filename)) return res.status(400).json({ error: 'Arquivo inválido' });
+    try {
+      const foto = await service.findByFilename(filename);
+      if (!foto) return res.status(404).json({ error: 'Foto não encontrada' });
+      res.set({ 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
+      res.type(foto.mime_type);
+      res.sendFile(path.join(PATRIMONIO_FOTOS_DIR, foto.nome_arquivo), error => {
+        if (error && !res.headersSent) res.status(404).json({ error: 'Foto não encontrada' });
+      });
+    } catch (error) { next(error); }
+  },
+
   async list(req: Request, res: Response, next: NextFunction) {
     const patrimonioId = parsePositiveInt(req.params.patrimonioId);
     if (patrimonioId === null) {
@@ -87,12 +102,13 @@ export const PatrimonioFotoController = {
         return res.status(404).json({ error: 'Patrimonio nao encontrado' });
       }
 
+      const imagem = await validatePhoto(req.file.path, req.file.mimetype);
       const foto = await service.create(patrimonioId, {
         url: `${PATRIMONIO_FOTOS_PUBLIC_PATH}/${req.file.filename}`,
         nome_arquivo: req.file.filename,
         nome_original: req.file.originalname,
         mime_type: req.file.mimetype,
-        tamanho_bytes: req.file.size,
+        ...imagem,
         descricao: req.body?.descricao,
         ordem: req.body?.ordem !== undefined ? Number(req.body.ordem) : undefined,
         principal: parseBoolean(req.body?.principal),
@@ -101,6 +117,7 @@ export const PatrimonioFotoController = {
       res.status(201).json(foto);
     } catch (err) {
       if (req.file) await removeArquivo(req.file.path);
+      if (err instanceof InvalidPhotoError) return res.status(400).json({ error: err.message });
       next(err);
     }
   },

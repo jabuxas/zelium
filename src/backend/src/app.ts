@@ -1,7 +1,8 @@
-import path from "path";
 import express, { NextFunction, Request, Response } from "express";
 import routes from "./routes";
 import { ReferenciaDeOutraOrganizacaoError } from "./context/errors";
+import { authenticate, withUserContext } from './middlewares/auth';
+import { PatrimonioFotoController } from './controllers/PatrimonioFotoController';
 
 const app = express();
 
@@ -15,7 +16,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+app.get('/uploads/patrimonios/:filename', authenticate, withUserContext, PatrimonioFotoController.file);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });

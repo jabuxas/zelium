@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { View, Image, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
+import { AuthenticatedImage } from '../AuthenticatedImage';
 import {
   Dialog,
   Portal,
@@ -89,16 +90,16 @@ export function EntityDetailDialog({
                 <ActivityIndicator />
               </View>
             ) : gallery.length === 1 ? (
-              <Image
-                source={{ uri: gallery[0] }}
+              <AuthenticatedImage
+                uri={gallery[0]}
                 style={styles.image}
                 resizeMode="contain"
                 testID={`${id}-image`}
               />
             ) : gallery.length > 1 ? (
               <View style={styles.carousel} testID={`${id}-carousel`}>
-                <Image
-                  source={{ uri: gallery[safeIndex] }}
+                <AuthenticatedImage
+                  uri={gallery[safeIndex]}
                   style={styles.pagerImage}
                   resizeMode="contain"
                   testID={`${id}-image-${safeIndex}`}

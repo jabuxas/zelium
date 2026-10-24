@@ -6,10 +6,12 @@
 let authToken: string | null = null;
 let generation = 0;
 const expiredListeners = new Set<() => void>();
+const tokenListeners = new Set<() => void>();
 
 export function setAuthToken(token: string | null): void {
   authToken = token;
   generation += 1;
+  tokenListeners.forEach(listener => listener());
 }
 
 export function getAuthToken(): string | null {
@@ -17,6 +19,11 @@ export function getAuthToken(): string | null {
 }
 
 export function authGeneration(): number { return generation; }
+
+export function subscribeAuthToken(listener: () => void): () => void {
+  tokenListeners.add(listener);
+  return () => { tokenListeners.delete(listener); };
+}
 
 export function onSessionExpired(listener: () => void): () => void {
   expiredListeners.add(listener);
