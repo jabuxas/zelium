@@ -114,6 +114,10 @@ export const PatrimonioFotoController = {
         principal: parseBoolean(req.body?.principal),
       });
 
+      if (!foto) {
+        await removeArquivo(req.file.path);
+        return res.status(404).json({ error: 'Patrimonio nao encontrado' });
+      }
       res.status(201).json(foto);
     } catch (err) {
       if (req.file) await removeArquivo(req.file.path);

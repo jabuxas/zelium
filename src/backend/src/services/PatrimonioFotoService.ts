@@ -44,8 +44,9 @@ export class PatrimonioFotoService {
     return PatrimonioFoto.findOne({ where: { id: fotoId, patrimonio_id: patrimonioId } });
   }
 
-  async create(patrimonioId: number, input: CreateFotoInput): Promise<PatrimonioFoto> {
+  async create(patrimonioId: number, input: CreateFotoInput): Promise<PatrimonioFoto | null> {
     return sequelize.transaction(async (t) => {
+      if (!(await this.lockPatrimonio(patrimonioId, t))) return null;
       const total = await PatrimonioFoto.count({
         where: { patrimonio_id: patrimonioId },
         transaction: t,
@@ -82,6 +83,7 @@ export class PatrimonioFotoService {
     dto: UpdateFotoInput
   ): Promise<PatrimonioFoto | null> {
     return sequelize.transaction(async (t) => {
+      if (!(await this.lockPatrimonio(patrimonioId, t))) return null;
       const foto = await PatrimonioFoto.findOne({
         where: { id: fotoId, patrimonio_id: patrimonioId },
         transaction: t,
@@ -112,6 +114,7 @@ export class PatrimonioFotoService {
    */
   async delete(patrimonioId: number, fotoId: number): Promise<PatrimonioFoto | null> {
     return sequelize.transaction(async (t) => {
+      if (!(await this.lockPatrimonio(patrimonioId, t))) return null;
       const foto = await PatrimonioFoto.findOne({
         where: { id: fotoId, patrimonio_id: patrimonioId },
         transaction: t,
@@ -124,7 +127,7 @@ export class PatrimonioFotoService {
       if (eraPrincipal) {
         const proxima = await PatrimonioFoto.findOne({
           where: { patrimonio_id: patrimonioId },
-          order: [['created_at', 'ASC']],
+          order: [['created_at', 'ASC'], ['id', 'ASC']],
           transaction: t,
         });
         if (proxima) {
@@ -136,6 +139,11 @@ export class PatrimonioFotoService {
     });
   }
 
+  /** Serializa as mutações do mesmo bem, inclusive quando ainda não há fotos. */
+  private async lockPatrimonio(patrimonioId: number, transaction: Transaction): Promise<boolean> {
+    return (await Patrimonio.findByPk(patrimonioId, { transaction, lock: transaction.LOCK.UPDATE })) !== null;
+  }
+
   private async unsetPrincipal(
     patrimonioId: number,
     transaction: Transaction,
@@ -145,6 +153,7 @@ export class PatrimonioFotoService {
     if (exceptId !== undefined) {
       where.id = { [Op.ne]: exceptId };
     }
-    await PatrimonioFoto.update({ principal: false }, { where, transaction });
+    const anteriores = await PatrimonioFoto.findAll({ where, transaction });
+    for (const foto of anteriores) await foto.update({ principal: false }, { transaction });
   }
 }

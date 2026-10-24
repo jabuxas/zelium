@@ -107,7 +107,7 @@ function findModelByTable(table: string): ModelStatic<ModelWithOrg> | undefined 
   return undefined;
 }
 
-sequelize.addHook("beforeValidate", async function (instance: ModelWithOrg) {
+sequelize.addHook("beforeValidate", async function (instance: ModelWithOrg, options: any) {
   const model = instance.constructor as OrgScopedModel;
   if (!orgOfModel(model)) return;
 
@@ -132,6 +132,7 @@ sequelize.addHook("beforeValidate", async function (instance: ModelWithOrg) {
     // A referência precisa existir e pertencer à MESMA organização
     const alvo = await targetModel.findOne({
       where: { id: fkValue, organizacao_id: organizacaoId } as any,
+      transaction: options.transaction,
     });
     if (!alvo) {
       throw new ReferenciaDeOutraOrganizacaoError(
@@ -210,6 +211,8 @@ const logAction = async (
     );
   } catch (err) {
     console.error("Failed to save audit log:", err);
+    // Uma transação de negócio só pode confirmar junto com seu evento.
+    if (options.transaction) throw err;
   }
 };
 

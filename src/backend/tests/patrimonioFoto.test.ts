@@ -76,6 +76,14 @@ describe('POST /api/patrimonios/:patrimonioId/fotos', () => {
     expect(MockedService.prototype.create).not.toHaveBeenCalled();
   });
 
+  it('404 se o bem for arquivado entre a validação do upload e a gravação', async () => {
+    (MockedService.prototype.patrimonioExists as jest.Mock).mockResolvedValue(true);
+    (MockedService.prototype.create as jest.Mock).mockResolvedValue(null);
+    const res = await request(app).post('/api/patrimonios/12/fotos')
+      .attach('foto', png, { filename: 'bem.png', contentType: 'image/png' });
+    expect(res.status).toBe(404);
+  });
+
   it.each([Buffer.from('<html>não é imagem</html>'), Buffer.from([0xff, 0xd8, 0xff])])('400 para conteúdo falso ou truncado mesmo com MIME permitido', async conteudo => {
     (MockedService.prototype.patrimonioExists as jest.Mock).mockResolvedValue(true);
     const res = await request(app).post('/api/patrimonios/12/fotos')
