@@ -3,7 +3,7 @@ import { mkdirSync } from 'fs';
 import path from 'path';
 import multer from 'multer';
 
-export const UPLOAD_ROOT = path.resolve(process.cwd(), 'uploads');
+export const UPLOAD_ROOT = path.resolve(process.env.UPLOAD_ROOT ?? path.join(process.cwd(), 'uploads'));
 export const PATRIMONIO_FOTOS_DIR = path.join(UPLOAD_ROOT, 'patrimonios');
 export const PATRIMONIO_FOTOS_PUBLIC_PATH = '/uploads/patrimonios';
 

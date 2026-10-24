@@ -1,4 +1,4 @@
-import { rmSync } from 'fs';
+import { testUploadRoot } from './helpers/uploads';
 import { request } from './helpers/request';
 import app from '../src/app';
 import { UPLOAD_ROOT } from '../src/config/upload';
@@ -23,8 +23,8 @@ const fotoExemplo = {
 
 beforeEach(() => jest.clearAllMocks());
 
-afterAll(() => {
-  rmSync(UPLOAD_ROOT, { recursive: true, force: true });
+it('usa somente armazenamento temporário exclusivo dos testes', () => {
+  expect(UPLOAD_ROOT).toBe(testUploadRoot);
 });
 
 describe('GET /api/patrimonios/:patrimonioId/fotos', () => {
