@@ -1,261 +1,88 @@
-import React, { useEffect } from 'react';
-import { ScrollView, View, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
-import { Text, Button, useTheme } from 'react-native-paper';
+import { useEffect } from 'react';
+import { ScrollView, View, StyleSheet, RefreshControl } from 'react-native';
+import { ActivityIndicator, Text, Button, useTheme } from 'react-native-paper';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDashboard } from '../hooks/useDashboard';
 import { DashboardCard } from '../components/DashboardCard';
-
-const ACAO_COLORS: Record<string, string> = {
-  criar: '#16a34a',
-  atualizar: '#2563eb',
-  excluir: '#dc2626',
-  login: '#7c3aed',
-  logout: '#ea580c',
-};
-
-const ACAO_LABELS: Record<string, string> = {
-  criar: 'Criação',
-  atualizar: 'Atualização',
-  excluir: 'Exclusão',
-  login: 'Login',
-  logout: 'Logout',
-};
-
-function getAcaoColor(acao: string): string {
-  return ACAO_COLORS[acao.toLowerCase()] ?? '#64748b';
-}
-
-function getAcaoLabel(acao: string): string {
-  return ACAO_LABELS[acao.toLowerCase()] ?? acao;
-}
-
-function formatLogDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '-';
-  return `${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
-}
+import { auditAction, auditDate, auditSummary } from '@/src/features/audit-log/domain/presentation';
+import { radii, spacing, type AppTheme } from '@/src/shared/theme/tokens';
 
 export default function DashboardScreen() {
-  const theme = useTheme();
+  const { colors } = useTheme<AppTheme>();
   const insets = useSafeAreaInsets();
   const { stats, logs, loading, error, atividadesIndisponiveis, dadosEmCache, isRefreshing, load, refresh, retry } = useDashboard();
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
-  if (loading) {
-    return (
-      <View style={[styles.centered, { backgroundColor: '#f8fafc' }]}>
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text style={{ marginTop: 10, color: '#64748b' }}>Sincronizando Inventário Zelium...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.centered, { backgroundColor: '#f8fafc' }]}>
-        <Text variant="titleMedium" style={{ color: theme.colors.error, textAlign: 'center' }}>
-          Não foi possível conectar ao servidor do Zelium.
-        </Text>
-        <Button mode="contained" onPress={retry} style={{ marginTop: 12 }}>
-          Tentar Novamente
-        </Button>
-      </View>
-    );
-  }
+  if (loading || error) return (
+    <View style={[styles.centered, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      {loading ? <>
+        <ActivityIndicator accessibilityLabel="Carregando inventário" />
+        <Text>Atualizando seu inventário...</Text>
+      </> : <>
+        <Text accessibilityRole="alert" style={{ color: colors.error }}>Não foi possível carregar o inventário.</Text>
+        <Button mode="contained" onPress={retry}>Tentar novamente</Button>
+      </>}
+    </View>
+  );
 
   return (
     <ScrollView
       testID="dashboard-scroll"
-      style={styles.container}
-      contentContainerStyle={{ ...styles.contentContainer, paddingTop: insets.top }}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={refresh} colors={["#2563eb"]} />
-      }
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{ paddingTop: insets.top, paddingBottom: spacing.xl }}
+      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={refresh} colors={[colors.primary]} tintColor={colors.primary} />}
     >
-      <View style={styles.header}>
-        <Text variant="headlineMedium" style={styles.mainTitle}>
-          Dashboard
-        </Text>
-        <Text variant="bodyMedium" style={styles.headerSubtitle}>
-          Visão geral do sistema de gestão patrimonial
-        </Text>
-      </View>
-
-      {dadosEmCache && <Text style={{ paddingHorizontal: 16 }}>Sem atualização do servidor. Mostrando indicadores salvos desta conta.</Text>}
-      <View style={styles.cardsGrid}>
-        <DashboardCard 
-          title="Patrimônios" 
-          value={stats?.totalPatrimonios || 0} 
-          subtitle="Total de Patrimônios" 
-          icon="cube"
-          iconBgColor="#eff6ff"
-          iconColor="#2563eb"
-        />
-        <DashboardCard 
-          title="Ambientes" 
-          value={stats?.totalAmbientes || 0} 
-          subtitle="Ambientes Cadastrados" 
-          icon="map-marker"
-          iconBgColor="#f0fdf4"
-          iconColor="#16a34a"
-        />
-        <DashboardCard 
-          title="Conferentes" 
-          value={stats?.totalConferentes || 0} 
-          subtitle="Responsáveis Ativos" 
-          icon="users"
-          iconBgColor="#f5f3ff"
-          iconColor="#7c3aed"
-        />
-        <DashboardCard 
-          title="Alertas" 
-          value={stats?.alertasAvaria || 0} 
-          subtitle="Itens em Manutenção" 
-          icon="exclamation-triangle"
-          iconBgColor="#fff7ed"
-          iconColor="#ea580c"
-        />
-      </View>
-
-      <View style={styles.sectionContainer}>
-        <Text variant="titleLarge" style={styles.sectionTitle}>
-          Atividades Recentes
-        </Text>
-
-        <View style={styles.tableCard}>
-          {atividadesIndisponiveis ? (
-            <View style={styles.emptyRow}>
-              <Text style={styles.emptyText}>Atividades indisponíveis no momento. Os indicadores continuam disponíveis.</Text>
-            </View>
-          ) : logs.length === 0 ? (
-            <View style={styles.emptyRow}>
-              <Text style={styles.emptyText}>Nenhuma movimentação registrada recentemente.</Text>
-            </View>
-          ) : (
-            logs.map((log, index) => (
-              <View
-                key={log.id}
-                style={[
-                  styles.tableRow,
-                  index === logs.length - 1 && { borderBottomWidth: 0 }
-                ]}
-              >
-                <View style={[styles.logDot, { backgroundColor: getAcaoColor(log.acao) }]} />
-                <View style={styles.logContent}>
-                  <Text variant="bodyMedium" style={styles.logText}>
-                    <Text style={{ fontWeight: '600', color: getAcaoColor(log.acao) }}>
-                      {getAcaoLabel(log.acao)}
-                    </Text>
-                    {` · ${log.recurso} #${log.recurso_id}`}
-                  </Text>
-                  {log.usuario ? (
-                    <Text variant="bodySmall" style={styles.logUser}>
-                      por {log.usuario}
-                    </Text>
-                  ) : null}
-                </View>
-                <Text variant="bodySmall" style={styles.logDate}>
-                  {formatLogDate(log.criado_em)}
-                </Text>
-              </View>
-            ))
-          )}
+      <View style={styles.content}>
+        <View style={styles.heading}>
+          <Text variant="headlineMedium" accessibilityRole="header" style={styles.bold}>Inventário</Text>
+          <Text style={{ color: colors.onSurfaceVariant }}>Localize, confira e acompanhe os bens da organização.</Text>
         </View>
+        <View style={styles.actions}>
+          <Button mode="contained" icon="qrcode-scan" contentStyle={styles.buttonContent} style={styles.button} onPress={() => router.push('/escanear')}>Conferir patrimônio</Button>
+          <Button mode="outlined" icon="magnify" contentStyle={styles.buttonContent} style={styles.button} onPress={() => router.push('/patrimonios')}>Buscar patrimônio</Button>
+        </View>
+        {dadosEmCache && <Text accessibilityRole="alert" style={{ color: colors.warning }}>Sem atualização do servidor. Mostrando indicadores salvos desta conta.</Text>}
+        <View style={styles.grid}>
+          <DashboardCard value={stats?.totalPatrimonios ?? 0} label="Total de Patrimônios" />
+          <DashboardCard value={stats?.totalAmbientes ?? 0} label="Ambientes cadastrados" />
+          <DashboardCard value={stats?.totalConferentes ?? 0} label="Conferentes cadastrados" />
+          <DashboardCard value={stats?.alertasAvaria ?? 0} label="Patrimônios com avaria" warning />
+        </View>
+        <View style={styles.section}>
+          <Text variant="titleLarge" accessibilityRole="header" style={styles.bold}>Atividades recentes</Text>
+          <Text style={{ color: colors.onSurfaceVariant }}>Movimentações do inventário e conferências.</Text>
+        </View>
+        <View style={[styles.events, { backgroundColor: colors.surface, borderColor: colors.outlineVariant }]}>
+          {atividadesIndisponiveis || logs.length === 0 ? (
+            <Text style={[styles.event, { color: colors.onSurfaceVariant }]}>{atividadesIndisponiveis
+              ? 'Atividades indisponíveis no momento. Os indicadores continuam disponíveis.'
+              : 'Nenhuma movimentação registrada recentemente.'}</Text>
+          ) : logs.map((log, index) => (
+            <View key={log.id} style={[styles.event, { borderTopWidth: index === 0 ? 0 : 1, borderColor: colors.outlineVariant }]}>
+              <Text variant="labelMedium" style={{ color: colors.primary }}>{auditAction(log.acao)}</Text>
+              <Text variant="bodyMedium" style={styles.bold}>{auditSummary(log)}</Text>
+              <Text variant="bodySmall" style={{ color: colors.onSurfaceVariant }}>{log.usuario ?? 'Sistema'} · {auditDate(log.criado_em)}</Text>
+            </View>
+          ))}
+        </View>
+        <Button mode="text" onPress={() => router.push('/audit-log')}>Ver histórico</Button>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  contentContainer: {
-    paddingBottom: 32,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 12,
-  },
-  mainTitle: {
-    fontWeight: 'bold',
-    color: '#0f172a',
-  },
-  headerSubtitle: {
-    color: '#64748b',
-    marginTop: 4,
-  },
-  cardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 10,
-    justifyContent: 'space-between',
-  },
-  sectionContainer: {
-    paddingHorizontal: 16,
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontWeight: 'bold',
-    color: '#0f172a',
-    marginBottom: 12,
-  },
-  tableCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    overflow: 'hidden',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  logDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 10,
-  },
-  logContent: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  logText: {
-    color: '#334155',
-    fontSize: 14,
-  },
-  logUser: {
-    color: '#94a3b8',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  logDate: {
-    color: '#94a3b8',
-    fontSize: 12,
-  },
-  emptyRow: {
-    padding: 24,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: '#94a3b8',
-    fontStyle: 'italic',
-  },
+  content: { width: '100%', maxWidth: 768, alignSelf: 'center', padding: spacing.md, gap: spacing.md },
+  heading: { gap: spacing.xs, marginTop: spacing.xs },
+  bold: { fontWeight: '700' },
+  actions: { gap: spacing.xs },
+  button: { borderRadius: radii.small },
+  buttonContent: { minHeight: 48 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  section: { marginTop: spacing.xs, gap: spacing.xxs },
+  events: { borderRadius: radii.small, borderWidth: 1, overflow: 'hidden' },
+  event: { padding: spacing.md, gap: spacing.xxs },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg, gap: spacing.md },
 });
