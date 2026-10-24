@@ -24,6 +24,7 @@ import {
 import { useAuth } from "../lib/auth-context";
 import type { Papel } from "../lib/auth";
 import AcessoPagina from './AcessoPagina';
+import ZeliumBrand from './ZeliumBrand';
 
 const PAPEL_LABEL: Record<Papel, string> = {
   gestor: "Gestor",
@@ -78,7 +79,7 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
         className={`${menuMovelAberto ? "flex w-64" : "hidden"} ${sidebarOpen ? "md:flex md:w-64" : "md:hidden"} fixed inset-y-0 left-0 md:static z-30 shrink-0 bg-white border-r border-gray-200 overflow-hidden flex-col`}
       >
         <div className="p-4 border-b border-gray-200 relative">
-          <h1 className="text-xl font-bold text-gray-800">Zelium</h1>
+          <h1 className="text-xl font-bold text-gray-800"><ZeliumBrand /></h1>
           <p className="text-xs text-gray-500">Gestão Patrimonial</p>
           <button type="button" aria-label="Fechar menu de navegação" onClick={() => setMenuMovelAberto(false)} className="md:hidden absolute top-3 right-3 p-2 rounded-lg hover:bg-gray-100"><X size={20} /></button>
         </div>

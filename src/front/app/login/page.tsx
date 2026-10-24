@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useAuth } from "../lib/auth-context";
-import { Lock, Mail, ShieldCheck } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
+import ZeliumBrand from '../components/ZeliumBrand';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -28,10 +29,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 text-white mb-4">
-            <ShieldCheck size={28} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Zelium</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex justify-center"><ZeliumBrand /></h1>
           <p className="text-gray-600 mt-1">
             Sistema de Gestão Patrimonial — entre com sua conta
           </p>
@@ -42,7 +40,7 @@ export default function LoginPage() {
           className="bg-white border border-gray-200 rounded-xl p-8 space-y-5 shadow-sm"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">
               E-mail
             </label>
             <div className="relative">
@@ -51,6 +49,7 @@ export default function LoginPage() {
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
               <input
+                id="login-email"
                 type="email"
                 required
                 autoComplete="email"
@@ -63,7 +62,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="login-senha" className="block text-sm font-medium text-gray-700 mb-1">
               Senha
             </label>
             <div className="relative">
@@ -72,6 +71,7 @@ export default function LoginPage() {
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
               <input
+                id="login-senha"
                 type="password"
                 required
                 autoComplete="current-password"

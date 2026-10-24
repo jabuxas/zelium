@@ -9,6 +9,7 @@ import { Button, Text, TextInput, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/src/shared/auth/AuthContext";
+import { ZeliumBrand } from '@/src/shared/brand/ZeliumBrand';
 
 export default function LoginScreen() {
   const theme = useTheme();
@@ -41,9 +42,7 @@ export default function LoginScreen() {
       ]}
     >
       <View style={styles.card}>
-        <Text variant="headlineMedium" style={styles.title}>
-          Zelium
-        </Text>
+        <View style={{ alignItems: 'center' }}><ZeliumBrand /></View>
         <Text variant="bodyMedium" style={styles.subtitle}>
           Gestão Patrimonial — entre com sua conta
         </Text>
