@@ -1,13 +1,13 @@
-import { View, StyleSheet } from "react-native";
+import { ScrollView, View, StyleSheet } from "react-native";
 import { Button, Card, Text, useTheme } from "react-native-paper";
 import { router, type RelativePathString } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { RESOURCE_REGISTRY, type ResourceKey } from "@/src/shared/domain/registry";
 import { useAuth } from "@/src/shared/auth/AuthContext";
+import { spacing, radii, type AppTheme } from '@/src/shared/theme/tokens';
 
 const ADMIN_CARDS: ResourceKey[] = [
-  "audit-log",
   "conferentes",
   "estados-item",
   "fornecedores",
@@ -22,7 +22,7 @@ const PAPEL_LABEL: Record<string, string> = {
 };
 
 export default function AdminHubScreen() {
-  const theme = useTheme();
+  const theme = useTheme<AppTheme>();
   const insets = useSafeAreaInsets();
   const { usuario, logout } = useAuth();
 
@@ -37,29 +37,36 @@ export default function AdminHubScreen() {
         { backgroundColor: theme.colors.background, paddingTop: insets.top + 16 },
       ]}
     >
-      <Text variant="headlineSmall" style={styles.heading}>
-        Administração
+      <ScrollView testID="admin-hub-scroll" contentContainerStyle={styles.scrollContent}>
+      <View style={styles.content}>
+      <Text variant="headlineSmall" accessibilityRole="header" style={styles.heading}>
+        Conta e cadastros
       </Text>
 
       {usuario && (
-        <Card style={[styles.profile, { backgroundColor: theme.colors.surface }]}>
+        <Card mode="outlined" style={[styles.profile, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
           <Card.Content>
             <Text variant="titleMedium">{usuario.nome}</Text>
-            <Text variant="bodySmall" style={{ opacity: 0.7 }}>
-              {usuario.email} · {PAPEL_LABEL[usuario.papel] ?? usuario.papel}
-            </Text>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>{usuario.email}</Text>
+            <Text variant="labelLarge" style={{ color: theme.colors.primary }}>{PAPEL_LABEL[usuario.papel] ?? usuario.papel}</Text>
           </Card.Content>
         </Card>
       )}
 
+      <Button mode="contained-tonal" icon="history" contentStyle={styles.buttonContent} style={styles.history}
+        onPress={() => router.push('/audit-log')}>Histórico da organização</Button>
+
       {podeAdministrar ? (
         <View style={styles.grid}>
+          <Text variant="titleMedium" accessibilityRole="header">Cadastros da organização</Text>
           {ADMIN_CARDS.map((key) => {
             const resource = RESOURCE_REGISTRY[key];
             return (
               <Card
                 key={key}
-                style={[styles.card, { backgroundColor: theme.colors.surface }]}
+                mode="outlined"
+                accessibilityLabel={`Abrir ${resource.label}`}
+                style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}
                 onPress={() => router.push(`/${key}` as RelativePathString)}
               >
                 <Card.Content style={styles.cardContent}>
@@ -72,22 +79,25 @@ export default function AdminHubScreen() {
           })}
         </View>
       ) : (
-        <Text variant="bodyMedium" style={styles.restricted}>
+        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
           Os cadastros da organização são gerenciados pelo gestor. No
-          aplicativo você acompanha patrimônios, ambientes, solicitações e
+          aplicativo você acompanha patrimônios, ambientes e
           conferências em campo.
         </Text>
       )}
 
       <Button
         mode="outlined"
+        contentStyle={styles.buttonContent}
         icon="logout"
         onPress={logout}
-        style={styles.logout}
+        style={[styles.logout, { borderColor: theme.colors.error }]}
         textColor={theme.colors.error}
       >
         Sair da conta
       </Button>
+      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -95,8 +105,9 @@ export default function AdminHubScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
   },
+  scrollContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.xl },
+  content: { width: '100%', maxWidth: 768, alignSelf: 'center' },
   heading: {
     fontWeight: "700",
     marginBottom: 16,
@@ -112,14 +123,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   cardContent: {
-    paddingVertical: 4,
+    minHeight: 48,
+    justifyContent: 'center',
   },
-  restricted: {
-    opacity: 0.7,
-    lineHeight: 20,
-  },
+  buttonContent: { minHeight: 48 },
+  history: { marginBottom: spacing.lg, borderRadius: radii.small },
   logout: {
-    marginTop: 24,
-    borderColor: "#fca5a5",
+    marginTop: spacing.lg,
+    borderRadius: radii.small,
   },
 });

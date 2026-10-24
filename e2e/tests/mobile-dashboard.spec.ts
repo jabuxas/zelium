@@ -11,6 +11,9 @@ for (const papel of ['gestor', 'responsavel', 'conferente'] as const) {
       await expect(page.getByRole('button', { name: 'Conferir patrimônio', exact: true })).toBeVisible();
       await expect(page.getByText('Conferentes cadastrados', { exact: true })).toBeVisible();
       await expect(page.getByText('Patrimônios com avaria', { exact: true })).toBeVisible();
+      for (const label of ['Início', 'Escanear', 'Bens', 'Locais', 'Mais']) {
+        await expect(page.getByText(label, { exact: true })).toBeInViewport({ ratio: 1 });
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await page.screenshot({ path: info.outputPath(`inventario-${papel}-${width}.png`), fullPage: true });
     }
