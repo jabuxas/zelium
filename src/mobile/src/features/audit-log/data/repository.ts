@@ -1,11 +1,12 @@
 import { apiClient } from "@/src/shared/api/client";
 import { getResource } from "@/src/shared/domain/registry";
-import type { AuditLog } from "../domain/types";
+import type { AuditLog, AuditLogPaginatedResponse } from "../domain/types";
 
 const resource = getResource("audit-log");
 
 export interface AuditLogRepository {
   list(params?: Record<string, unknown>): Promise<AuditLog[]>;
+  page(params?: Record<string, unknown>): Promise<AuditLogPaginatedResponse>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -97,11 +98,24 @@ function normalizeListResponse(payload: unknown): AuditLog[] {
 
 export class AuditLogRepositoryImpl implements AuditLogRepository {
   async list(params?: Record<string, unknown>): Promise<AuditLog[]> {
-    const path = params
-      ? `${resource.apiPath}?${new URLSearchParams(params as Record<string, string>)}`
-      : resource.apiPath;
+    return (await this.page(params)).data;
+  }
 
-    return normalizeListResponse(await apiClient(path));
+  async page(params: Record<string, unknown> = {}): Promise<AuditLogPaginatedResponse> {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') query.set(key, String(value));
+    });
+    const search = query.toString();
+    const payload = await apiClient(`${resource.apiPath}${search ? `?${search}` : ''}`);
+    const data = normalizeListResponse(payload);
+    return {
+      data,
+      total: isRecord(payload) ? readNumber(payload.total, data.length) : data.length,
+      pages: isRecord(payload) ? readNumber(payload.pages, data.length ? 1 : 0) : data.length ? 1 : 0,
+      currentPage: isRecord(payload) ? readNumber(payload.currentPage, 1) : 1,
+      limit: isRecord(payload) ? readNumber(payload.limit, 10) : 10,
+    };
   }
 }
 

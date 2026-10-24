@@ -79,4 +79,12 @@ describe("AuditLogRepositoryImpl", () => {
       alteracoes: [{ campo: 'ambiente_id', anterior: 'Sala 1', novo: 'Sala 2' }],
     });
   });
+
+  it('preserva totais e página para navegar além dos primeiros resultados', async () => {
+    mockedApiClient.mockResolvedValueOnce({ total: 35, pages: 4, currentPage: 2, limit: 10, data: [] });
+    expect(await repository.page({ page: 2, acao: 'UPDATE', tabela: 'patrimonio', busca: 'IFSC 7', usuario: undefined })).toEqual({
+      total: 35, pages: 4, currentPage: 2, limit: 10, data: [],
+    });
+    expect(mockedApiClient).toHaveBeenCalledWith('/audit-log?page=2&acao=UPDATE&tabela=patrimonio&busca=IFSC+7');
+  });
 });
