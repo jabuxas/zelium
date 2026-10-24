@@ -69,4 +69,14 @@ describe("AuditLogRepositoryImpl", () => {
       },
     ]);
   });
+
+  it('preserva identificação e alterações enriquecidas do servidor', async () => {
+    mockedApiClient.mockResolvedValueOnce({ data: [{ id: 9, acao: 'UPDATE', tabela: 'patrimonio', registro_id: 7,
+      registro_nome: 'IFSC-007', patrimonio_id: 7, created_at: '2026-01-01T00:00:00Z',
+      alteracoes: [{ campo: 'ambiente_id', anterior: 'Sala 1', novo: 'Sala 2' }],
+    }] });
+    expect((await repository.list())[0]).toMatchObject({ registro_nome: 'IFSC-007', patrimonio_id: 7,
+      alteracoes: [{ campo: 'ambiente_id', anterior: 'Sala 1', novo: 'Sala 2' }],
+    });
+  });
 });

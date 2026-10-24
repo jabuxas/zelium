@@ -6,6 +6,9 @@ export interface AuditLog {
   usuario?: string;
   detalhes?: string;
   criado_em: string;
+  registro_nome?: string;
+  patrimonio_id?: number;
+  alteracoes?: { campo: string; anterior: unknown; novo: unknown }[];
 }
 
 export interface AuditLogPaginatedResponse {

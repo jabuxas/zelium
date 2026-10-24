@@ -72,6 +72,14 @@ function normalizeAuditLog(item: unknown): AuditLog {
     normalized.detalhes = normalizedDetails;
   }
 
+  if (typeof item.registro_nome === 'string') normalized.registro_nome = item.registro_nome;
+  if (typeof item.patrimonio_id === 'number') normalized.patrimonio_id = item.patrimonio_id;
+  if (Array.isArray(item.alteracoes)) {
+    normalized.alteracoes = item.alteracoes.filter(isRecord)
+      .filter(change => typeof change.campo === 'string')
+      .map(change => ({ campo: String(change.campo), anterior: change.anterior, novo: change.novo }));
+  }
+
   return normalized;
 }
 
