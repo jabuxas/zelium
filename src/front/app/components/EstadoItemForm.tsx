@@ -93,8 +93,9 @@ export default function EstadoItemForm() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Informacoes do Estado</h2>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Estado *</label>
+                <label htmlFor="estado-nome" className="block text-sm font-medium text-gray-700 mb-2">Nome do Estado *</label>
                 <input
+                  id="estado-nome"
                   type="text"
                   placeholder="Ex: Ativo"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -104,10 +105,11 @@ export default function EstadoItemForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Descricao</label>
+                <label htmlFor="estado-descricao" className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
                 <textarea
+                  id="estado-descricao"
                   rows={3}
-                  placeholder="Descricao do estado..."
+                  placeholder="Descrição do estado..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={descricao}
                   onChange={e => setDescricao(e.target.value)}
@@ -123,7 +125,7 @@ export default function EstadoItemForm() {
               className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               <Save size={20} />
-              {loading ? 'Salvando...' : isEdit ? 'Salvar Alteracoes' : 'Cadastrar Estado'}
+              {loading ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Cadastrar Estado'}
             </button>
             <Link href="/estados-item" className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancelar</Link>
           </div>

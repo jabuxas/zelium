@@ -97,10 +97,11 @@ export default function ResponsavelForm() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações Pessoais</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="responsavel-nome" className="block text-sm font-medium text-gray-700 mb-2">
                   Nome Completo *
                 </label>
                 <input
+                  id="responsavel-nome"
                   type="text"
                   placeholder="Ex: João Silva"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -110,10 +111,11 @@ export default function ResponsavelForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="responsavel-email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email *
                 </label>
                 <input
+                  id="responsavel-email"
                   type="email"
                   placeholder="joao.silva@empresa.com"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -123,10 +125,11 @@ export default function ResponsavelForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="responsavel-telefone" className="block text-sm font-medium text-gray-700 mb-2">
                   Telefone
                 </label>
                 <input
+                  id="responsavel-telefone"
                   type="tel"
                   placeholder="(11) 98765-4321"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -141,10 +144,11 @@ export default function ResponsavelForm() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações Profissionais</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="responsavel-departamento" className="block text-sm font-medium text-gray-700 mb-2">
                   Departamento
                 </label>
                 <input
+                  id="responsavel-departamento"
                   type="text"
                   placeholder="Ex: TI"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -153,10 +157,11 @@ export default function ResponsavelForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="responsavel-cargo" className="block text-sm font-medium text-gray-700 mb-2">
                   Cargo
                 </label>
                 <input
+                  id="responsavel-cargo"
                   type="text"
                   placeholder="Ex: Gerente"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"

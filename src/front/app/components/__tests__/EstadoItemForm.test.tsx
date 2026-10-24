@@ -51,7 +51,7 @@ describe('EstadoItemForm', () => {
     render(<EstadoItemForm />);
 
     await userEvent.type(screen.getByPlaceholderText('Ex: Ativo'), ' Disponivel ');
-    await userEvent.type(screen.getByPlaceholderText(/descricao do estado/i), ' Pronto para uso ');
+    await userEvent.type(screen.getByLabelText('Descrição'), ' Pronto para uso ');
     await userEvent.click(screen.getByRole('button', { name: /cadastrar estado/i }));
 
     await waitFor(() => {
@@ -79,7 +79,7 @@ describe('EstadoItemForm', () => {
     const nome = await screen.findByDisplayValue('Ativo');
     await userEvent.clear(nome);
     await userEvent.type(nome, 'Ativo revisado');
-    await userEvent.click(screen.getByRole('button', { name: /salvar alteracoes/i }));
+    await userEvent.click(screen.getByRole('button', { name: /salvar alterações/i }));
 
     await waitFor(() => {
       expect(mockToast).toHaveBeenCalledWith('Estado do item atualizado com sucesso', 'success');

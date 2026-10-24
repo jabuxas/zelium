@@ -120,11 +120,12 @@ export default function FornecedoresList() {
                       {podeEditar && (
                         <>
 
-                      <Link href={`/fornecedores/editar/${fornecedor.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                      <Link href={`/fornecedores/editar/${fornecedor.id}`} aria-label={`Editar ${fornecedor.nome}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit2 size={18} />
                       </Link>
                       <button
                         onClick={() => handleDelete(fornecedor.id)}
+                        aria-label={`Excluir ${fornecedor.nome}`}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 size={18} />

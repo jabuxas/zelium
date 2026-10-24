@@ -130,12 +130,14 @@ export default function ResponsaveisList() {
 
                       <Link
                         href={`/responsaveis/editar/${responsavel.id}`}
+                        aria-label={`Editar ${responsavel.nome}`}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                       >
                         <Edit2 size={18} />
                       </Link>
                       <button
                         onClick={() => handleDelete(responsavel.id)}
+                        aria-label={`Excluir ${responsavel.nome}`}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 size={18} />

@@ -133,11 +133,12 @@ export default function ConferentesList() {
                       {podeEditar && (
                         <>
 
-                      <Link href={`/conferentes/editar/${conferente.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                      <Link href={`/conferentes/editar/${conferente.id}`} aria-label={`Editar ${conferente.nome}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit2 size={18} />
                       </Link>
                       <button
                         onClick={() => handleDelete(conferente.id)}
+                        aria-label={`Excluir ${conferente.nome}`}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 size={18} />

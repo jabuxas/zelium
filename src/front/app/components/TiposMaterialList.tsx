@@ -149,12 +149,14 @@ export default function TiposMaterialList() {
 
                       <Link
                         href={`/tipos-material/editar/${tipo.id}`}
+                        aria-label={`Editar ${tipo.nome}`}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                       >
                         <Edit2 size={16} />
                       </Link>
                       <button
                         onClick={() => handleDelete(tipo.id)}
+                        aria-label={`Excluir ${tipo.nome}`}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 size={16} />

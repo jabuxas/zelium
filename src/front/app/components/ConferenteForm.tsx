@@ -99,8 +99,9 @@ export default function ConferenteForm() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Informacoes do Conferente</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
+                <label htmlFor="conferente-nome" className="block text-sm font-medium text-gray-700 mb-2">Nome Completo *</label>
                 <input
+                  id="conferente-nome"
                   type="text"
                   placeholder="Ex: Carlos Oliveira"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -110,8 +111,9 @@ export default function ConferenteForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                <label htmlFor="conferente-email" className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                 <input
+                  id="conferente-email"
                   type="email"
                   placeholder="carlos.oliveira@empresa.com"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -121,8 +123,9 @@ export default function ConferenteForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                <label htmlFor="conferente-telefone" className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
                 <input
+                  id="conferente-telefone"
                   type="tel"
                   placeholder="(11) 99876-5432"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -131,8 +134,9 @@ export default function ConferenteForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Cargo</label>
+                <label htmlFor="conferente-cargo" className="block text-sm font-medium text-gray-700 mb-2">Cargo</label>
                 <input
+                  id="conferente-cargo"
                   type="text"
                   placeholder="Ex: Auditor"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -150,7 +154,7 @@ export default function ConferenteForm() {
               className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               <Save size={20} />
-              {loading ? 'Salvando...' : isEdit ? 'Salvar Alteracoes' : 'Cadastrar Conferente'}
+              {loading ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Cadastrar Conferente'}
             </button>
             <Link href="/conferentes" className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancelar</Link>
           </div>

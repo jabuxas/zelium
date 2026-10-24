@@ -133,11 +133,12 @@ export default function EstadosItemList() {
                       {podeEditar && (
                         <>
 
-                      <Link href={`/estados-item/editar/${estado.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                      <Link href={`/estados-item/editar/${estado.id}`} aria-label={`Editar ${estado.nome}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                         <Edit2 size={18} />
                       </Link>
                       <button
                         onClick={() => handleDelete(estado.id)}
+                        aria-label={`Excluir ${estado.nome}`}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 size={18} />

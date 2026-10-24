@@ -92,8 +92,9 @@ export default function FornecedorForm() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Dados da Empresa</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                <label htmlFor="fornecedor-nome" className="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
                 <input
+                  id="fornecedor-nome"
                   type="text"
                   placeholder="Ex: Fornecedor A Ltda"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -103,8 +104,9 @@ export default function FornecedorForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">CNPJ *</label>
+                <label htmlFor="fornecedor-cnpj" className="block text-sm font-medium text-gray-700 mb-2">CNPJ *</label>
                 <input
+                  id="fornecedor-cnpj"
                   type="text"
                   placeholder="00.000.000/0000-00"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -114,8 +116,9 @@ export default function FornecedorForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label htmlFor="fornecedor-email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                 <input
+                  id="fornecedor-email"
                   type="email"
                   placeholder="contato@fornecedor.com"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -124,8 +127,9 @@ export default function FornecedorForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
+                <label htmlFor="fornecedor-telefone" className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
                 <input
+                  id="fornecedor-telefone"
                   type="tel"
                   placeholder="(11) 3000-0000"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -143,7 +147,7 @@ export default function FornecedorForm() {
               className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               <Save size={20} />
-              {loading ? 'Salvando...' : isEdit ? 'Salvar Alteracoes' : 'Cadastrar Fornecedor'}
+              {loading ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Cadastrar Fornecedor'}
             </button>
             <Link href="/fornecedores" className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancelar</Link>
           </div>
