@@ -1,6 +1,6 @@
 # Auditoria E2E — tarefas
 
-- [ ] Ambiente E2E isolado e reexecutável
+- [x] Ambiente E2E isolado e reexecutável
   - Aceite: banco exclusivo, API real, frontends, limpeza nos sinais, rastros.
   - Verificar: smoke de login em web e Expo Web.
   - Arquivos: `e2e/{package.json,playwright.config.ts,support/*}`.
@@ -16,11 +16,11 @@
   - Aceite: RED → GREEN sem enfraquecer asserções.
   - Verificar: testes focados e suites completas afetadas.
   - Arquivos: definidos por cada achado.
-- [ ] Preparar marca oficial
+- [x] Preparar marca oficial
   - Aceite: fallback textual, logo configurável com tamanho/aspecto preservados.
   - Verificar: testes dos componentes e screenshots login/cabeçalho.
   - Arquivos: componentes/config web/mobile e `docs/MARCA.md`.
-- [ ] Tema e login mobile
+- [x] Tema e login mobile (validação Expo Web; teclado nativo pendente)
   - Aceite: tokens, contraste, campos acessíveis, erros, teclado e layout estreito.
   - Verificar: testes e screenshots 320/375/414/768 px.
   - Arquivos: tema, cores, login, layout de abas, app config.
@@ -41,3 +41,24 @@
   - Aceite: suites/builds, revisão dos diffs, screenshots reais e limitações explícitas.
   - Verificar: comandos do plano; serviços descartáveis encerrados.
   - Arquivos: `docs/{AUDITORIA_E2E,GUIA_TESTES}.md`, este checklist.
+
+## Incrementos verificados
+
+- Uploads de testes isolados, organização forjada/contagens cruzadas bloqueadas e
+  autor de nome longo preservado na auditoria.
+- Sessões expiradas e respostas antigas tratadas; cache do dashboard separado
+  por conta/organização, com aviso e recuperação de falhas de armazenamento.
+- Fotos privadas com validação real do conteúdo e remoção de metadados;
+  E2E de download, isolamento e visualizador autenticado do app.
+- Tema/login com contraste e recuperação; capturas em 320/375/414/768 px.
+- Dashboard compacto, ações de conferência/consulta e contagem de avarias por
+  configuração (`dbeef0a`, `5fb8682`); E2E passou nos três perfis/quatro larguras.
+
+## Achados ainda abertos
+
+- Concorrência da foto principal e auditoria da antiga principal.
+- Falha no hook de auditoria pode persistir operação sem evento.
+- Dependências HTTP de produção vulneráveis (atualizar sem `--force`).
+- `PUT /ambientes/:id` sem `responsavel_id` responde 500 em vez de erro de validação.
+- Scanner: permissões, entrada manual e dependência externa de jsQR no Expo Web.
+- Logo/ícone/splash oficiais ausentes; nenhum dispositivo para validar recursos nativos.
