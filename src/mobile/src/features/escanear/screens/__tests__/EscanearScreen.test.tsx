@@ -1,12 +1,9 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react-native";
 import { PaperProvider } from "react-native-paper";
+import { buildPaperTheme } from '@/src/shared/theme/tokens';
 
-const mockToast = jest.fn();
-
-jest.mock("@/src/shared/ui/toast", () => ({
-  useToast: () => ({ toast: mockToast }),
-}));
+jest.mock('@react-navigation/native', () => ({ ...jest.requireActual('@react-navigation/native'), useIsFocused: () => true }));
 
 jest.mock("react-native-safe-area-context", () => {
   const React = require("react");
@@ -27,6 +24,7 @@ jest.mock("expo-camera", () => {
   const { View } = require("react-native");
   return {
     CameraView: (props: React.ComponentProps<typeof View>) => <View {...props} />,
+    useCameraPermissions: () => [{ granted: true }, jest.fn()],
   };
 });
 
@@ -45,7 +43,7 @@ import { CameraView } from "expo-camera";
 
 function renderScreen() {
   return render(
-    <PaperProvider>
+    <PaperProvider theme={buildPaperTheme('light')}>
       <EscanearScreen />
     </PaperProvider>,
   );
@@ -64,6 +62,8 @@ const PATRIMONIO = {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockBuscarPorNumero.mockReset();
+  mockRegistrarConferencia.mockReset();
   mockListarEstados.mockResolvedValue([
     { id: 1, nome: "Em condições" },
     { id: 2, nome: "Em manutenção" },
@@ -75,11 +75,14 @@ describe("EscanearScreen", () => {
     renderScreen();
     expect(screen.getByText("Inventário em campo")).toBeTruthy();
     await waitFor(() => expect(mockListarEstados).toHaveBeenCalled());
+    expect(screen.queryByTestId('camera-view')).toBeNull();
   });
 
   it("busca o patrimonio ao escanear um QR code valido", async () => {
     mockBuscarPorNumero.mockResolvedValue([PATRIMONIO]);
     renderScreen();
+
+    fireEvent.press(screen.getByRole('button', { name: 'Ativar câmera' }));
 
     fireEvent(screen.UNSAFE_getByType(CameraView), "barcodeScanned", {
       data: "zelium://patrimonio/QR-001",
@@ -95,6 +98,7 @@ describe("EscanearScreen", () => {
     mockBuscarPorNumero.mockResolvedValue([PATRIMONIO]);
     mockRegistrarConferencia.mockResolvedValue({ id: 1 });
     renderScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Ativar câmera' }));
 
     fireEvent(screen.UNSAFE_getByType(CameraView), "barcodeScanned", {
       data: "zelium://patrimonio/QR-001",
@@ -114,31 +118,27 @@ describe("EscanearScreen", () => {
         observacao: "Conferido em campo",
       }),
     );
-    expect(mockToast).toHaveBeenCalledWith(
-      "Conferência registrada com sucesso",
-      "success",
-    );
+    expect(await screen.findByText('Conferência registrada com sucesso')).toBeTruthy();
   });
 
   it("avisa quando o patrimonio nao existe", async () => {
     mockBuscarPorNumero.mockResolvedValue([]);
     renderScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Ativar câmera' }));
 
     fireEvent(screen.UNSAFE_getByType(CameraView), "barcodeScanned", {
       data: "zelium://patrimonio/NX-999",
     });
 
     await waitFor(() =>
-      expect(mockToast).toHaveBeenCalledWith(
-        'Patrimônio "NX-999" não encontrado',
-        "error",
-      ),
+      expect(screen.getByText('Patrimônio "NX-999" não encontrado')).toBeTruthy(),
     );
   });
 
   it("aceita numero puro no QR code", async () => {
     mockBuscarPorNumero.mockResolvedValue([PATRIMONIO]);
     renderScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Ativar câmera' }));
 
     fireEvent(screen.UNSAFE_getByType(CameraView), "barcodeScanned", {
       data: "2024/001",
@@ -147,5 +147,34 @@ describe("EscanearScreen", () => {
     await waitFor(() =>
       expect(mockBuscarPorNumero).toHaveBeenCalledWith("2024/001"),
     );
+  });
+
+  it('permite consulta manual sem câmera e mantém os dados após falha de gravação', async () => {
+    mockBuscarPorNumero.mockResolvedValue([PATRIMONIO]);
+    mockRegistrarConferencia.mockRejectedValueOnce(new Error('Sem conexão'));
+    renderScreen();
+    fireEvent.changeText(screen.getByLabelText('Número de patrimônio'), ' QR-001 ');
+    fireEvent.press(screen.getByRole('button', { name: 'Buscar patrimônio' }));
+    await screen.findByText('QR-001');
+    expect(mockBuscarPorNumero).toHaveBeenCalledWith('QR-001');
+    fireEvent.changeText(screen.getByLabelText('Observação (opcional)'), 'Não perder este texto');
+    fireEvent.press(screen.getByRole('button', { name: 'Registrar conferência' }));
+    await screen.findByText('Erro ao registrar a conferência. Seus dados foram mantidos para tentar novamente.');
+    expect(screen.getByLabelText('Observação (opcional)').props.value).toBe('Não perder este texto');
+    expect(screen.queryByTestId('camera-view')).toBeNull();
+  });
+
+  it('não registra duas conferências nem permite trocar o bem enquanto salva', async () => {
+    mockBuscarPorNumero.mockResolvedValue([PATRIMONIO]);
+    mockRegistrarConferencia.mockImplementation(() => new Promise(() => {}));
+    renderScreen();
+    fireEvent.changeText(screen.getByLabelText('Número de patrimônio'), 'QR-001');
+    fireEvent.press(screen.getByRole('button', { name: 'Buscar patrimônio' }));
+    await screen.findByText('QR-001');
+    const submit = screen.getByRole('button', { name: 'Registrar conferência' });
+    fireEvent.press(submit); fireEvent.press(submit);
+    expect(mockRegistrarConferencia).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText('Observação (opcional)')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Conferir outro patrimônio' })).toBeDisabled();
   });
 });

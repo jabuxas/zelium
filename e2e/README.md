@@ -35,6 +35,10 @@ npm run report
 Expo Web com bundle `--no-dev`: isso não é um APK nem prova câmera/GPS/teclado nativo. A exportação do
 app e verificações de hardware são registradas separadamente na auditoria.
 
+O E2E do scanner também decodifica um QR real usando um vídeo **sintético local**
+(Canvas/MediaStream). Isso verifica o leitor web empacotado e a liberação da captura,
+mas não substitui validar câmera e permissões em um aparelho físico.
+
 Relatório HTML, screenshots e traces ficam em diretórios ignorados pelo Git.
 Traces podem conter credenciais **de demonstração** e tokens do banco descartável;
 não publique esses arquivos indiscriminadamente. Asserções e seed usam somente

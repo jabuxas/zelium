@@ -260,6 +260,13 @@ curl -s "http://localhost:8000/api/relatorios/exportar/pdf?tipo=por-ambiente" \
 
 **O que verificar:** etiqueta legível e conferência registrada pelo app.
 
+O app não abre a câmera automaticamente: use **Ativar câmera** e conceda a
+permissão quando solicitado. **Número de patrimônio → Buscar patrimônio** permite
+continuar sem câmera. No navegador, o leitor `jsqr` é empacotado localmente, sem
+scripts de CDN. Ao sair da tela ou localizar um bem, a captura é encerrada.
+Falha ao salvar mantém estado e observação para nova tentativa. O E2E web usa
+captura sintética; câmera/permissões nativas ainda exigem aparelho ou emulador.
+
 1. Web: em `/patrimonios`, clique no ícone de **QR Code** de um item →
    página da etiqueta com o QR e botão **Imprimir etiqueta**.
 2. `GET /api/patrimonios/1/etiqueta` também retorna o HTML imprimível.
