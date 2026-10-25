@@ -3,6 +3,21 @@ import { API_URL } from '../playwright.config';
 import { apiHeaders } from '../support/helpers';
 import { createPatrimonio } from '../support/data';
 
+test('ambiente rejeita responsável ausente ou inválido sem alterar o registro', async ({ request }) => {
+  const headers = await apiHeaders(request);
+  const before = await request.get(`${API_URL}/api/ambientes/1`, { headers });
+  expect(before.status()).toBe(200);
+  const original = await before.json();
+  for (const responsavel_id of [undefined, null, 0, -1, 1.5, false, 'inválido']) {
+    const response = await request.put(`${API_URL}/api/ambientes/1`, { headers, data: { nome: 'Não persistir', responsavel_id } });
+    expect(response.status()).toBe(400);
+    expect((await response.json()).error).toContain('responsavel_id');
+  }
+  const after = await request.get(`${API_URL}/api/ambientes/1`, { headers });
+  expect(after.status()).toBe(200);
+  expect(await after.json()).toEqual(original);
+});
+
 for (const papel of ['gestor', 'responsavel', 'conferente'] as const) {
   test(`${papel}: consulta, confere e abre solicitação sem exceder permissões`, async ({ request }) => {
     const gestor = await apiHeaders(request);

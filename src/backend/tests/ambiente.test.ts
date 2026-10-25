@@ -130,13 +130,20 @@ describe('PUT /api/ambientes/:id', () => {
   });
 
   it('400 quando responsavel_id é removido (null)', async () => {
-    (MockedService.prototype.update as jest.Mock).mockRejectedValue(new Error('responsavel_id é obrigatório'));
-
     const res = await request(app)
       .put('/api/ambientes/1')
       .send({ nome: 'Lab', responsavel_id: null });
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'responsavel_id é obrigatório' });
+    expect(MockedService.prototype.update).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, '', ' ', 0, -1, 1.5, false, 'abc', [], {}])('400 para responsável inválido: %p', async responsavel_id => {
+    const res = await request(app).put('/api/ambientes/1').send({ nome: 'Lab', responsavel_id });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/responsavel_id/);
+    expect(MockedService.prototype.update).not.toHaveBeenCalled();
   });
 
   it('500 quando service lança erro', async () => {

@@ -4,6 +4,16 @@ import { AmbienteService } from "../services/AmbienteService";
 
 const service = new AmbienteService();
 
+function validarResponsavel(value: unknown): string | null {
+  if (value == null || (typeof value === 'string' && !value.trim())) {
+    return 'responsavel_id é obrigatório';
+  }
+  if ((typeof value !== 'number' && typeof value !== 'string') || !Number.isSafeInteger(Number(value)) || Number(value) <= 0) {
+    return 'responsavel_id deve ser um inteiro positivo';
+  }
+  return null;
+}
+
 export const AmbienteController = {
   async findAll(_req: Request, res: Response) {
     const items = await service.findAll();
@@ -23,9 +33,8 @@ export const AmbienteController = {
       return res.status(400).json({ error: 'nome é obrigatório' });
     }
 
-    if (!responsavel_id) {
-      return res.status(400).json({ error: 'responsavel_id é obrigatório' });
-    }
+    const erroResponsavel = validarResponsavel(responsavel_id);
+    if (erroResponsavel) return res.status(400).json({ error: erroResponsavel });
 
     try {
       const item = await service.create(req.body);
@@ -42,6 +51,8 @@ export const AmbienteController = {
   },
 
   async update(req: Request, res: Response, next: NextFunction) {
+    const erroResponsavel = validarResponsavel(req.body?.responsavel_id);
+    if (erroResponsavel) return res.status(400).json({ error: erroResponsavel });
     try {
       const item = await service.update(Number(req.params.id), req.body);
       if (!item) return res.status(404).json({ error: 'Não encontrado' });
