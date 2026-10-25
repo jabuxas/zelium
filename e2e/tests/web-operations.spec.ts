@@ -54,6 +54,7 @@ for (const papel of ['gestor', 'responsavel'] as const) {
     await expect(page.getByRole('row').filter({ hasText: numero })).toHaveCount(0);
     await page.goto('/ambientes');
     await page.getByRole('link', { name: `Editar ${ambiente}`, exact: true }).click();
+    await expect(page.getByLabel('Nome do Ambiente *', { exact: true })).toHaveValue(ambiente);
     await page.getByLabel('Nome do Ambiente *', { exact: true }).fill(`${ambiente} revisada`);
     await page.getByRole('button', { name: 'Salvar Alterações', exact: true }).click();
     await expect(page.getByRole('row').filter({ hasText: `${ambiente} revisada` })).toBeVisible();

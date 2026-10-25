@@ -20,6 +20,8 @@ export default function AmbienteForm() {
   const [responsavelId, setResponsavelId] = useState("");
   const [responsaveis, setResponsaveis] = useState<Responsavel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+  const carregandoDados = isEdit && loadedId !== String(id);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,21 +33,26 @@ export default function AmbienteForm() {
 
   useEffect(() => {
     if (!isEdit) return;
+    let active = true;
     apiFetch(`${API_URL}/ambientes/${id}`)
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error('Erro ao carregar ambiente')))
       .then((data) => {
+        if (!active) return;
         setNome(data.nome ?? "");
         setBloco(data.bloco ?? "");
         setAndar(data.andar ?? "");
         setResponsavelId(
           data.responsavel_id ? String(data.responsavel_id) : "",
         );
+        setLoadedId(String(id));
       })
-      .catch(() => setErro("Erro ao carregar ambiente"));
+      .catch(() => { if (active) setErro("Erro ao carregar ambiente"); });
+    return () => { active = false; };
   }, [id, isEdit]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (carregandoDados || loading) return;
     setErro(null);
 
     if (!nome.trim()) {
@@ -101,9 +108,10 @@ export default function AmbienteForm() {
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        {erro && <p className="text-red-600 mb-4">{erro}</p>}
+        {erro && <p role="alert" className="text-red-600 mb-4">{erro}</p>}
+        {carregandoDados && !erro && <p role="status" className="text-gray-600 mb-4">Carregando ambiente...</p>}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
+          <fieldset disabled={loading || carregandoDados}>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               Informações Básicas
             </h2>
@@ -149,7 +157,7 @@ export default function AmbienteForm() {
                 />
               </div>
             </div>
-          </div>
+          </fieldset>
 
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -161,6 +169,7 @@ export default function AmbienteForm() {
               </label>
               <select
                 id="ambiente-responsavel"
+                disabled={loading || carregandoDados}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                 value={responsavelId}
                 onChange={(e) => setResponsavelId(e.target.value)}
@@ -179,7 +188,7 @@ export default function AmbienteForm() {
           <div className="flex gap-4 pt-4 border-t border-gray-200">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || carregandoDados}
               className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               <Save size={20} />
