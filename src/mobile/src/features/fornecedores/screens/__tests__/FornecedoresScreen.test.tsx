@@ -100,8 +100,8 @@ describe("FornecedoresScreen", () => {
       expect(screen.getByText("Novo Fornecedor")).toBeTruthy();
     });
 
-    expect(screen.getAllByText("Nome do fornecedor").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("CNPJ (opcional)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Nome do fornecedor *").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CNPJ *").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Contato (opcional)").length).toBeGreaterThan(0);
   });
 });

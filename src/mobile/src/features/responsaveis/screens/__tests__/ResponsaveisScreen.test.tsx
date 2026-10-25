@@ -100,8 +100,8 @@ describe("ResponsaveisScreen", () => {
       expect(screen.getByText("Novo Responsável")).toBeTruthy();
     });
 
-    expect(screen.getAllByText("Nome do responsável").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("E-mail (opcional)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Nome do responsável *").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("E-mail *").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Telefone (opcional)").length).toBeGreaterThan(0);
   });
 });

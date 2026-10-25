@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   View,
   Pressable,
@@ -33,6 +33,7 @@ export type FormField = {
   keyboardType?: KeyboardType;
   type?: "text" | "select";
   options?: SelectOption[];
+  required?: boolean;
 };
 
 export type EntityFormSheetProps = {
@@ -63,12 +64,22 @@ export function EntityFormSheet({
   const theme = useTheme<AppTheme>();
   const { height: windowHeight } = useWindowDimensions();
   const [openSelect, setOpenSelect] = useState<string | null>(null);
+  const [attempted, setAttempted] = useState(false);
+  const missingFields = fields.filter(field => field.required && !values[field.name]?.trim());
+  useEffect(() => { if (visible) { setAttempted(false); setOpenSelect(null); } }, [visible]);
+
+  function save() {
+    if (saving) return;
+    setAttempted(true);
+    if (missingFields.length === 0) onSave();
+  }
 
   return (
     <Portal>
       <Modal
         visible={visible}
-        onDismiss={onCancel}
+        onDismiss={() => { if (!saving) onCancel(); }}
+        dismissable={!saving}
         contentContainerStyle={[
           styles.modal,
           { backgroundColor: theme.colors.surface },
@@ -86,6 +97,10 @@ export function EntityFormSheet({
             >
               {title}
             </Text>
+            {fields.some(field => field.required) && <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>Campos com * são obrigatórios.</Text>}
+            {attempted && missingFields.length > 0 && <Text accessibilityRole="alert" style={{ color: theme.colors.error }}>
+              Campos obrigatórios: {missingFields.map(field => field.label).join(', ')}.
+            </Text>}
           </View>
 
           <ScrollView
@@ -114,7 +129,8 @@ export function EntityFormSheet({
                     >
                       <View pointerEvents="none">
                         <TextInput
-                          label={field.label}
+                          label={field.required ? `${field.label} *` : field.label}
+                          error={attempted && missingFields.includes(field)}
                           {...(field.placeholder
                             ? { placeholder: field.placeholder }
                             : {})}
@@ -165,7 +181,8 @@ export function EntityFormSheet({
               return (
                 <TextInput
                   key={field.name}
-                  label={field.label}
+                  label={field.required ? `${field.label} *` : field.label}
+                  error={attempted && missingFields.includes(field)}
                   {...(field.placeholder
                     ? { placeholder: field.placeholder }
                     : {})}
@@ -197,7 +214,7 @@ export function EntityFormSheet({
             </Button>
             <Button
               mode="contained"
-              onPress={onSave}
+              onPress={save}
               loading={saving}
               disabled={saving}
               style={styles.button}

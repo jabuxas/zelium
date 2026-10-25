@@ -60,3 +60,20 @@ for (const papel of ['responsavel', 'conferente'] as const) {
     }
   });
 }
+
+for (const path of ['responsaveis', 'conferentes', 'fornecedores']) {
+  test(`app: ${path} indica campos exigidos pela API antes de enviar`, async ({ page }) => {
+    await loginMobile(page);
+    await page.goto(`/${path}`);
+    await page.getByTestId(`${path}-fab`).click();
+    const nome = path === 'responsaveis' ? 'Nome do responsável' : path === 'conferentes' ? 'Nome do conferente' : 'Nome do fornecedor';
+    await page.getByLabel(nome, { exact: true }).fill('Cadastro incompleto de teste');
+    const posts: string[] = [];
+    page.on('request', req => { if (req.method() === 'POST') posts.push(req.url()); });
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+    await expect(page.getByText(`Campos obrigatórios: ${path === 'fornecedores' ? 'CNPJ' : 'E-mail'}.`, { exact: true })).toBeVisible();
+    expect(posts).toEqual([]);
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Salvar', exact: true })).toHaveCount(0);
+  });
+}

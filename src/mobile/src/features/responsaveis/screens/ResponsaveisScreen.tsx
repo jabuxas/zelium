@@ -24,11 +24,13 @@ const FORM_FIELDS: FormField[] = [
   {
     name: "nome",
     label: "Nome do responsável",
+    required: true,
     placeholder: "Nome do responsável",
   },
   {
     name: "email",
-    label: "E-mail (opcional)",
+    label: "E-mail",
+    required: true,
     placeholder: "E-mail (opcional)",
   },
   {

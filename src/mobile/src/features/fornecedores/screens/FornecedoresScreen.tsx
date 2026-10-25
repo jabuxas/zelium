@@ -24,11 +24,13 @@ const FORM_FIELDS: FormField[] = [
   {
     name: "nome",
     label: "Nome do fornecedor",
+    required: true,
     placeholder: "Nome do fornecedor",
   },
   {
     name: "cnpj",
-    label: "CNPJ (opcional)",
+    label: "CNPJ",
+    required: true,
     placeholder: "CNPJ (opcional)",
   },
   {

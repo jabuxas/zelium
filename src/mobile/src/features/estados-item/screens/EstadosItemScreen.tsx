@@ -21,7 +21,7 @@ import type {
 import { DependencyConflictError } from "@/src/shared/api/errors";
 
 const FORM_FIELDS: FormField[] = [
-  { name: "nome", label: "Nome do estado", placeholder: "Nome do estado" },
+  { name: "nome", label: "Nome do estado", placeholder: "Nome do estado", required: true },
   {
     name: "descricao",
     label: "Descrição (opcional)",

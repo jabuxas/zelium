@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react-native";
-import { PaperProvider } from "react-native-paper";
+import { Modal, PaperProvider } from "react-native-paper";
 import { EntityFormSheet } from "@/src/shared/ui/admin/EntityFormSheet";
 import type { FormField } from "@/src/shared/ui/admin/EntityFormSheet";
 
@@ -155,5 +155,23 @@ describe("EntityFormSheet", () => {
 
     expect(screen.getByTestId("my-form")).toBeTruthy();
     expect(screen.getByTestId("my-form-field-nome")).toBeTruthy();
+  });
+
+  it('explica campos obrigatórios e não envia valores vazios', () => {
+    const onSave = jest.fn();
+    renderWithPaper(<EntityFormSheet visible title="Cadastro" fields={[{ name: 'nome', label: 'Nome', required: true }]}
+      values={{ nome: '   ' }} onChange={jest.fn()} onSave={onSave} onCancel={jest.fn()} />);
+    fireEvent.press(screen.getByTestId('entity-form-sheet-save'));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByText('Campos obrigatórios: Nome.')).toBeTruthy();
+    expect(screen.getAllByText('Nome *').length).toBeGreaterThan(0);
+  });
+
+  it('não fecha pelo backdrop durante a gravação', () => {
+    const onCancel = jest.fn();
+    renderWithPaper(<EntityFormSheet visible title="Cadastro" fields={fields} values={values}
+      onChange={jest.fn()} onSave={jest.fn()} onCancel={onCancel} saving />);
+    fireEvent(screen.UNSAFE_getByType(Modal), 'dismiss');
+    expect(onCancel).not.toHaveBeenCalled();
   });
 });

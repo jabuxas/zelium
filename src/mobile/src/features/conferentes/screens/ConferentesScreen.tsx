@@ -21,10 +21,11 @@ import type {
 import { DependencyConflictError } from "@/src/shared/api/errors";
 
 const FORM_FIELDS: FormField[] = [
-  { name: "nome", label: "Nome do conferente", placeholder: "Nome do conferente" },
+  { name: "nome", label: "Nome do conferente", placeholder: "Nome do conferente", required: true },
   {
     name: "email",
-    label: "Email (opcional)",
+    label: "E-mail",
+    required: true,
     placeholder: "Email (opcional)",
   },
 ];

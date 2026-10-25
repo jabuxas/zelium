@@ -113,7 +113,7 @@ describe("ConferentesScreen", () => {
       expect(screen.getByText("Novo Conferente")).toBeTruthy();
     });
 
-    expect(screen.getAllByText("Nome do conferente").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Email (opcional)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Nome do conferente *").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("E-mail *").length).toBeGreaterThan(0);
   });
 });
