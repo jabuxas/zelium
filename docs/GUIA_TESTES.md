@@ -380,12 +380,32 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test -- --runInBand` | 224 testes: CRUDs, RBAC, multiempresa, notificações, relatórios (CSV/PDF), QR/conferência, depreciação, auditoria, versionamento |
-| Frontend | `cd src/front && pnpm test --runInBand` | 102 testes: listas, formulários, dashboard, permissões, notificações, inspeção, histórico e navegação |
-| Mobile | `cd src/mobile && npm test -- --runInBand` | 205 testes: telas, permissões, repositórios, hooks, dashboard, parser do QR, escaneamento |
+| Backend | `cd src/backend && npm test -- --runInBand` | 257 testes na última rodada completa: CRUDs, RBAC, multiempresa, notificações, relatórios (CSV/PDF), QR/conferência, depreciação, auditoria/rollback, versionamento |
+| Frontend | `cd src/front && pnpm test --runInBand` | 116 testes: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação e configuração de avaria |
+| Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
+| E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro e permissões |
+| E2E interfaces | `cd e2e && npm test -- --project=web --project=mobile` | Login, cadastros, inventário, solicitações web, relatórios/downloads web, conferência, fotos e histórico do app |
+| E2E produção | `cd e2e && npm run test:production` | Mesmos cenários com build Next em `.next-e2e`; Expo Web continua distinto de homologação nativa |
+| Infraestrutura E2E | `cd e2e && npm run test:infrastructure` | Encerramento dos processos filhos/netos da UI |
 
 > Os testes de banco do backend usam **containers isolados** (Testcontainers) —
 > não dependem de um PostgreSQL local. É preciso ter Docker rodando.
+
+Não execute duas rodadas Playwright simultaneamente: elas usam portas fixas
+8870/3370/8170. Os servidores e anexos são descartáveis, com SMTP desativado;
+nenhuma execução deve apontar ao banco real. Consulte `AUDITORIA_E2E.md` para
+resultados por rodada, evidências e limitações. As contagens acima não significam
+validação de câmera/GPS/teclado/instalação em dispositivo físico.
+
+Em **Estados do Item**, o Gestor pode configurar **Indica avaria** no web/app.
+Essa configuração alimenta os indicadores de avaria e notificações de mudança
+de estado; não depende do nome ou ID do cadastro. Confira também se editar
+preserva a configuração e se desativá-la persiste após reabrir o formulário.
+
+O lint mobile passou; o web ainda registra um erro anterior em
+`app/lib/auth-context.tsx` e dois avisos (navegação em `api-client.ts` e etiqueta). Build Next e exportação Expo
+passaram, mas não substituem corrigir esses achados nem as dependências de
+desenvolvimento/Expo abertas no relatório de auditoria.
 
 CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 (O job do mobile não está no workflow — veja "O que falta".)
