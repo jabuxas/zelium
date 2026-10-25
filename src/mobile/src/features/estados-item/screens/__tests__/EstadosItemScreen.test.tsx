@@ -37,7 +37,7 @@ import EstadosItemScreen from "../EstadosItemScreen";
 
 const MOCK_DATA = [
   { id: 1, nome: "Bom", descricao: "Estado bom" },
-  { id: 2, nome: "Regular", descricao: "Estado regular" },
+  { id: 2, nome: "Regular", descricao: "Estado regular", avaria: true },
   { id: 3, nome: "Ruim" },
 ];
 
@@ -160,7 +160,7 @@ describe("EstadosItemScreen", () => {
     fireEvent.press(screen.getByTestId("estados-item-form-save"));
 
     await waitFor(() => {
-      expect(mockHook.create).toHaveBeenCalledWith({ nome: "Novo" });
+      expect(mockHook.create).toHaveBeenCalledWith({ nome: "Novo", avaria: false });
     });
   });
 
@@ -190,5 +190,34 @@ describe("EstadosItemScreen", () => {
     await waitFor(() => {
       expect(mockHook.remove).toHaveBeenCalledWith(1);
     });
+  });
+
+  it('cadastra um estado que indica avaria', async () => {
+    renderScreen();
+    fireEvent.press(screen.getByTestId('estados-item-fab'));
+    fireEvent.changeText(screen.getByTestId('estados-item-form-field-nome'), 'Danificado');
+    const avaria = screen.getByRole('switch', { name: 'Indica avaria' });
+    expect(avaria).not.toBeChecked();
+    fireEvent(avaria, 'valueChange', true);
+    fireEvent.press(screen.getByTestId('estados-item-form-save'));
+    await waitFor(() => expect(mockHook.create).toHaveBeenCalledWith({ nome: 'Danificado', avaria: true }));
+  });
+
+  it('restaura a configuração existente e permite desativar avaria', async () => {
+    renderScreen();
+    fireEvent.press(screen.getByTestId('estado-item-card-2-edit'));
+    const avaria = screen.getByRole('switch', { name: 'Indica avaria' });
+    expect(avaria).toBeChecked();
+    fireEvent(avaria, 'valueChange', false);
+    fireEvent.press(screen.getByTestId('estados-item-form-save'));
+    await waitFor(() => expect(mockHook.update).toHaveBeenCalledWith(2, { avaria: false }));
+  });
+
+  it('permite limpar a descrição existente', async () => {
+    renderScreen();
+    fireEvent.press(screen.getByTestId('estado-item-card-1-edit'));
+    fireEvent.changeText(screen.getByTestId('estados-item-form-field-descricao'), '');
+    fireEvent.press(screen.getByTestId('estados-item-form-save'));
+    await waitFor(() => expect(mockHook.update).toHaveBeenCalledWith(1, { descricao: null }));
   });
 });

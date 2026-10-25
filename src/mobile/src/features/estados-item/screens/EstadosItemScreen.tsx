@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { FAB } from "react-native-paper";
+import { FAB, Switch, Text } from "react-native-paper";
 import { usePodeGerir } from '@/src/shared/auth/permissions';
 import { useEstadosItem } from "../hooks/useEstadosItem";
 import {
@@ -31,7 +31,7 @@ const FORM_FIELDS: FormField[] = [
 ];
 
 function itemToMetadata(item: EstadoItem): MetadataItem[] {
-  const meta: MetadataItem[] = [];
+  const meta: MetadataItem[] = [{ label: 'Avaria', value: item.avaria ? 'Sim' : 'Não' }];
   if (item.descricao) {
     meta.push({ label: "Descrição", value: item.descricao });
   }
@@ -39,8 +39,7 @@ function itemToMetadata(item: EstadoItem): MetadataItem[] {
 }
 
 function itemToValues(item?: EstadoItem): Record<string, string> {
-  if (!item) return { nome: "", descricao: "" };
-  return { nome: item.nome, descricao: item.descricao ?? "" };
+  return { nome: item?.nome ?? '', descricao: item?.descricao ?? '', avaria: String(item?.avaria ?? false) };
 }
 
 export default function EstadosItemScreen() {
@@ -72,7 +71,7 @@ export default function EstadosItemScreen() {
 
   const handleOpenCreate = useCallback(() => {
     setEditingItem(null);
-    setFormValues({ nome: "", descricao: "" });
+    setFormValues(itemToValues());
     setFormVisible(true);
   }, []);
 
@@ -98,11 +97,10 @@ export default function EstadosItemScreen() {
         const descricaoChanged =
           (formValues.descricao?.trim() ?? "") !== (editingItem.descricao ?? "");
         if (descricaoChanged) {
-          const trimmed = formValues.descricao?.trim();
-          if (trimmed) {
-            dto.descricao = trimmed;
-          }
+          dto.descricao = formValues.descricao?.trim() || null;
         }
+        const avaria = formValues.avaria === 'true';
+        if (avaria !== (editingItem.avaria ?? false)) dto.avaria = avaria;
         await update(editingItem.id, dto);
       } else {
         const trimmedDescricao = formValues.descricao?.trim();
@@ -110,6 +108,7 @@ export default function EstadosItemScreen() {
         if (trimmedDescricao) {
           dto.descricao = trimmedDescricao;
         }
+        dto.avaria = formValues.avaria === 'true';
         await create(dto);
       }
       setFormVisible(false);
@@ -199,6 +198,14 @@ export default function EstadosItemScreen() {
         onSave={handleSave}
         onCancel={handleCancelForm}
         saving={saving}
+        extraContent={<>
+          <View style={styles.avaria}>
+            <Text variant="bodyLarge">Indica avaria</Text>
+            <Switch accessibilityLabel="Indica avaria" value={formValues.avaria === 'true'}
+              disabled={saving} onValueChange={value => handleFormChange('avaria', String(value))} />
+          </View>
+          <Text variant="bodySmall">Bens neste estado entram no indicador de avarias. Uma conferência neste estado pode gerar notificação.</Text>
+        </>}
         testID="estados-item-form"
       />
       <ConfirmDeleteDialog
@@ -214,6 +221,7 @@ export default function EstadosItemScreen() {
 }
 
 const styles = StyleSheet.create({
+  avaria: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48 },
   container: {
     flex: 1,
   },

@@ -12,7 +12,7 @@ const catalogs = [
 ];
 
 for (const catalog of catalogs) {
-  test(`app: Gestor mantém ${catalog.path} pelo formulário real`, async ({ page }) => {
+  test(`app: Gestor mantém ${catalog.path} pelo formulário real`, async ({ page }, info) => {
     await loginMobile(page);
     await page.goto(`/${catalog.path}`);
     await page.getByTestId(`${catalog.path}-fab`).click();
@@ -20,19 +20,38 @@ for (const catalog of catalogs) {
     await page.getByLabel(catalog.name, { exact: true }).fill(nome);
     if (['conferentes', 'responsaveis'].includes(catalog.path)) await page.getByLabel(/e-?mail/i).fill(`${randomUUID()}@e2e.local`);
     if (catalog.path === 'fornecedores') await page.getByLabel(/CNPJ/).fill(`99${String(Date.now()).slice(-12)}`);
+    if (catalog.path === 'estados-item') {
+      await page.getByRole('switch', { name: 'Indica avaria', exact: true }).click();
+      await expect(page.getByTestId('estados-item-form-surface')).toHaveCSS('opacity', '1');
+      for (const width of [320, 375, 414, 768]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect(page.getByRole('switch', { name: 'Indica avaria', exact: true })).toBeChecked();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await page.screenshot({ path: info.outputPath(`avaria-app-${width}.png`), fullPage: true });
+      }
+    }
     const created = page.waitForResponse(r => r.url() === `${API_URL}/api/${catalog.api}` && r.request().method() === 'POST');
     await page.getByRole('button', { name: 'Salvar', exact: true }).click();
     const response = await created;
     expect(response.status()).toBe(201);
-    const { id } = await response.json();
+    const item = await response.json();
+    const { id } = item;
+    if (catalog.path === 'estados-item') expect(item.avaria).toBe(true);
     const cardId = `${catalog.card}-card-${id}`;
     await expect(page.getByTestId(cardId)).toBeVisible();
     await page.getByTestId(`${cardId}-edit`).click();
     await expect(page.getByLabel(catalog.name, { exact: true })).toHaveValue(nome);
+    if (catalog.path === 'estados-item') {
+      const avaria = page.getByRole('switch', { name: 'Indica avaria', exact: true });
+      await expect(avaria).toBeChecked();
+      await avaria.click();
+    }
     await page.getByLabel(catalog.name, { exact: true }).fill(`${nome} editado`);
     const updated = page.waitForResponse(r => r.url() === `${API_URL}/api/${catalog.api}/${id}` && r.request().method() === 'PUT');
     await page.getByRole('button', { name: 'Salvar', exact: true }).click();
-    expect((await updated).status()).toBe(200);
+    const updateResponse = await updated;
+    expect(updateResponse.status()).toBe(200);
+    if (catalog.path === 'estados-item') expect((await updateResponse.json()).avaria).toBe(false);
     await expect(page.getByTestId(cardId).getByText(`${nome} editado`, { exact: true })).toBeVisible();
     await page.getByTestId(`${cardId}-delete`).click();
     const deleted = page.waitForResponse(r => r.url() === `${API_URL}/api/${catalog.api}/${id}` && r.request().method() === 'DELETE');

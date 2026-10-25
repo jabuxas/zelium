@@ -17,6 +17,7 @@ export default function EstadoItemForm() {
 
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [avaria, setAvaria] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -28,6 +29,7 @@ export default function EstadoItemForm() {
       .then(data => {
         setNome(data.nome ?? '');
         setDescricao(data.descricao ?? '');
+        setAvaria(data.avaria === true);
       })
       .catch(() => setErro('Erro ao carregar estado do item'));
   }, [id, isEdit]);
@@ -45,6 +47,7 @@ export default function EstadoItemForm() {
     const body = {
       nome: nome.trim(),
       descricao: descricao.trim() || null,
+      avaria,
     };
 
     try {
@@ -116,6 +119,12 @@ export default function EstadoItemForm() {
                 />
               </div>
             </div>
+            <label className="mt-4 flex min-h-11 items-center gap-3 text-sm font-medium text-gray-900">
+              <input type="checkbox" checked={avaria} disabled={loading} onChange={e => setAvaria(e.target.checked)}
+                aria-describedby="estado-avaria-ajuda" className="h-5 w-5 accent-blue-600" />
+              Indica avaria
+            </label>
+            <p id="estado-avaria-ajuda" className="text-sm text-gray-600">Bens neste estado entram no indicador de avarias. Uma conferência neste estado pode gerar notificação.</p>
           </div>
 
           <div className="flex gap-4 pt-4 border-t border-gray-200">

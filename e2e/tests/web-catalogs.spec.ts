@@ -12,7 +12,7 @@ const catalogs = [
 ];
 
 for (const catalog of catalogs) {
-  test(`web: Gestor mantém ${catalog.path} pelo formulário real`, async ({ page }) => {
+  test(`web: Gestor mantém ${catalog.path} pelo formulário real`, async ({ page }, info) => {
     const nome = `E2E ${randomUUID().slice(0, 8)}`;
     await loginWeb(page);
     await page.goto(`/${catalog.path}`);
@@ -22,20 +22,32 @@ for (const catalog of catalogs) {
       await page.getByLabel(/Email.*\*/).fill(`${randomUUID()}@e2e.local`);
     }
     if (catalog.path === 'fornecedores') await page.getByLabel('CNPJ *', { exact: true }).fill(`99${String(Date.now()).slice(-12)}`);
+    if (catalog.path === 'estados-item') {
+      await page.getByRole('checkbox', { name: 'Indica avaria', exact: true }).check();
+      await page.screenshot({ path: info.outputPath('avaria-web.png'), fullPage: true });
+    }
     const created = page.waitForResponse(r => r.url() === `${API_URL}/api/${catalog.api}` && r.request().method() === 'POST');
     await page.getByRole('button', { name: /Cadastrar/ }).click();
-    expect((await created).status()).toBe(201);
+    const createResponse = await created;
+    expect(createResponse.status()).toBe(201);
+    if (catalog.path === 'estados-item') expect((await createResponse.json()).avaria).toBe(true);
     await expect(page).toHaveURL(new RegExp(`/${catalog.path}$`));
     const row = page.getByRole('row').filter({ hasText: nome });
     await expect(row).toBeVisible();
     await row.getByRole('link', { name: `Editar ${nome}`, exact: true }).click();
     await expect(page.getByLabel(catalog.nameLabel, { exact: true })).toHaveValue(nome);
+    if (catalog.path === 'estados-item') {
+      const avaria = page.getByRole('checkbox', { name: 'Indica avaria', exact: true });
+      await expect(avaria).toBeChecked();
+      await avaria.uncheck();
+    }
     const editado = `${nome} editado`;
     await page.getByLabel(catalog.nameLabel, { exact: true }).fill(editado);
     await page.getByRole('button', { name: 'Salvar Alterações', exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/${catalog.path}$`));
     const updated = page.getByRole('row').filter({ hasText: editado });
     await expect(updated).toBeVisible();
+    if (catalog.path === 'estados-item') await expect(updated.getByRole('cell', { name: 'Não', exact: true })).toBeVisible();
     page.once('dialog', dialog => dialog.accept());
     const deleted = page.waitForResponse(r => r.url().includes(`/api/${catalog.api}/`) && r.request().method() === 'DELETE');
     await updated.getByRole('button', { name: `Excluir ${editado}`, exact: true }).click();

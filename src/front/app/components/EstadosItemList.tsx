@@ -13,6 +13,7 @@ type EstadoItem = {
   id: number;
   nome: string;
   descricao: string | null;
+  avaria: boolean;
 };
 
 export default function EstadosItemList() {
@@ -113,13 +114,14 @@ export default function EstadosItemList() {
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nome</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Descricao</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Avaria</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Acoes</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filtrados.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                   Nenhum estado do item encontrado.
                 </td>
               </tr>
@@ -128,6 +130,7 @@ export default function EstadosItemList() {
                 <tr key={estado.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm text-gray-900 font-medium">{estado.nome}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{estado.descricao ?? '-'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{estado.avaria ? 'Sim' : 'Não'}</td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
                       {podeEditar && (

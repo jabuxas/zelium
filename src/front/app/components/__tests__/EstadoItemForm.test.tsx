@@ -44,6 +44,7 @@ describe('EstadoItemForm', () => {
       expect(JSON.parse(opts?.body as string)).toEqual({
         nome: 'Disponivel',
         descricao: 'Pronto para uso',
+        avaria: false,
       });
       return { status: 201, body: { id: 1 } };
     });
@@ -70,6 +71,7 @@ describe('EstadoItemForm', () => {
       expect(JSON.parse(opts.body as string)).toEqual({
         nome: 'Ativo revisado',
         descricao: 'Em uso',
+        avaria: false,
       });
       return { status: 200, body: { id: 7 } };
     });
@@ -114,5 +116,35 @@ describe('EstadoItemForm', () => {
     render(<EstadoItemForm />);
 
     expect(await screen.findByText(/erro ao carregar estado do item/i)).toBeInTheDocument();
+  });
+
+  it('envia a configuração de avaria ao cadastrar', async () => {
+    mockFetch((_url, opts) => {
+      expect(JSON.parse(opts!.body as string)).toMatchObject({ avaria: true });
+      return { status: 201, body: { id: 10 } };
+    });
+    render(<EstadoItemForm />);
+    await userEvent.type(screen.getByLabelText('Nome do Estado *'), 'Danificado');
+    const avaria = screen.getByRole('checkbox', { name: 'Indica avaria' });
+    expect(avaria).not.toBeChecked();
+    await userEvent.click(avaria);
+    await userEvent.click(screen.getByRole('button', { name: /cadastrar estado/i }));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/estados-item'));
+  });
+
+  it('carrega avaria existente e permite desativá-la na edição', async () => {
+    mockParams = { id: '7' };
+    mockFetch((_url, opts) => {
+      if (!opts?.method) return { status: 200, body: { id: 7, nome: 'Danificado', avaria: true } };
+      expect(JSON.parse(opts.body as string)).toMatchObject({ avaria: false });
+      return { status: 200, body: { id: 7 } };
+    });
+    render(<EstadoItemForm />);
+    await screen.findByDisplayValue('Danificado');
+    const avaria = screen.getByRole('checkbox', { name: 'Indica avaria' });
+    expect(avaria).toBeChecked();
+    await userEvent.click(avaria);
+    await userEvent.click(screen.getByRole('button', { name: /salvar alterações/i }));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/estados-item'));
   });
 });
