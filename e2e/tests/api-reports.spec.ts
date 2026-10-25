@@ -64,3 +64,20 @@ test('nega relatórios ao Conferente e financeiro ao Responsável, inclusive exp
   expect((await request.get(`${API_URL}/api/relatorios/patrimonios`)).status()).toBe(401);
   expect((await request.get(`${API_URL}/api/relatorios/exportar/csv?tipo=invalido`, { headers: resp })).status()).toBe(400);
 });
+
+test('Gestor exporta financeiro CSV/PDF no runtime real, com totais da própria organização', async ({ request }) => {
+  for (const email of ['gestor@zelium.com', 'gestor.b@e2e.local']) {
+    const headers = await apiHeaders(request, email);
+    const resumo = await request.get(`${API_URL}/api/relatorios/financeiro`, { headers });
+    expect(resumo.status()).toBe(200);
+    const { total } = await resumo.json();
+    const csv = await request.get(`${API_URL}/api/relatorios/exportar/csv?tipo=financeiro`, { headers });
+    expect(csv.status()).toBe(200);
+    const linhas = (await csv.text()).trim().split('\r\n');
+    expect(linhas[0]).toContain('valor_contabil');
+    expect(linhas.at(-1)!.split(';')).toEqual(['TOTAL', String(total.total_itens), String(total.valor_aquisicao), String(total.depreciacao_acumulada), String(total.valor_contabil)]);
+    const pdf = await request.get(`${API_URL}/api/relatorios/exportar/pdf?tipo=financeiro`, { headers });
+    expect(pdf.status()).toBe(200);
+    expect((await pdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
+  }
+});

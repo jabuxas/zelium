@@ -2,6 +2,7 @@ import { QueryTypes } from "sequelize";
 import PDFDocument from "pdfkit";
 import { sequelize } from "../database/connection";
 import { currentOrgId, DEFAULT_ORG_ID } from "../context/requestContext";
+import { DepreciacaoService } from './DepreciacaoService';
 
 function orgId(): number {
   return currentOrgId() ?? DEFAULT_ORG_ID;
@@ -133,7 +134,6 @@ export class RelatorioService {
       case "patrimonios":
         return { titulo: "Relatório de Patrimônios", linhas: await this.patrimonios(filtros) };
       case "financeiro": {
-        const { DepreciacaoService } = await import("./DepreciacaoService");
         const resumo = await new DepreciacaoService().resumoFinanceiro();
         const linhas = resumo.por_ambiente.map((linha) => ({
           ambiente: linha.ambiente,
