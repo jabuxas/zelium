@@ -122,12 +122,14 @@ export default function AmbientesList() {
 
                       <Link
                         href={`/ambientes/editar/${ambiente.id}`}
+                        aria-label={`Editar ${ambiente.nome}`}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                       >
                         <Edit2 size={18} />
                       </Link>
                       <button
                         onClick={() => handleDelete(ambiente.id)}
+                        aria-label={`Excluir ${ambiente.nome}`}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 size={18} />

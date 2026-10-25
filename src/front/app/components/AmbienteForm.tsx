@@ -109,10 +109,11 @@ export default function AmbienteForm() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="ambiente-nome" className="block text-sm font-medium text-gray-700 mb-2">
                   Nome do Ambiente *
                 </label>
                 <input
+                  id="ambiente-nome"
                   type="text"
                   placeholder="Ex: Sala 201"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -122,10 +123,11 @@ export default function AmbienteForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="ambiente-bloco" className="block text-sm font-medium text-gray-700 mb-2">
                   Bloco
                 </label>
                 <input
+                  id="ambiente-bloco"
                   type="text"
                   placeholder="Ex: Bloco A"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -134,10 +136,11 @@ export default function AmbienteForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="ambiente-andar" className="block text-sm font-medium text-gray-700 mb-2">
                   Andar/Localização
                 </label>
                 <input
+                  id="ambiente-andar"
                   type="text"
                   placeholder="Ex: 2º Andar"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -153,10 +156,11 @@ export default function AmbienteForm() {
               Responsável
             </h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="ambiente-responsavel" className="block text-sm font-medium text-gray-700 mb-2">
                 Responsável pelo Ambiente *
               </label>
               <select
+                id="ambiente-responsavel"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                 value={responsavelId}
                 onChange={(e) => setResponsavelId(e.target.value)}

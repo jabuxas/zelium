@@ -155,10 +155,11 @@ export default function PatrimonioForm() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações Básicas</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-numero" className="block text-sm font-medium text-gray-700 mb-2">
                   Número do Patrimônio *
                 </label>
                 <input
+                  id="patrimonio-numero"
                   type="text"
                   placeholder="Ex: 1234"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -168,10 +169,11 @@ export default function PatrimonioForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-tipo" className="block text-sm font-medium text-gray-700 mb-2">
                   Tipo de Material *
                 </label>
                 <select
+                  id="patrimonio-tipo"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={tipoMaterialId}
                   onChange={e => setTipoMaterialId(e.target.value)}
@@ -184,10 +186,11 @@ export default function PatrimonioForm() {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-descricao" className="block text-sm font-medium text-gray-700 mb-2">
                   Descrição *
                 </label>
                 <input
+                  id="patrimonio-descricao"
                   type="text"
                   placeholder="Ex: Notebook Dell Latitude 5420"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
@@ -197,10 +200,11 @@ export default function PatrimonioForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-valor" className="block text-sm font-medium text-gray-700 mb-2">
                   Valor (R$) *
                 </label>
                 <input
+                  id="patrimonio-valor"
                   type="number"
                   step="0.01"
                   min="0"
@@ -212,10 +216,11 @@ export default function PatrimonioForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-estado" className="block text-sm font-medium text-gray-700 mb-2">
                   Estado do Item *
                 </label>
                 <select
+                  id="patrimonio-estado"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={estadoItemId}
                   onChange={e => setEstadoItemId(e.target.value)}
@@ -233,10 +238,11 @@ export default function PatrimonioForm() {
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Fornecedor</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="patrimonio-fornecedor" className="block text-sm font-medium text-gray-700 mb-2">
                 Fornecedor
               </label>
               <select
+                id="patrimonio-fornecedor"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                 value={fornecedorId}
                 onChange={e => setFornecedorId(e.target.value)}
@@ -253,10 +259,11 @@ export default function PatrimonioForm() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Alocação</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-ambiente" className="block text-sm font-medium text-gray-700 mb-2">
                   Ambiente *
                 </label>
                 <select
+                  id="patrimonio-ambiente"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={ambienteId}
                   onChange={e => setAmbienteId(e.target.value)}
@@ -269,10 +276,11 @@ export default function PatrimonioForm() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-responsavel" className="block text-sm font-medium text-gray-700 mb-2">
                   Responsável *
                 </label>
                 <select
+                  id="patrimonio-responsavel"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={responsavelId}
                   onChange={e => setResponsavelId(e.target.value)}
@@ -291,10 +299,11 @@ export default function PatrimonioForm() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações Adicionais</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-data" className="block text-sm font-medium text-gray-700 mb-2">
                   Data de Aquisição
                 </label>
                 <input
+                  id="patrimonio-data"
                   type="date"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   value={dataAquisicao}
@@ -302,10 +311,11 @@ export default function PatrimonioForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-vida-util" className="block text-sm font-medium text-gray-700 mb-2">
                   Vida Útil (anos)
                 </label>
                 <input
+                  id="patrimonio-vida-util"
                   type="number"
                   min="1"
                   max="100"
@@ -319,10 +329,11 @@ export default function PatrimonioForm() {
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="patrimonio-residual" className="block text-sm font-medium text-gray-700 mb-2">
                   Valor Residual (R$)
                 </label>
                 <input
+                  id="patrimonio-residual"
                   type="number"
                   step="0.01"
                   min="0"
@@ -334,10 +345,11 @@ export default function PatrimonioForm() {
               </div>
             </div>
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="patrimonio-observacoes" className="block text-sm font-medium text-gray-700 mb-2">
                 Observações
               </label>
               <textarea
+                id="patrimonio-observacoes"
                 rows={4}
                 placeholder="Informações adicionais sobre o patrimônio..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"

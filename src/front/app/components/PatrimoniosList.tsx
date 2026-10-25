@@ -161,12 +161,14 @@ export default function PatrimoniosList() {
                       </Link>
                       <Link
                         href={`/patrimonios/editar/${patrimonio.id}`}
+                        aria-label={`Editar ${patrimonio.numero_patrimonio}`}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                       >
                         <Edit2 size={18} />
                       </Link>
                       <button
                         onClick={() => handleDelete(patrimonio.id)}
+                        aria-label={`Excluir ${patrimonio.numero_patrimonio}`}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 size={18} />
