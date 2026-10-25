@@ -13,13 +13,22 @@ const production = process.env.E2E_PRODUCTION === '1';
 let child;
 let stopping = false;
 function stop(signal) {
+  if (stopping) return;
   stopping = true;
   if (!child?.pid) return;
+  const pid = child.pid;
   try {
     // O grupo é exclusivo do processo que este script acabou de criar.
     if (process.platform === 'win32') child.kill(signal);
-    else process.kill(-child.pid, signal);
+    else process.kill(-pid, signal);
   } catch (error) { if (error.code !== 'ESRCH') throw error; }
+  if (process.platform !== 'win32') {
+    // Next pode continuar após o pnpm sair; limita o encerramento do grupo próprio.
+    setTimeout(() => {
+      try { process.kill(-pid, 'SIGKILL'); }
+      catch (error) { if (error.code !== 'ESRCH') throw error; }
+    }, 3000);
+  }
 }
 for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => stop(signal));
 function run(args) {
