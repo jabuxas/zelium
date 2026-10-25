@@ -3,6 +3,7 @@ import { EstadoItem } from "../models/EstadoItem";
 import { Patrimonio } from "../models/Patrimonio";
 import { currentContext, DEFAULT_ORG_ID } from "../context/requestContext";
 import { PatrimonioService } from "./PatrimonioService";
+import { sequelize } from '../database/connection';
 
 export interface CriarConferenciaData {
   patrimonio_id: number;
@@ -28,26 +29,27 @@ export class ConferenciaService {
    */
   async create(data: CriarConferenciaData) {
     const ctx = currentContext();
+    return sequelize.transaction(async transaction => {
+      const estadoValido =
+        data.estado_item_id === undefined ||
+        data.estado_item_id === null ||
+        (await EstadoItem.findByPk(data.estado_item_id, { transaction })) !== null;
 
-    const estadoValido =
-      data.estado_item_id === undefined ||
-      data.estado_item_id === null ||
-      (await EstadoItem.findByPk(data.estado_item_id)) !== null;
+      const conferencia = await Conferencia.create({
+        organizacao_id: ctx?.organizacaoId ?? DEFAULT_ORG_ID,
+        patrimonio_id: data.patrimonio_id,
+        usuario_id: ctx?.usuarioId ?? 0,
+        estado_item_id: estadoValido ? data.estado_item_id ?? null : null,
+        observacao: data.observacao ?? null,
+      }, { transaction });
 
-    const conferencia = await Conferencia.create({
-      organizacao_id: ctx?.organizacaoId ?? DEFAULT_ORG_ID,
-      patrimonio_id: data.patrimonio_id,
-      usuario_id: ctx?.usuarioId ?? 0,
-      estado_item_id: estadoValido ? data.estado_item_id ?? null : null,
-      observacao: data.observacao ?? null,
+      if (estadoValido && data.estado_item_id) {
+        await patrimonioService.update(data.patrimonio_id, {
+          estado_item_id: data.estado_item_id,
+        }, transaction);
+      }
+
+      return conferencia;
     });
-
-    if (estadoValido && data.estado_item_id) {
-      await patrimonioService.update(data.patrimonio_id, {
-        estado_item_id: data.estado_item_id,
-      });
-    }
-
-    return conferencia;
   }
 }

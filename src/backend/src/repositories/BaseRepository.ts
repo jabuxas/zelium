@@ -1,4 +1,4 @@
-import { CreationAttributes, Model, ModelStatic, Op } from "sequelize";
+import { CreationAttributes, Model, ModelStatic, Op, Transaction } from "sequelize";
 
 export class BaseRepository<T extends Model> {
   constructor(protected readonly model: ModelStatic<T>) {}
@@ -22,12 +22,14 @@ export class BaseRepository<T extends Model> {
     return this.model.sequelize!.transaction(transaction => this.model.create(data, { transaction }));
   }
 
-  async update(id: number, data: Partial<CreationAttributes<T>>): Promise<T | null> {
-    return this.model.sequelize!.transaction(async transaction => {
+  /** Reutiliza a transação do fluxo composto, ou confirma dado e evento juntos. */
+  async update(id: number, data: Partial<CreationAttributes<T>>, transaction?: Transaction): Promise<T | null> {
+    const save = async (transaction: Transaction) => {
       const instance = await this.model.findByPk(id, { transaction });
       if (!instance) return null;
       return instance.update(data, { transaction });
-    });
+    };
+    return transaction ? save(transaction) : this.model.sequelize!.transaction(save);
   }
 
   async delete(id: number): Promise<boolean> {

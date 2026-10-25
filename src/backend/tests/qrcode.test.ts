@@ -3,6 +3,7 @@ import type { Sequelize } from 'sequelize';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
 import { bearerToken, rawRequest } from './helpers/request';
+import { runWithContext } from '../src/context/requestContext';
 
 let app: Express;
 let sequelize: Sequelize;
@@ -14,6 +15,8 @@ let EstadoItem: any;
 let Ambiente: any;
 let Responsavel: any;
 let Patrimonio: any;
+let AuditLog: typeof import('../src/models/AuditLog').AuditLog;
+let Conferencia: typeof import('../src/models/Conferencia').Conferencia;
 
 const TOKEN_GESTOR = bearerToken('gestor', '1', 1);
 const TOKEN_CONFERENTE = bearerToken('conferente', '2', 1);
@@ -43,6 +46,8 @@ beforeAll(async () => {
   Patrimonio = (await import('../src/models/Patrimonio')).Patrimonio;
 
   await import('../src/database/index');
+  AuditLog = (await import('../src/models/AuditLog')).AuditLog;
+  Conferencia = (await import('../src/models/Conferencia')).Conferencia;
   await sequelize.sync({ force: true });
 
   app = (await import('../src/app')).default;
@@ -143,5 +148,43 @@ describe('QR Code e inventário em campo', () => {
   it('conferente pode listar conferencias mas nao excluir patrimonio', async () => {
     const res = await rawRequest(app).delete('/api/patrimonios/1').set(TOKEN_CONFERENTE);
     expect(res.status).toBe(403);
+  });
+
+  it.each(['conferencia', 'patrimonio'])('desfaz conferência e estado se o evento de %s falhar', async tabela => {
+    const bem = await Patrimonio.create({ numero_patrimonio: `ATOMIC-${tabela}`, descricao: 'Bem de teste', valor: 1,
+      tipo_material_id: 1, estado_item_id: 1, ambiente_id: 1, responsavel_id: 1, organizacao_id: 1 });
+    const eventosAntes = await AuditLog.count();
+    const original = AuditLog.create.bind(AuditLog);
+    const auditSpy = jest.spyOn(AuditLog, 'create');
+    if (tabela === 'patrimonio') auditSpy.mockImplementationOnce((values, options) => original(values, options));
+    auditSpy.mockRejectedValueOnce(new Error('Auditoria indisponível'));
+    const { NotificacaoService } = await import('../src/services/NotificacaoService');
+    const notificationSpy = jest.spyOn(NotificacaoService.prototype, 'notificar').mockResolvedValue();
+    try {
+      const res = await rawRequest(app).post(`/api/patrimonios/${bem.id}/conferencias`).set(TOKEN_CONFERENTE)
+        .send({ estado_item_id: 2, observacao: 'Não confirmar parcialmente' });
+      expect(res.status).toBe(500);
+      expect(await Conferencia.count({ where: { patrimonio_id: bem.id } })).toBe(0);
+      expect((await Patrimonio.findByPk(bem.id)).estado_item_id).toBe(1);
+      expect(await AuditLog.count()).toBe(eventosAntes);
+      expect(notificationSpy).not.toHaveBeenCalled();
+    } finally { auditSpy.mockRestore(); notificationSpy.mockRestore(); }
+  });
+
+  it('não notifica avaria antes do commit nem quando o fluxo composto é desfeito', async () => {
+    const bem = await Patrimonio.create({ numero_patrimonio: 'DEFERRED', descricao: 'Bem de teste', valor: 1,
+      tipo_material_id: 1, estado_item_id: 1, ambiente_id: 1, responsavel_id: 1, organizacao_id: 1 });
+    const { PatrimonioService } = await import('../src/services/PatrimonioService');
+    const { NotificacaoService } = await import('../src/services/NotificacaoService');
+    const spy = jest.spyOn(NotificacaoService.prototype, 'notificar').mockResolvedValue();
+    try {
+      await expect(runWithContext({ usuarioId: 2, papel: 'conferente', organizacaoId: 1 }, () => sequelize.transaction(async transaction => {
+        await new PatrimonioService().update(bem.id, { estado_item_id: 2 }, transaction);
+        expect(spy).not.toHaveBeenCalled();
+        throw new Error('Cancelar fluxo composto');
+      }))).rejects.toThrow('Cancelar fluxo composto');
+      expect(spy).not.toHaveBeenCalled();
+      expect((await Patrimonio.findByPk(bem.id)).estado_item_id).toBe(1);
+    } finally { spy.mockRestore(); }
   });
 });
