@@ -82,6 +82,34 @@ describe("Testes de integração do log de auditoria", () => {
     expect(log.usuario).toBe("Teste gestor (#1)");
   });
 
+  it('não confirma cadastro quando a auditoria falha', async () => {
+    const spy = jest.spyOn(AuditLog, 'create').mockRejectedValueOnce(new Error('Auditoria indisponível'));
+    try {
+      const res = await request(app).post('/api/tipo-material').send({ nome: 'Não confirmar' });
+      expect(res.status).toBe(500);
+    } finally { spy.mockRestore(); }
+    expect(await TipoMaterial.count({ where: { nome: 'Não confirmar' } })).toBe(0);
+    expect(await AuditLog.count()).toBe(0);
+  });
+
+  it.each(['UPDATE', 'DELETE', 'RESTORE'] as const)('não confirma %s quando a auditoria falha', async acao => {
+    const item = await TipoMaterial.create({ nome: 'Original' });
+    if (acao === 'RESTORE') await item.destroy();
+    const eventosAntes = await AuditLog.count();
+    const spy = jest.spyOn(AuditLog, 'create').mockRejectedValueOnce(new Error('Auditoria indisponível'));
+    try {
+      const url = `/api/tipo-material/${item.id}`;
+      const res = acao === 'UPDATE' ? await request(app).put(url).send({ nome: 'Não confirmar' })
+        : acao === 'DELETE' ? await request(app).delete(url)
+        : await request(app).patch(`${url}/restaurar`);
+      expect(res.status).toBe(500);
+    } finally { spy.mockRestore(); }
+    const persisted = await TipoMaterial.findByPk(item.id, { paranoid: false });
+    expect(persisted!.nome).toBe('Original');
+    expect(persisted!.isSoftDeleted()).toBe(acao === 'RESTORE');
+    expect(await AuditLog.count()).toBe(eventosAntes);
+  });
+
   it("deve registrar automaticamente quando um TipoMaterial é atualizado", async () => {
     const item = await TipoMaterial.create({ nome: "Original Name" });
 

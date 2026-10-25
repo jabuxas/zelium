@@ -19,26 +19,32 @@ export class BaseRepository<T extends Model> {
   }
 
   create(data: CreationAttributes<T>): Promise<T> {
-    return this.model.create(data);
+    return this.model.sequelize!.transaction(transaction => this.model.create(data, { transaction }));
   }
 
   async update(id: number, data: Partial<CreationAttributes<T>>): Promise<T | null> {
-    const instance = await this.findById(id);
-    if (!instance) return null;
-    return instance.update(data);
+    return this.model.sequelize!.transaction(async transaction => {
+      const instance = await this.model.findByPk(id, { transaction });
+      if (!instance) return null;
+      return instance.update(data, { transaction });
+    });
   }
 
   async delete(id: number): Promise<boolean> {
-    const instance = await this.findById(id);
-    if (!instance) return false;
-    await instance.destroy();
-    return true;
+    return this.model.sequelize!.transaction(async transaction => {
+      const instance = await this.model.findByPk(id, { transaction });
+      if (!instance) return false;
+      await instance.destroy({ transaction });
+      return true;
+    });
   }
 
   async restore(id: number): Promise<T | null> {
-    const instance = await this.model.findByPk(id, { paranoid: false });
-    if (!instance) return null;
-    await instance.restore();
-    return instance;
+    return this.model.sequelize!.transaction(async transaction => {
+      const instance = await this.model.findByPk(id, { paranoid: false, transaction });
+      if (!instance) return null;
+      await instance.restore({ transaction });
+      return instance;
+    });
   }
 }
