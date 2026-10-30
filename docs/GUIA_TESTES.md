@@ -178,6 +178,13 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8000/api/usuarios -H "
 - [ ] Login inválido → mensagem "Email ou senha invalidos"
 - [ ] `senha_hash` nunca aparece em respostas da API
 - [ ] Criar usuário (gestor) em `POST /api/usuarios` e logar com ele
+- [ ] 11 falhas de login seguidas do mesmo IP → `429` com `Retry-After`
+      (só falha de credencial conta; sucesso não consome cota)
+- [ ] Trocar a senha de um usuário (gestor, `PUT /api/usuarios/:id`) derruba
+      as sessões dele: o token antigo passa a responder `401 Sessao
+      desatualizada` e o novo login funciona
+- [ ] Desativar um usuário revoga a sessão dele; desativar a organização
+      revoga as sessões de todos os seus usuários
 
 ### 4.3 Isolamento multiempresa
 
@@ -462,11 +469,16 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 
 | Falta | Detalhe |
 | --- | --- |
-| Rate limiting no login | Força bruta contra `/api/auth/login` não é limitada |
-| Refresh token / revogação | O JWT vale 7 dias e não é revogável por usuário (logout é só local) |
+| **Cookie de sessão httpOnly na web** | Token segue no `localStorage` (o app mobile usa `AsyncStorage`); migração para cookie `HttpOnly`/`Secure` + CSRF é o próximo passo de hardening |
 | Retenção de logs | `audit_log` e `notificacao` crescem sem política de expurgo |
 | Monitoramento/alertas | Sem métricas ou alertas de saúde (além do `/health`) |
 | Backup externo | O backup roda local; a cópia para fora do servidor é manual (documentada em `docs/DEPLOY.md`) |
+
+Resolvidos em 29–30/10/2026: ~~rate limiting no login~~ (`429` após 10 falhas
+de credencial por IP a cada 15 min, `Retry-After` incluso) e ~~refresh token /
+revogação~~ (sessões revogáveis por `sessao_version` — troca de senha,
+desativação de usuário ou organização matam os tokens; ADR-0011). O segredo
+JWT padrão também é recusado na subida em produção.
 
 ### Fora do escopo atual (deliberado)
 
@@ -481,7 +493,9 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 
 | Sintoma | Causa provável | Solução |
 | --- | --- | --- |
-| `401 Sessao expirada ou token invalido` em tudo | Token antigo (sem `organizacaoId`) ou sessão vencida | Fazer login novamente |
+| `429 Muitas tentativas de login` | 10+ falhas de credencial do mesmo IP em 15 min | Aguardar o tempo do header `Retry-After` (sucesso não conta para o limite) |
+| `401 Sessao desatualizada` em tudo | Token de versão anterior: troca de senha, desativação ou organização desativada revogaram a sessão (ou token antigo sem `ver`) | Fazer login novamente |
+| `401 Sessao expirada ou token invalido` em tudo | Token expirado ou inválido | Fazer login novamente |
 | Frontend não carrega listas | `NEXT_PUBLIC_API_URL` errado | Dev: `http://localhost:8000/api`. Recriar o build se mudou |
 | App mostra "Env EXPO_PUBLIC_API_URL não está definida" | Falta a variável | Rodar `EXPO_PUBLIC_API_URL=http://<ip>:8000/api npx expo start` |
 | Câmera não abre no app | Permissão negada | Liberar câmera nas configurações do Android e reiniciar |

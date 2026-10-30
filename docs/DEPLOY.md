@@ -194,3 +194,7 @@ escrita antes de atualizar**: o DDL pode bloquear tabelas. Consulte
 - Troque as senhas padrão e o `JWT_SECRET` antes do primeiro acesso público.
 - Monitore o disco (`backups_data` e `db_data` crescem com o tempo).
 - Confira o certificado com `curl -vI https://<domínio>/` após a primeira subida.
+
+O backend também **recusa subir em produção sem `JWT_SECRET`** ou com o segredo
+de desenvolvimento (fail fast no import). Sessões são revogáveis: trocar a
+senha de um usuário desativa os tokens dele na hora (ADR-0011).

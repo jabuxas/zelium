@@ -40,7 +40,6 @@ impõem unicidade somente ao número patrimonial. Não usa `CASCADE`; dependênc
 incompatíveis impedem a atualização, em vez de serem removidas silenciosamente.
 
 Segunda migração: `20261029_002_valor_monetario_numeric` (dinheiro exato).
-
 - Antes do `ALTER TYPE`, verifica **sujeira legada** (residual maior que valor,
   valor negativo, `NaN`/`Infinity`, vida útil fora de 1..100) e **aborta sem
   alterar nada**, dizendo quantas linhas têm cada problema. A migração NÃO
@@ -67,6 +66,13 @@ Segunda migração: `20261029_002_valor_monetario_numeric` (dinheiro exato).
 Consequência operacional: com o fallback removido, bens sem dados completos
 saem do cálculo. A tela `/financeiro` mostra um aviso com essa contagem para o
 gestor completar os cadastros.
+
+Terceira migração: `20261030_001_usuario_sessao_version` (revogação de sessão).
+Adiciona `usuario.sessao_version` (default 1); o JWT passa a carregar `ver` e o
+middleware revalida usuário, organização e versão a cada requisição — troca de
+senha ou desativação revogam as sessões emitidas. Tokens anteriores (sem `ver`)
+são recusados uma única vez. O `down` exige binário anterior à migração;
+detalhes em [`adrs/ADR-0011-sessoes-revogaveis.md`](adrs/ADR-0011-sessoes-revogaveis.md).
 
 ## Dados que a inicialização não deve presumir
 
