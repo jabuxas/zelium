@@ -6,6 +6,10 @@ import { PatrimonioFotoController } from './controllers/PatrimonioFotoController
 
 const app = express();
 
+// A stack de produção roda atrás do Caddy: req.ip passa a ser o cliente real
+// (X-Forwarded-For do primeiro proxy), exigido pelo rate limit do login.
+app.set("trust proxy", 1);
+
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
