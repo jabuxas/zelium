@@ -212,6 +212,13 @@ VALUES ('Gestor B', 'gestor.b@teste.com',
 - [ ] FKs cruzadas são bloqueadas na escrita
 - [ ] Auditoria e notificações ficam ligadas à organização correta
 
+**Numeração patrimonial por empresa (29/10/2026):** o mesmo número, inclusive
+com zeros à esquerda, pode existir em empresas diferentes. Repeti-lo na mesma
+empresa retorna `409`, inclusive se o original estiver arquivado. A busca por
+número continua isolada pela sessão; use a restauração para recuperar um bem
+arquivado, não um novo cadastro. Atualização de bancos existentes, histórico de
+migrações e limites da reversão estão em [`MIGRACOES.md`](MIGRACOES.md).
+
 ### 4.4 Notificações automáticas (e-mail)
 
 **O que verificar:** três gatilhos disparam e-mail e ficam registrados.
@@ -319,6 +326,12 @@ valor contábil     = valor − acumulada (nunca abaixo do residual)
 - [ ] Valor contábil nunca fica abaixo do valor residual
 - [ ] Totais do `/financeiro` batem com a soma por ambiente
 
+**Persistência na inicialização (29/10/2026):** migrações não preenchem mais
+aquisição ausente com a data de cadastro nem vida útil com dez anos. Valores já
+preenchidos são preservados; eventual inferência por versões antigas exige
+revisão, não limpeza indiscriminada. A consolidação do cálculo e das validações
+financeiras é o próximo incremento, separado desta correção de migração.
+
 ### 4.8 Histórico de atividades e inspeção
 
 1. No dashboard, **Atividades Recentes** mostra eventos operacionais formatados,
@@ -380,7 +393,7 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test -- --runInBand` | 257 testes na última rodada completa: CRUDs, RBAC, multiempresa, notificações, relatórios (CSV/PDF), QR/conferência, depreciação, auditoria/rollback, versionamento |
+| Backend | `cd src/backend && npm test -- --runInBand` | 272 testes na rodada de 29/10/2026: CRUDs, RBAC, multiempresa e numeração por organização, migrações/reversão, notificações, relatórios (CSV/PDF), QR/conferência, depreciação, auditoria/rollback, versionamento |
 | Frontend | `cd src/front && pnpm test --runInBand` | 116 testes: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação e configuração de avaria |
 | Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
 | E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro e permissões |

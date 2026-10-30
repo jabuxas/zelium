@@ -171,6 +171,12 @@ docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 As migrações de banco são executadas automaticamente na subida do backend
 (`src/backend/src/database/migrate.ts`) — não há passo manual de schema.
 
+Desde 29/10/2026, a inicialização usa transação e lock de migração, e alterações
+novas são registradas em `schema_migrations`. A unicidade patrimonial passa a ser
+por organização. **Ensaiar em cópia restaurável e reservar janela curta sem
+escrita antes de atualizar**: o DDL pode bloquear tabelas. Consulte
+[`MIGRACOES.md`](MIGRACOES.md) para preservação de dados e reversão segura.
+
 ---
 
 ## 9. Operação
