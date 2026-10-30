@@ -35,6 +35,14 @@ export default function PatrimonioForm() {
 
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [erros, setErros] = useState<Array<{ campo: string; mensagem: string }>>([]);
+
+  const ROTULO_CAMPO: Record<string, string> = {
+    valor: 'Valor (R$)',
+    data_aquisicao: 'Data de Aquisição',
+    vida_util_anos: 'Vida Útil (anos)',
+    valor_residual: 'Valor Residual (R$)',
+  };
 
   useEffect(() => {
     apiFetch(`${API_URL}/tipo-material`).then(r => r.json()).then(setTiposMaterial).catch(() => {});
@@ -68,6 +76,7 @@ export default function PatrimonioForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
+    setErros([]);
 
     if (!numeroPatrimonio.trim()) {
       setErro('Numero do patrimonio e obrigatorio');
@@ -124,6 +133,11 @@ export default function PatrimonioForm() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        if (Array.isArray(data.erros) && data.erros.length > 0) {
+          // Validação compartilhada: um erro por campo, com rótulo legível.
+          setErros(data.erros);
+          return;
+        }
         throw new Error(data.error ?? 'Erro ao salvar');
       }
       router.push('/patrimonios');
@@ -149,7 +163,19 @@ export default function PatrimonioForm() {
       </div>
 
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        {erro && <p className="text-red-600 mb-4">{erro}</p>}
+        {erro && <p className="text-red-600 mb-4" role="alert">{erro}</p>}
+        {erros.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700 mb-4" role="alert">
+            <p className="font-medium mb-2">Corrija os campos abaixo:</p>
+            <ul className="list-disc list-inside space-y-1">
+              {erros.map((erroCampo) => (
+                <li key={erroCampo.campo}>
+                  <strong>{ROTULO_CAMPO[erroCampo.campo] ?? erroCampo.campo}:</strong> {erroCampo.mensagem}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações Básicas</h2>
