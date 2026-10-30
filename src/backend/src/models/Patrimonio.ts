@@ -25,8 +25,8 @@ export class Patrimonio extends Model<
 Patrimonio.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
-    numero_patrimonio: { type: DataTypes.STRING(50), allowNull: false, unique: true },
+    organizacao_id: { type: DataTypes.INTEGER, allowNull: false, unique: 'patrimonio_organizacao_numero_key' },
+    numero_patrimonio: { type: DataTypes.STRING(50), allowNull: false, unique: 'patrimonio_organizacao_numero_key' },
     descricao: { type: DataTypes.TEXT, allowNull: false },
     valor: { type: DataTypes.FLOAT, allowNull: false },
     observacoes: { type: DataTypes.TEXT, allowNull: true },

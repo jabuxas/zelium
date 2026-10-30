@@ -177,3 +177,74 @@ describe('Isolamento multiempresa', () => {
     expect(emails).not.toContain('gestor@beta.com');
   });
 });
+
+describe('Numeração patrimonial por organização', () => {
+  function dadosDoBem(numero: string, org: number) {
+    return {
+      numero_patrimonio: numero,
+      descricao: 'Bem com identificação institucional',
+      valor: 200,
+      tipo_material_id: org,
+      estado_item_id: org,
+      ambiente_id: org,
+      responsavel_id: org,
+    };
+  }
+
+  it('permite o mesmo número nas duas empresas e isola a busca pelo número', async () => {
+    const alfa = await rawRequest(app).post('/api/patrimonios')
+      .set(bearerToken('gestor', '1', 1)).send(dadosDoBem('000123', 1));
+    const beta = await rawRequest(app).post('/api/patrimonios')
+      .set(bearerToken('gestor', '2', 2)).send(dadosDoBem('000123', 2));
+    expect(alfa.status).toBe(201);
+    expect(beta.status).toBe(201);
+    expect(alfa.body.id).not.toBe(beta.body.id);
+
+    for (const [org, bem] of [[1, alfa.body], [2, beta.body]] as const) {
+      const busca = await rawRequest(app).get('/api/patrimonios').query({ numero: '000123' })
+        .set(bearerToken('gestor', String(org), org));
+      expect(busca.status).toBe(200);
+      expect(busca.body.map((item: { id: number }) => item.id)).toEqual([bem.id]);
+      expect(busca.body[0].numero_patrimonio).toBe('000123');
+    }
+  });
+
+  it('rejeita cadastros concorrentes do mesmo número na mesma empresa', async () => {
+    const respostas = await Promise.all([1, 2].map(() => rawRequest(app)
+      .post('/api/patrimonios').set(bearerToken('gestor', '1', 1))
+      .send(dadosDoBem('CONCORRENTE-001', 1))));
+    expect(respostas.map(res => res.status).sort()).toEqual([201, 409]);
+    expect(await Patrimonio.count({ where: { numero_patrimonio: 'CONCORRENTE-001' } })).toBe(1);
+  });
+
+  it('rejeita edição para um número já reservado na mesma empresa', async () => {
+    const auth = bearerToken('gestor', '1', 1);
+    const primeiro = await rawRequest(app).post('/api/patrimonios').set(auth)
+      .send(dadosDoBem('EDITAR-001', 1));
+    const segundo = await rawRequest(app).post('/api/patrimonios').set(auth)
+      .send(dadosDoBem('EDITAR-002', 1));
+    expect(primeiro.status).toBe(201);
+    expect(segundo.status).toBe(201);
+
+    const res = await rawRequest(app).put(`/api/patrimonios/${segundo.body.id}`).set(auth)
+      .send({ numero_patrimonio: 'EDITAR-001' });
+    expect(res.status).toBe(409);
+    expect((await Patrimonio.findByPk(segundo.body.id)).numero_patrimonio).toBe('EDITAR-002');
+  });
+
+  it('mantém o número reservado após arquivar e permite restaurar o bem original', async () => {
+    const auth = bearerToken('gestor', '1', 1);
+    const criado = await rawRequest(app).post('/api/patrimonios').set(auth)
+      .send(dadosDoBem('ARQUIVADO-001', 1));
+    expect(criado.status).toBe(201);
+    expect((await rawRequest(app).delete(`/api/patrimonios/${criado.body.id}`).set(auth)).status).toBe(204);
+
+    const repetido = await rawRequest(app).post('/api/patrimonios').set(auth)
+      .send(dadosDoBem('ARQUIVADO-001', 1));
+    expect(repetido.status).toBe(409);
+    const restaurado = await rawRequest(app).patch(`/api/patrimonios/${criado.body.id}/restaurar`).set(auth);
+    expect(restaurado.status).toBe(200);
+    expect(restaurado.body.id).toBe(criado.body.id);
+    expect(restaurado.body.numero_patrimonio).toBe('ARQUIVADO-001');
+  });
+});

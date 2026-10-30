@@ -95,7 +95,7 @@ CREATE TABLE ambiente (
 CREATE TABLE patrimonio (
     id SERIAL PRIMARY KEY,
     organizacao_id INT NOT NULL DEFAULT 1 REFERENCES organizacao(id),
-    numero_patrimonio VARCHAR(50) NOT NULL UNIQUE,
+    numero_patrimonio VARCHAR(50) NOT NULL,
     descricao TEXT NOT NULL,
     valor FLOAT NOT NULL,
     observacoes TEXT,
@@ -107,6 +107,7 @@ CREATE TABLE patrimonio (
     ambiente_id INT NOT NULL REFERENCES ambiente(id),
     responsavel_id INT NOT NULL REFERENCES responsavel(id),
     fornecedor_id INT REFERENCES fornecedor(id),
+    CONSTRAINT patrimonio_organizacao_numero_key UNIQUE (organizacao_id, numero_patrimonio),
     versao INTEGER DEFAULT 1 NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
