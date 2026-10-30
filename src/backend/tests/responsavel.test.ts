@@ -10,6 +10,12 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+// Suíte unitária sem banco: a revalidação de sessão (real em sessao.test.ts)
+// é simulada como válida — boundary de teste, não exceção de produção.
+jest.mock('../src/middlewares/revalidarSessao', () => ({
+  revalidarSessao: async () => ({ sessao_version: 1 }),
+}));
+
 describe('POST /api/responsaveis', () => {
   it('201 com body válido', async () => {
     const created = { id: 1, nome: 'João', email: 'joao@test.com', cargo: null, departamento: null, telefone: null };

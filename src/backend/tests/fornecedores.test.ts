@@ -5,6 +5,12 @@ import { FornecedorService } from '../src/services/FornecedoresService';
 jest.mock('../src/services/FornecedoresService');
 const MockedService = FornecedorService as jest.Mocked<typeof FornecedorService>;
 
+// Suíte unitária sem banco: a revalidação de sessão (real em sessao.test.ts)
+// é simulada como válida — boundary de teste, não exceção de produção.
+jest.mock('../src/middlewares/revalidarSessao', () => ({
+  revalidarSessao: async () => ({ sessao_version: 1 }),
+}));
+
 describe('Testes Essenciais Fornecedor', () => {
   beforeEach(() => jest.clearAllMocks());
 

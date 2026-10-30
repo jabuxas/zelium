@@ -137,7 +137,7 @@ describe('Numeração patrimonial no schema SQL e na atualização de banco exis
     expect(valoresMonetariosComparaveis(await bem(1))).toEqual(antes);
     await expect(inserirMesmoNumeroNaOutraEmpresa()).resolves.toBeUndefined();
     const historico = await sequelize.query<{ id: string }>('SELECT id FROM schema_migrations', { type: QueryTypes.SELECT });
-    expect(historico.map(linha => linha.id)).toEqual([
+    expect(historico.map(linha => linha.id).slice(0, 2)).toEqual([
       '20261029_001_numero_patrimonio_por_organizacao',
       '20261029_002_valor_monetario_numeric',
     ]);
@@ -166,9 +166,12 @@ describe('Numeração patrimonial no schema SQL e na atualização de banco exis
     ))[0].id;
     expect(await rollbackLastMigration()).toBe(ultima);
     const restantes = await sequelize.query<{ id: string }>('SELECT id FROM schema_migrations', { type: QueryTypes.SELECT });
-    expect(restantes.map(linha => linha.id)).toEqual(['20261029_001_numero_patrimonio_por_organizacao']);
+    expect(restantes.map(linha => linha.id).slice(0, 2)).toEqual([
+      '20261029_001_numero_patrimonio_por_organizacao',
+      '20261029_002_valor_monetario_numeric',
+    ]);
     // Com a numeração por organização aplicada, a mesma letra em outra empresa é válida:
-    // o rollback retirou a migração MONETÁRIA, não a de numeração.
+    // o rollback retirou a última migração, não a de numeração.
     await expect(inserirMesmoNumeroNaOutraEmpresa()).resolves.toBeUndefined();
     await migrate();
     const aplicadas = await contarMigracoes();
@@ -177,8 +180,10 @@ describe('Numeração patrimonial no schema SQL e na atualização de banco exis
 
   it('recusa rollback com números compartilhados sem apagar bens nem o histórico', async () => {
     await migrate();
-    // Reverte a migração MONETÁRIA para voltar ao estado que só tem a restrição
-    // de numeração; então compartilha números e recusa reverter a numeração.
+    // Reverte as migrações posteriores (sessão 003, monetária 002) para voltar
+    // ao estado que só tem a restrição de numeração; então compartilha números
+    // e recusa reverter a numeração.
+    await rollbackLastMigration();
     await rollbackLastMigration();
     await inserirMesmoNumeroNaOutraEmpresa();
     const antes = (await sequelize.query('SELECT * FROM patrimonio ORDER BY id', { type: QueryTypes.SELECT }))
@@ -191,6 +196,7 @@ describe('Numeração patrimonial no schema SQL e na atualização de banco exis
     const aplicadas = await contarMigracoes();
     expect(aplicadas.has('20261029_001_numero_patrimonio_por_organizacao')).toBe(true);
     expect(aplicadas.has('20261029_002_valor_monetario_numeric')).toBe(false);
+    expect(aplicadas.has('20261030_001_usuario_sessao_version')).toBe(false);
   });
 
   it('desfaz DDL e troca de unicidade se falhar o registro da migração', async () => {
@@ -333,6 +339,9 @@ describe('Migração monetária NUMERIC(14,2) — integridade e sujeira legada',
   it('reversão volta para DOUBLE PRECISION preservando valores e removendo CHECKs', async () => {
     await migrate();
     await sequelize.query(`UPDATE patrimonio SET valor_residual = 0.1 + 0.2 WHERE id = 2`);
+    // A última migração é a de sessão (003); reverte-a primeiro, depois a
+    // monetária — comportamento do rollback: sempre a última aplicada.
+    expect(await rollbackLastMigration()).toBe('20261030_001_usuario_sessao_version');
     expect(await rollbackLastMigration()).toBe('20261029_002_valor_monetario_numeric');
     expect(await tiposDeValor()).toMatchObject({
       valor: expect.stringMatching(/double precision/i),

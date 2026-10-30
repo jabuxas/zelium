@@ -3,6 +3,7 @@ import type { Sequelize } from 'sequelize';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
 import { bearerToken, rawRequest } from './helpers/request';
+import { criarUsuariosDeTeste } from './helpers/usuarios';
 let calcularDepreciacao: typeof import('../src/services/DepreciacaoService').calcularDepreciacao;
 
 let app: Express;
@@ -84,6 +85,7 @@ beforeAll(async () => {
     responsavel_id: 1,
     organizacao_id: 1,
   });
+  await criarUsuariosDeTeste();
 }, 60_000);
 
 afterAll(async () => {

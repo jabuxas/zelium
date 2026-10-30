@@ -3,6 +3,7 @@ import type { Sequelize } from 'sequelize';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
 import { bearerToken, rawRequest } from './helpers/request';
+import { criarUsuariosDeTeste } from './helpers/usuarios';
 
 let app: Express;
 let sequelize: Sequelize;
@@ -56,6 +57,7 @@ beforeAll(async () => {
   await Patrimonio.create({ numero_patrimonio: 'R-001', descricao: 'Notebook A', valor: 1000, tipo_material_id: 1, estado_item_id: 1, ambiente_id: 1, responsavel_id: 1, organizacao_id: 1 });
   await Patrimonio.create({ numero_patrimonio: 'R-002', descricao: 'Monitor A', valor: 2000, tipo_material_id: 1, estado_item_id: 1, ambiente_id: 1, responsavel_id: 1, organizacao_id: 1 });
   await Patrimonio.create({ numero_patrimonio: 'R-003', descricao: 'Projetor B', valor: 500, tipo_material_id: 1, estado_item_id: 2, ambiente_id: 2, responsavel_id: 2, organizacao_id: 1 });
+  await criarUsuariosDeTeste();
 }, 60_000);
 
 afterAll(async () => {

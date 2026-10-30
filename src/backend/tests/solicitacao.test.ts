@@ -14,6 +14,12 @@ const validBody = {
   conferente_id: 1,
 };
 
+// Suíte unitária sem banco: a revalidação de sessão (real em sessao.test.ts)
+// é simulada como válida — boundary de teste, não exceção de produção.
+jest.mock('../src/middlewares/revalidarSessao', () => ({
+  revalidarSessao: async () => ({ sessao_version: 1 }),
+}));
+
 describe('Solicitacoes', () => {
   beforeEach(() => jest.clearAllMocks());
 

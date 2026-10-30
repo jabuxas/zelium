@@ -66,6 +66,8 @@ export class AuthService {
         nome: usuario.nome,
         papel: usuario.papel,
         organizacaoId: usuario.organizacao_id,
+        // Âncora de revogação: incrementada em troca de senha/desativação.
+        ver: usuario.sessao_version,
       },
       JWT_SECRET,
       {

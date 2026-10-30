@@ -29,6 +29,8 @@ export function bearerToken(
       nome: `Teste ${papel}`,
       papel,
       organizacaoId,
+      // Usuários criados nos testes nascem com sessao_version 1 (default).
+      ver: 1,
     },
     JWT_SECRET,
     { subject, expiresIn: "1h" }

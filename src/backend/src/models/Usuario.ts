@@ -21,6 +21,7 @@ export class Usuario extends Model<
   declare papel: UsuarioPapel;
   declare ativo: boolean;
   declare organizacao_id: CreationOptional<number>;
+  declare sessao_version: CreationOptional<number>;
   declare versao: CreationOptional<number>;
 }
 
@@ -37,6 +38,7 @@ Usuario.init(
     },
     ativo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     organizacao_id: { type: DataTypes.INTEGER, allowNull: false },
+    sessao_version: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
     versao: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
   },
   {

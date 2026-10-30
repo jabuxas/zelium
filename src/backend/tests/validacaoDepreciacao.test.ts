@@ -3,6 +3,7 @@ import type { Sequelize } from 'sequelize';
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
 import { bearerToken, rawRequest } from './helpers/request';
+import { criarUsuariosDeTeste } from './helpers/usuarios';
 
 let app: Express;
 let sequelize: Sequelize;
@@ -49,6 +50,7 @@ beforeAll(async () => {
   await EstadoItem.create({ nome: 'Em condicoes', organizacao_id: 1 });
   await Responsavel.create({ nome: 'Resp Validacao', email: 'r@validacao.com', organizacao_id: 1 });
   await Ambiente.create({ nome: 'Sala Validacao', responsavel_id: 1, organizacao_id: 1 });
+  await criarUsuariosDeTeste();
 }, 60_000);
 
 afterAll(async () => {

@@ -10,6 +10,7 @@ import { EstadoItem } from "../src/models/EstadoItem";
 import { Patrimonio } from "../src/models/Patrimonio";
 import { Responsavel } from "../src/models/Responsavel";
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { criarUsuariosDeTeste } from './helpers/usuarios';
 
 let container: StartedPostgreSqlContainer;
 
@@ -45,6 +46,7 @@ describe("Testes de integração do log de auditoria", () => {
     });
     connectionManager.initPools();
     await sequelize.sync({ force: true });
+    await criarUsuariosDeTeste();
   }, 60_000);
 
   afterAll(async () => {

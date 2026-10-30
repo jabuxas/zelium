@@ -1,4 +1,5 @@
-import { CreationAttributes } from "sequelize";
+import { CreationAttributes, Transaction, literal } from "sequelize";
+import { sequelize } from "../database/connection";
 import { Usuario } from "../models/Usuario";
 import { BaseRepository } from "../repositories/BaseRepository";
 import { AuthService } from "./AuthService";
@@ -44,7 +45,24 @@ export class UsuarioService {
     if (data.senha) {
       patch.senha_hash = await this.auth.hashSenha(data.senha);
     }
-    return this.repo.update(id, patch);
+
+    // Troca de senha ou desativação revogam todas as sessões emitidas: a
+    // versão sobe na MESMA transação da gravação (número de sessão pode
+    // crescer; nenhuma sessão antiga sobrevive).
+    const revogarSessoes = data.senha !== undefined || data.ativo === false;
+    if (!revogarSessoes) {
+      return this.repo.update(id, patch);
+    }
+    return sequelize.transaction(async (transaction: Transaction) => {
+      const atualizado = await this.repo.update(id, patch, transaction);
+      if (atualizado) {
+        await Usuario.update(
+          { sessao_version: literal("sessao_version + 1") as unknown as number },
+          { where: { id }, transaction }
+        );
+      }
+      return atualizado;
+    });
   }
 
   delete(id: number) {

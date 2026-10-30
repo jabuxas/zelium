@@ -157,6 +157,24 @@ const migrations = [{
         ALTER COLUMN valor_residual TYPE double precision USING valor_residual::double precision;
     `, { transaction });
   },
+}, {
+  id: '20261030_001_usuario_sessao_version',
+  async up(transaction: Transaction) {
+    // Âncora de revogação: o JWT carrega ver=sessao_version e o middleware
+    // confere por requisição. Troca de senha/desativação incrementam a versão
+    // e matam todas as sessões emitidas antes. Tokens de versões antigas, sem
+    // 'ver', são recusados (intencional: sessão desatualizada).
+    await sequelize.query(`
+      ALTER TABLE public.usuario ADD COLUMN IF NOT EXISTS sessao_version INT NOT NULL DEFAULT 1;
+    `, { transaction });
+  },
+  async down(transaction: Transaction) {
+    // Exige binário anterior a esta migração (que ainda não consulta a
+    // coluna). Ao reaplicar, todas as contas voltam à versão 1.
+    await sequelize.query(`
+      ALTER TABLE public.usuario DROP COLUMN IF EXISTS sessao_version;
+    `, { transaction });
+  },
 }];
 
 /** Serializa inicializações e rollback no mesmo banco, com DDL transacional. */

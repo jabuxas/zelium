@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/auth";
-import { UsuarioPapel } from "../models/Usuario";
+import type { UsuarioPapel } from "../models/Usuario";
+import { revalidarSessao } from "./revalidarSessao";
 import { runWithContext } from "../context/requestContext";
 
 export interface AuthPayload {
@@ -10,6 +11,8 @@ export interface AuthPayload {
   nome: string;
   papel: UsuarioPapel;
   organizacaoId: number;
+  /** sessao_version no momento da emissão; divergência revoga o token. */
+  ver: number;
 }
 
 declare global {
@@ -42,14 +45,37 @@ export function authenticate(
         .status(401)
         .json({ error: "Sessao desatualizada. Faca login novamente." });
     }
-    req.user = {
-      sub: String(payload.sub),
-      email: String(payload.email),
-      nome: String(payload.nome),
-      papel: payload.papel as UsuarioPapel,
-      organizacaoId: Number(payload.organizacaoId),
-    };
-    next();
+
+    // Revalidação por requisição: usuário/organização ativos e versão de
+    // sessão. Troca de senha ou desativação revogam tokens já emitidos.
+    // Custo: duas consultas por request — aceitável no volume do piloto.
+    void revalidarSessao(String(payload.sub))
+      .then((usuario) => {
+        if (!usuario) {
+          return res.status(401).json({
+            error: "Sessao invalida ou encerrada. Faca login novamente.",
+          });
+        }
+        if (Number(payload.ver) !== usuario.sessao_version) {
+          return res
+            .status(401)
+            .json({ error: "Sessao desatualizada. Faca login novamente." });
+        }
+        req.user = {
+          sub: String(payload.sub),
+          email: String(payload.email),
+          nome: String(payload.nome),
+          papel: payload.papel as UsuarioPapel,
+          organizacaoId: Number(payload.organizacaoId),
+          ver: Number(payload.ver),
+        };
+        next();
+      })
+      .catch(() => {
+        res
+          .status(401)
+          .json({ error: "Sessao invalida. Faca login novamente." });
+      });
   } catch {
     return res
       .status(401)

@@ -175,6 +175,7 @@ CREATE TABLE usuario (
     papel VARCHAR(20) NOT NULL DEFAULT 'conferente' CHECK (papel IN ('gestor', 'responsavel', 'conferente')),
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
     organizacao_id INT NOT NULL REFERENCES organizacao(id),
+    sessao_version INT NOT NULL DEFAULT 1,
     versao INTEGER DEFAULT 1 NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),

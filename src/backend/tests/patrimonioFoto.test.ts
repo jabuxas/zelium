@@ -28,6 +28,12 @@ it('usa somente armazenamento temporário exclusivo dos testes', () => {
   expect(UPLOAD_ROOT).toBe(testUploadRoot);
 });
 
+// Suíte unitária sem banco: a revalidação de sessão (real em sessao.test.ts)
+// é simulada como válida — boundary de teste, não exceção de produção.
+jest.mock('../src/middlewares/revalidarSessao', () => ({
+  revalidarSessao: async () => ({ sessao_version: 1 }),
+}));
+
 describe('GET /api/patrimonios/:patrimonioId/fotos', () => {
   it('200 com lista de fotos', async () => {
     (MockedService.prototype.patrimonioExists as jest.Mock).mockResolvedValue(true);
