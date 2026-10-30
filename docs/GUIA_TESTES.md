@@ -302,35 +302,51 @@ miniaturas e o visualizador; imagens locais pendentes não recebem credenciais.
 **O que verificar:** cálculo linear e visão financeira.
 
 1. `/financeiro` (gestor): cards de aquisição, valor contábil, depreciação e
-   residual + tabela por ambiente + CSV.
+   residual + tabela por ambiente + CSV. Se houver bens sem data de aquisição ou
+   vida útil, um aviso amarelo mostra a contagem — cadastre esses dados para
+   incluí-los no cálculo.
 2. O seed já contém bens adquiridos em anos anteriores — a depreciação acumulada
    deve ser maior que zero.
 3. Crie/edite um patrimônio informando data de aquisição antiga, vida útil e
-   valor residual → confira `GET /api/patrimonios/:id/depreciacao`.
+   valor residual → confira `GET /api/patrimonios/:id/depreciacao`
+   (**exclusivo do Gestor**: Responsável e Conferente recebem `403`).
+4. Tente editar com dados inválidos (ex.: vida útil `0`, residual maior que o
+   valor): a API responde `400` e o formulário lista **um erro por campo**, com
+   rótulo amigável, sem gravar nada.
+5. Os valores são calculados em centavos e somados de forma idêntica no detalhe,
+   resumo, agrupamento e exportação.
 
 ```bash
 curl -s http://localhost:8000/api/patrimonios/1/depreciacao -H "Authorization: Bearer $TOKEN"
 ```
 
-**Regra do cálculo (método linear):**
+**Regra do cálculo (método linear, em centavos):**
 
 ```
-depreciação anual  = (valor − residual) / vida útil
-depreciação mensal = anual / 12
-acumulada          = mensal × meses decorridos (limitada ao valor depreciável)
-valor contábil     = valor − acumulada (nunca abaixo do residual)
+base        = aquisição − residual
+acumulada   = round(base × meses completos ÷ (vida útil × 12)), limitada à base
+valor contábil = aquisição − acumulada (nunca abaixo do residual)
 ```
+
+Sem data de aquisição **ou** sem vida útil, o bem não deprecia: a resposta traz
+`depreciavel: false` e `motivo_nao_depreciavel`
+(`data_aquisicao_ausente` ou `vida_util_ausente`). Não existe mais vida útil
+presumida. Os valores são **estimativa gerencial** — a tela deixa isso explícito;
+não substituem escrituração contábil nem avaliação de mercado.
 
 **Critérios de aceite:**
-- [ ] Bens sem data de aquisição não depreciam
+- [ ] Bens sem data de aquisição ou vida útil não depreciam e aparecem no aviso do `/financeiro`
 - [ ] Valor contábil nunca fica abaixo do valor residual
-- [ ] Totais do `/financeiro` batem com a soma por ambiente
+- [ ] Totais do `/financeiro` batem com a soma por ambiente e com o CSV/JSON
+- [ ] Detalhe de depreciação por bem: `403` para Responsável e Conferente
+- [ ] Edição inválida responde `400` com erros por campo e não altera o registro
 
 **Persistência na inicialização (29/10/2026):** migrações não preenchem mais
 aquisição ausente com a data de cadastro nem vida útil com dez anos. Valores já
 preenchidos são preservados; eventual inferência por versões antigas exige
-revisão, não limpeza indiscriminada. A consolidação do cálculo e das validações
-financeiras é o próximo incremento, separado desta correção de migração.
+revisão, não limpeza indiscriminada. O cálculo, as validações compartilhadas e a
+conversão monetária (`NUMERIC(14,2)` + CHECKs) estão implementados — detalhes de
+sujeira legada e reversão em [`MIGRACOES.md`](MIGRACOES.md).
 
 ### 4.8 Histórico de atividades e inspeção
 
@@ -393,8 +409,8 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test -- --runInBand` | 272 testes na rodada de 29/10/2026: CRUDs, RBAC, multiempresa e numeração por organização, migrações/reversão, notificações, relatórios (CSV/PDF), QR/conferência, depreciação, auditoria/rollback, versionamento |
-| Frontend | `cd src/front && pnpm test --runInBand` | 116 testes: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação e configuração de avaria |
+| Backend | `cd src/backend && npm test -- --runInBand` | 301 testes na rodada de 30/10/2026: CRUDs, RBAC, multiempresa e numeração por organização, migrações/reversão (incl. monetária), validação compartilhada, notificações, relatórios (CSV/PDF), QR/conferência, depreciação em centavos, auditoria/rollback, versionamento |
+| Frontend | `cd src/front && pnpm test --runInBand` | 123 testes: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro (aviso de cadastro incompleto) e erros por campo |
 | Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
 | E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro e permissões |
 | E2E interfaces | `cd e2e && npm test -- --project=web --project=mobile` | Login, cadastros, inventário, solicitações web, relatórios/downloads web, conferência, fotos e histórico do app |

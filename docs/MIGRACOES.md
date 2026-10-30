@@ -39,6 +39,35 @@ unicidade por organização antes de retirar constraints ou índices únicos que
 impõem unicidade somente ao número patrimonial. Não usa `CASCADE`; dependências
 incompatíveis impedem a atualização, em vez de serem removidas silenciosamente.
 
+Segunda migração: `20261029_002_valor_monetario_numeric` (dinheiro exato).
+
+- Antes do `ALTER TYPE`, verifica **sujeira legada** (residual maior que valor,
+  valor negativo, `NaN`/`Infinity`, vida útil fora de 1..100) e **aborta sem
+  alterar nada**, dizendo quantas linhas têm cada problema. A migração NÃO
+  corrige dados por conta própria: o operador decide cada linha (via API ou
+  UPDATE) e sobe novamente. O `PUT` antigo não validava esses campos, então
+  banco de produção pode ter sujeira — não assuma que não tem.
+- Conta e registra (`console.warn`) quantas linhas mudam de valor na conversão
+  (artefato binário de float8, ex.: `0.30000000000000004`). Inteiros float
+  (`4500`) viram `4500.00` sem mudar de valor e não contam.
+- Colunas passam a `NUMERIC(14,2)` com CHECKs nomeados (`patrimonio_valor_check`,
+  `patrimonio_valor_residual_check`, `patrimonio_vida_util_check`) — as mesmas
+  regras da validação compartilhada, agora garantidas no banco. Os CHECKs são
+  idempotentes: bancos criados pelo `schema.sql` novo já os têm.
+- `down` volta para `DOUBLE PRECISION` preservando valores e remove os CHECKs
+  explicitamente. Artefatos binários podem reaparecer no float; é perda
+  conhecida e documentada, não silenciosa.
+- O driver `pg` entrega NUMERIC como string: os getters do modelo normalizam
+  `valor`/`valor_residual` para número; a API segue prometendo reais em number.
+- O cálculo de depreciação opera em centavos (BigInt, round half-up) e o
+  **fallback de vida útil de 10 anos foi removido**: bem sem data de aquisição
+  ou sem vida útil fica `depreciavel: false` com `motivo_nao_depreciavel`
+  (`data_aquisicao_ausente` | `vida_util_ausente`), sem valor inventado.
+
+Consequência operacional: com o fallback removido, bens sem dados completos
+saem do cálculo. A tela `/financeiro` mostra um aviso com essa contagem para o
+gestor completar os cadastros.
+
 ## Dados que a inicialização não deve presumir
 
 - Aquisição, vida útil e residual ausentes permanecem ausentes. `created_at` não
@@ -50,10 +79,10 @@ incompatíveis impedem a atualização, em vez de serem removidas silenciosament
   automaticamente. Identificar quais datas foram inferidas por versões antigas
   exige examinar auditoria, backups ou confirmação do gestor.
 
-**Limite deste incremento:** ele corrige persistência e migração. A retirada do
-fallback de vida útil no cálculo, precisão monetária, validações compartilhadas,
-onboarding e trial são entregas posteriores. As contas e o seed de demonstração
-ainda exigem tratamento antes de liberar cadastro público.
+**Limite destes incrementos:** eles fecham persistência, migração e cálculo
+financeiro. Onboarding self-service, trial e importação são as entregas
+seguintes. As contas e o seed de demonstração ainda exigem tratamento antes de
+liberar cadastro público.
 
 ## Atualização segura
 
@@ -106,9 +135,13 @@ npx --no-install tsc -p tsconfig.build.json --noEmit
 Os testes criam PostgreSQL descartável via Testcontainers. Cobrem instalação
 nova concorrente, atualização de schema anterior, reinicialização, falha no
 histórico com rollback de DDL, reversão permitida/recusada, numeração por empresa,
-conflito concorrente, edição e reserva do número após arquivamento.
+conflito concorrente, edição e reserva do número após arquivamento — e, para a
+migração monetária: conversão com centavos fracionários, aborto por sujeira
+legada (residual > valor, negativo, NaN), recuperação após correção manual,
+CHECKs via banco e API, reversão para float e banco antigo sem a coluna residual.
 
-Verificado em 29/10/2026: **272 testes do backend / 24 suítes**, **17 E2E da API**
-(`cd e2e && npm run test:api`) e as duas verificações TypeScript acima aprovados.
-Os problemas tiveram reprodução RED antes da correção. Nenhum banco real foi
-usado; estes resultados não constituem homologação em produção ou em aparelho.
+Verificado em 29–30/10/2026: **301 testes do backend / 26 suítes**, **17 E2E da
+API** (`cd e2e && npm run test:api`), **123 testes web / 21 suítes** e as duas
+verificações TypeScript aprovados. Os problemas tiveram reprodução RED antes da
+correção. Nenhum banco real foi usado; estes resultados não constituem
+homologação em produção ou em aparelho.
