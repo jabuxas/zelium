@@ -65,6 +65,10 @@ export default function FinanceiroPage() {
           <p className="text-gray-600">
             Depreciação linear e valor contábil do parque de patrimônios
           </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Estimativa gerencial para decisão — não substitui escrituração contábil
+            nem avaliação de mercado.
+          </p>
         </div>
         <button
           onClick={baixarCsv}
@@ -80,6 +84,19 @@ export default function FinanceiroPage() {
 
       {resumo && (
         <>
+          {resumo.total.total_itens - resumo.total.itens_depreciaveis > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-900" role="status">
+              <p className="font-medium">
+                {resumo.total.total_itens - resumo.total.itens_depreciaveis === 1
+                  ? '1 bem sem dados completos de depreciação'
+                  : `${resumo.total.total_itens - resumo.total.itens_depreciaveis} bens sem dados completos de depreciação`}
+              </p>
+              <p>
+                Falta data de aquisição ou vida útil. Cadastre esses dados para incluir
+                os bens no cálculo e na visão financeira.
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <div className="flex items-center gap-2 text-blue-600 mb-2">
