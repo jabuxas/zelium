@@ -89,6 +89,7 @@ describe('Testes Essenciais Patrimonio', () => {
 
   describe('PUT /api/patrimonios/:id', () => {
     it('Deve atualizar um patrimonio existente', async () => {
+      (MockedService.prototype.findById as jest.Mock).mockResolvedValue({ id: 1, valor: 3500, valor_residual: null });
       (MockedService.prototype.update as jest.Mock).mockResolvedValue({ id: 1, ...validBody, valor: 4000 });
 
       const res = await request(app).put('/api/patrimonios/1').send({ valor: 4000 });
@@ -98,6 +99,7 @@ describe('Testes Essenciais Patrimonio', () => {
     });
 
     it('Deve retornar 404 ao atualizar inexistente', async () => {
+      (MockedService.prototype.findById as jest.Mock).mockResolvedValue(null);
       (MockedService.prototype.update as jest.Mock).mockResolvedValue(null);
 
       const res = await request(app).put('/api/patrimonios/99').send({ valor: 4000 });

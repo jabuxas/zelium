@@ -2,8 +2,17 @@ import { NextFunction, Request, Response } from "express";
 import { ForeignKeyConstraintError, UniqueConstraintError } from "sequelize";
 import { PatrimonioService } from "../services/PatrimonioService";
 import { gerarQrCodeSvg, qrConteudoPatrimonio } from "../utils/qrcode";
+import {
+  camposDepreciacaoDoCorpo,
+  validarCamposDepreciacao,
+} from "../validation/depreciacao";
 
 const service = new PatrimonioService();
+
+function mensagemDe(erros: { campo: string; mensagem: string }[]): string {
+  // A primeira mensagem preserva o texto que o frontend já conhece.
+  return erros[0]?.mensagem ?? "Dados invalidos";
+}
 
 function textoHtml(value: unknown): string {
   const entidades: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -125,25 +134,10 @@ export const PatrimonioController = {
       return res.status(400).json({ error: "responsavel_id e obrigatorio" });
     }
 
-    // Campos de depreciação (opcionais)
-    const { data_aquisicao, vida_util_anos, valor_residual } = req.body;
-    if (data_aquisicao !== undefined && data_aquisicao !== null) {
-      const data = new Date(`${data_aquisicao}T00:00:00`);
-      if (Number.isNaN(data.getTime())) {
-        return res.status(400).json({ error: "data_aquisicao invalida (use AAAA-MM-DD)" });
-      }
-    }
-    if (vida_util_anos !== undefined && vida_util_anos !== null) {
-      const vida = Number(vida_util_anos);
-      if (!Number.isInteger(vida) || vida <= 0 || vida > 100) {
-        return res.status(400).json({ error: "vida_util_anos deve ser um inteiro entre 1 e 100" });
-      }
-    }
-    if (valor_residual !== undefined && valor_residual !== null) {
-      const residual = Number(valor_residual);
-      if (Number.isNaN(residual) || residual < 0 || residual > Number(valor)) {
-        return res.status(400).json({ error: "valor_residual deve ser um numero entre 0 e o valor do bem" });
-      }
+    // Campos de depreciação (opcionais) — MESMA validação da edição.
+    const erros = validarCamposDepreciacao(camposDepreciacaoDoCorpo(req.body));
+    if (erros.length > 0) {
+      return res.status(400).json({ error: mensagemDe(erros), erros });
     }
 
     try {
@@ -162,6 +156,24 @@ export const PatrimonioController = {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
+      const campos = camposDepreciacaoDoCorpo(req.body);
+      let persistidos = {};
+      const precisaPersistidos =
+        (campos.valor_residual !== undefined && campos.valor === undefined) ||
+        (campos.valor !== undefined && campos.valor_residual === undefined);
+      if (precisaPersistidos) {
+        const atual = await service.findById(Number(req.params.id));
+        if (!atual) return res.status(404).json({ error: "Patrimonio nao encontrado" });
+        persistidos = { valor: atual.valor, valor_residual: atual.valor_residual };
+      }
+
+      // PUT do formulário web envia nulls explícitos: validação idêntica ao
+      // cadastro, com combinações contra o registro persistido.
+      const erros = validarCamposDepreciacao(campos, persistidos);
+      if (erros.length > 0) {
+        return res.status(400).json({ error: mensagemDe(erros), erros });
+      }
+
       const item = await service.update(Number(req.params.id), req.body);
       if (!item) return res.status(404).json({ error: "Patrimonio nao encontrado" });
       res.json(item);
