@@ -28,11 +28,26 @@ Patrimonio.init(
     organizacao_id: { type: DataTypes.INTEGER, allowNull: false, unique: 'patrimonio_organizacao_numero_key' },
     numero_patrimonio: { type: DataTypes.STRING(50), allowNull: false, unique: 'patrimonio_organizacao_numero_key' },
     descricao: { type: DataTypes.TEXT, allowNull: false },
-    valor: { type: DataTypes.FLOAT, allowNull: false },
+    valor: {
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: false,
+      // NUMERIC chega como string do driver; a API promete number (reais).
+      get(this: Patrimonio) {
+        const valor = this.getDataValue('valor') as unknown;
+        return valor === null || valor === undefined ? null : Number(valor);
+      },
+    },
     observacoes: { type: DataTypes.TEXT, allowNull: true },
     data_aquisicao: { type: DataTypes.DATEONLY, allowNull: true },
     vida_util_anos: { type: DataTypes.INTEGER, allowNull: true },
-    valor_residual: { type: DataTypes.FLOAT, allowNull: true },
+    valor_residual: {
+      type: DataTypes.DECIMAL(14, 2),
+      allowNull: true,
+      get(this: Patrimonio) {
+        const valor = this.getDataValue('valor_residual') as unknown;
+        return valor === null || valor === undefined ? null : Number(valor);
+      },
+    },
     tipo_material_id: { type: DataTypes.INTEGER, allowNull: false },
     estado_item_id: { type: DataTypes.INTEGER, allowNull: false },
     ambiente_id: { type: DataTypes.INTEGER, allowNull: false },
