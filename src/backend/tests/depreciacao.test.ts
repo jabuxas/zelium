@@ -163,6 +163,20 @@ describe('Endpoints de depreciação', () => {
     expect(res.status).toBe(403);
   });
 
+  it('detalhe de depreciacao por bem e exclusivo do gestor', async () => {
+    const gestor = await rawRequest(app).get('/api/patrimonios/1/depreciacao').set(TOKEN);
+    expect(gestor.status).toBe(200);
+    // 403 (não 404): a autorização vem antes da consulta, sem sondar existência.
+    for (const papel of ['responsavel', 'conferente'] as const) {
+      const res = await rawRequest(app)
+        .get('/api/patrimonios/1/depreciacao')
+        .set(bearerToken(papel));
+      expect(res.status).toBe(403);
+    }
+    const anonimo = await rawRequest(app).get('/api/patrimonios/1/depreciacao');
+    expect(anonimo.status).toBe(401);
+  });
+
   it('valida campos de depreciacao no cadastro', async () => {
     const res = await rawRequest(app)
       .post('/api/patrimonios')

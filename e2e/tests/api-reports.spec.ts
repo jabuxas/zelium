@@ -61,6 +61,11 @@ test('nega relatórios ao Conferente e financeiro ao Responsável, inclusive exp
   for (const path of ['financeiro', 'exportar/csv?tipo=financeiro', 'exportar/pdf?tipo=financeiro']) {
     expect((await request.get(`${API_URL}/api/relatorios/${path}`, { headers: resp })).status()).toBe(403);
   }
+  // Detalhe por bem expõe residual/contábil: financeiro, gestor-only (403 vem
+  // antes da consulta; sem sondar existência do id).
+  for (const headers of [conf, resp]) {
+    expect((await request.get(`${API_URL}/api/patrimonios/1/depreciacao`, { headers })).status()).toBe(403);
+  }
   expect((await request.get(`${API_URL}/api/relatorios/patrimonios`)).status()).toBe(401);
   expect((await request.get(`${API_URL}/api/relatorios/exportar/csv?tipo=invalido`, { headers: resp })).status()).toBe(400);
 });

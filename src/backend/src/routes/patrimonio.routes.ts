@@ -13,7 +13,9 @@ router.patch("/:id/restaurar", authorize("gestor", "responsavel"), PatrimonioCon
 router.get("/:id/historico-estado", PatrimonioController.historicoEstado);
 router.get("/:id/qrcode", PatrimonioController.qrCode);
 router.get("/:id/etiqueta", PatrimonioController.etiqueta);
-router.get("/:id/depreciacao", DepreciacaoController.detalhe);
+// Detalhe expõe residual e valor contábil por bem: dado financeiro, mesmo
+// tratamento do agregado /relatorios/financeiro (exclusivo do Gestor).
+router.get("/:id/depreciacao", authorize("gestor"), DepreciacaoController.detalhe);
 router.get("/:id", PatrimonioController.findById);
 router.post("/", authorize("gestor", "responsavel"), PatrimonioController.create);
 router.put("/:id", authorize("gestor", "responsavel"), PatrimonioController.update);
