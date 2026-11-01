@@ -4,7 +4,7 @@ Implementação incremental do bloco 6. **Não é liberação pública**: cookie
 HttpOnly/CSRF, tratamento dos seeds de demonstração, SMTP real, aplicação dos
 limites/expiração do trial e interface web continuam sendo gates separados.
 
-## Contrato planejado
+## Contrato (solicitação implementada; confirmação em construção)
 
 - `POST /api/auth/cadastros`: `{ nome, email, organizacaoNome }`. Resposta
   genérica `202`, inclusive para e-mail existente ou solicitação repetida.
@@ -22,6 +22,7 @@ limites/expiração do trial e interface web continuam sendo gates separados.
   senha nem entram na auditoria de negócio/notificações operacionais.
 - Repetição antes de expirar não substitui dados/token nem dispara outro e-mail.
   Após expiração, pode-se solicitar novamente. Falha no envio invalida o pedido.
+  A resposta continua sendo o mesmo `202` genérico; não garante entrega.
 - Confirmação usa bloqueio de linha e transação: uma organização, primeiro
   Gestor, estados iniciais e auditoria; falha em qualquer parte desfaz tudo.
 - Trial de 30 dias começa na confirmação; limites iniciais de 500 bens/5
@@ -43,8 +44,16 @@ credenciais e dados pessoais (nome/e-mail para finalidade de criar a conta).
 - Evitar abuso: limite por IP antes de validação/hash/envio, inclusive falhas;
   implantação atual de uma instância. Abrir publicamente exige controle
   compartilhado se houver múltiplas instâncias e revisão de abuso de e-mail.
-- Pendências expiram em 24h e são removidas no consumo ou limpeza; retenção
-  operacional e rotina de limpeza serão documentadas junto à implementação.
+- Pendências expiram em 24h e são removidas na próxima solicitação ou por
+  `npm run cadastros:limpar` no pacote `src/backend`. Ao habilitar o piloto,
+  agendar esse comando ao menos diariamente no mesmo ambiente do backend:
+  retenção máxima operacional de 48h com o agendamento ativo. Monitorar o
+  código de saída e não registrar linhas/payloads. Backups seguem a política
+  de retenção operacional e não podem reintroduzir pendências válidas antigas.
+- Envio é síncrono e a resposta não promete tempo constante: diferença de
+  latência SMTP ainda pode sinalizar conta existente. Antes da abertura pública,
+  adotar entrega durável assíncrona/mitigação de enumeração temporal. Crash entre
+  reserva e envio exige aguardar expiração; não há promessa de entrega exata.
 
 Testes devem provar isolamento, expiração, replay/corridas, rollback incluindo
 auditoria, respostas genéricas, dados legados intactos e ausência de segredos
