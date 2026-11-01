@@ -416,7 +416,7 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test -- --runInBand` | 301 testes na rodada de 30/10/2026: CRUDs, RBAC, multiempresa e numeração por organização, migrações/reversão (incl. monetária), validação compartilhada, notificações, relatórios (CSV/PDF), QR/conferência, depreciação em centavos, auditoria/rollback, versionamento |
+| Backend | `cd src/backend && npm test -- --runInBand` | 365 testes/31 suítes em 01/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, limites de login/cadastro e confirmação transacional |
 | Frontend | `cd src/front && pnpm test --runInBand` | 123 testes: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro (aviso de cadastro incompleto) e erros por campo |
 | Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
 | E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro e permissões |
@@ -455,8 +455,9 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 | Falta | Detalhe |
 | --- | --- |
 | **Troca/recuperação de senha** | Usuário não consegue trocar a própria senha nem recuperá-la por e-mail (a senha padrão `Zelium@2026` só muda via gestor em `PUT /api/usuarios/:id`) |
+| **Onboarding self-service na web** | Backend de solicitação/confirmação pronto, mas desabilitado por padrão; falta interface, fiscalização do trial e gates de abertura pública em `ONBOARDING_SELF_SERVICE.md` |
 | **UI de gestão de usuários** | O CRUD `/api/usuarios` existe, mas não há página no frontend — gestão é via API/SQL |
-| **UI de gestão de organizações** | Criar org só via SQL; não há tela de multiempresa para o operador |
+| **UI de gestão de organizações** | Provisionamento por confirmação existe sob flag; não há tela de multiempresa para o operador |
 | **Paginação nas listas web** | Listas carregam tudo de uma vez; com milhares de bens ficará lento |
 | **Job mobile no CI** | Os testes do app não rodam no GitHub Actions |
 | **E-mail real homologado** | O fluxo SMTP está pronto, mas não foi testado com um provedor real de e-mail |

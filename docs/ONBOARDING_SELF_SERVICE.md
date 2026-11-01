@@ -4,12 +4,17 @@ Implementação incremental do bloco 6. **Não é liberação pública**: cookie
 HttpOnly/CSRF, tratamento dos seeds de demonstração, SMTP real, aplicação dos
 limites/expiração do trial e interface web continuam sendo gates separados.
 
-## Contrato (solicitação implementada; confirmação em construção)
+## Contrato implementado no backend
 
 - `POST /api/auth/cadastros`: `{ nome, email, organizacaoNome }`. Resposta
   genérica `202`, inclusive para e-mail existente ou solicitação repetida.
 - `POST /api/auth/cadastros/confirmacao`: `{ token, senha }`. Sucesso `201`,
   sem login automático; senha definida somente por quem recebeu o link.
+  Senha entre 12 caracteres e 72 bytes UTF-8, bcrypt com custo 12. Token
+  desconhecido, expirado, consumido ou e-mail reservado retorna o mesmo `400`.
+- Solicitação: até 5 tentativas/IP/15min; confirmação: 10/IP/15min, contando
+  sucessos e payloads inválidos. `429` inclui `Retry-After`; erros JSON são
+  tratados sem registrar o corpo (`400`, ou `413` acima de 100 KB).
 - JSON estrito: campos de papel, organização/ID, datas ou limites enviados
   pelo cliente são recusados com `400`, assim como campos desconhecidos.
 - `SELF_SERVICE_ENABLED=true` habilita as duas rotas; padrão desabilitado
@@ -25,6 +30,8 @@ limites/expiração do trial e interface web continuam sendo gates separados.
   A resposta continua sendo o mesmo `202` genérico; não garante entrega.
 - Confirmação usa bloqueio de linha e transação: uma organização, primeiro
   Gestor, estados iniciais e auditoria; falha em qualquer parte desfaz tudo.
+  Replay retorna `400` e não é login; nenhum JWT é retornado na confirmação.
+  O login posterior usa o contrato existente e sessões revogáveis (ADR-0011).
 - Trial de 30 dias começa na confirmação; limites iniciais de 500 bens/5
   usuários. Organizações existentes ficam explicitamente como `legado`, sem
   prazo retroativo. **Metadados não substituem a futura fiscalização do trial.**
@@ -50,11 +57,28 @@ credenciais e dados pessoais (nome/e-mail para finalidade de criar a conta).
   retenção máxima operacional de 48h com o agendamento ativo. Monitorar o
   código de saída e não registrar linhas/payloads. Backups seguem a política
   de retenção operacional e não podem reintroduzir pendências válidas antigas.
+  No contêiner compilado, usar `node dist/database/limparCadastros.js`
+  (produção não instala `tsx`). Após restaurar backup, invalidar pendências
+  antes de reabrir tráfego para impedir replay de confirmações já consumidas.
 - Envio é síncrono e a resposta não promete tempo constante: diferença de
   latência SMTP ainda pode sinalizar conta existente. Antes da abertura pública,
   adotar entrega durável assíncrona/mitigação de enumeração temporal. Crash entre
   reserva e envio exige aguardar expiração; não há promessa de entrega exata.
 
-Testes devem provar isolamento, expiração, replay/corridas, rollback incluindo
-auditoria, respostas genéricas, dados legados intactos e ausência de segredos
-em banco/auditoria/respostas/logs. Não comprovam SMTP real ou piloto autorizado.
+## Evidências e próximos incrementos
+
+Em 01/11/2026: 365 testes/31 suítes do backend, 17 E2E da API, ambos os
+checks TypeScript e compilação de produção aprovados. `tests/cadastro.test.ts` cobre API/SQL reais com
+apenas transporte SMTP simulado: isolamento, expiração, replay/corridas,
+rollback incluindo auditoria, validação, respostas genéricas e logs seguros.
+`tests/emailPrivado.test.ts` cobre o contrato privado do transporte; migrações
+cobrem preservação dos legados e reversão protegida. Não houve teste com SMTP
+externo, abertura pública, deploy, interface web ou dispositivo Android.
+
+Próximos gates: fiscalização de expiração/limites do trial em todas as escritas
+(com leitura/exportação por perfil após expirar), cookies HttpOnly/CSRF na web,
+confirmação/recuperação e onboarding na interface, controle dos seeds demo,
+entrega de e-mail durável e homologada, privacidade/retenção operacional e
+revisão de segurança independente antes de abertura pública. CSV e validação
+institucional continuam entregas distintas. Nenhum desses gates é considerado
+resolvido apenas por existir `SELF_SERVICE_ENABLED`.

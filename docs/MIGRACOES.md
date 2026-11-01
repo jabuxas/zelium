@@ -74,6 +74,15 @@ senha ou desativação revogam as sessões emitidas. Tokens anteriores (sem `ver
 são recusados uma única vez. O `down` exige binário anterior à migração;
 detalhes em [`adrs/ADR-0011-sessoes-revogaveis.md`](adrs/ADR-0011-sessoes-revogaveis.md).
 
+Quarta migração: `20261101_001_cadastro_self_service`. Adiciona
+`cadastro_pendente` (hash SHA-256 do token, e-mail único, expiração e índice
+para limpeza) e metadados de acesso em `organizacao`: `modalidade_acesso`,
+`trial_inicio`, `trial_fim`, `limite_patrimonios` e `limite_usuarios`.
+Organizações já existentes recebem `legado`, sem prazo/limites retroativos.
+CHECK recusa metadados incompletos. O `down` recusa descartar pendências ou
+trials (inclusive arquivados); não apagar contas para forçar reversão.
+Rotas seguem desabilitadas por padrão: [contrato e gates](ONBOARDING_SELF_SERVICE.md).
+
 ## Dados que a inicialização não deve presumir
 
 - Aquisição, vida útil e residual ausentes permanecem ausentes. `created_at` não
@@ -85,10 +94,10 @@ detalhes em [`adrs/ADR-0011-sessoes-revogaveis.md`](adrs/ADR-0011-sessoes-revoga
   automaticamente. Identificar quais datas foram inferidas por versões antigas
   exige examinar auditoria, backups ou confirmação do gestor.
 
-**Limite destes incrementos:** eles fecham persistência, migração e cálculo
-financeiro. Onboarding self-service, trial e importação são as entregas
-seguintes. As contas e o seed de demonstração ainda exigem tratamento antes de
-liberar cadastro público.
+**Limite destes incrementos:** persistência/cálculo financeiro e backend de
+cadastro/confirmação estão implementados; a interface de onboarding,
+fiscalização do trial e importação continuam pendentes. As contas e o seed de
+demonstração ainda exigem tratamento antes de liberar cadastro público.
 
 ## Atualização segura
 
