@@ -17,8 +17,9 @@ export interface ResultadoEnvio {
 
 /**
  * Envio de e-mails via SMTP. Sem credenciais configuradas (desenvolvimento,
- * testes, ambientes sem SMTP), o envio é SIMULADO: a mensagem é registrada
- * no log e persistida no banco (tabela `notificacao`) com status "simulada".
+ * testes, ambientes sem SMTP), o envio operacional é SIMULADO (metadados no
+ * log; persistência é responsabilidade de NotificacaoService). E-mails de
+ * acesso usam privado=true: sem simulação ou log de destinatário/erro bruto.
  */
 export class EmailService {
   private transporter: Transporter | null;
@@ -29,6 +30,8 @@ export class EmailService {
           host: mailConfig.host,
           port: mailConfig.port,
           secure: mailConfig.port === 465,
+          connectionTimeout: 10_000,
+          socketTimeout: 20_000,
           auth: {
             user: mailConfig.user,
             pass: mailConfig.password,
@@ -37,8 +40,9 @@ export class EmailService {
       : null;
   }
 
-  async enviar(email: EmailPayload): Promise<ResultadoEnvio> {
+  async enviar(email: EmailPayload, options: { privado?: boolean } = {}): Promise<ResultadoEnvio> {
     if (!this.transporter) {
+      if (options.privado) return { status: 'falha', erro: 'SMTP nao configurado' };
       console.log(
         `[notificacao] ENVIO SIMULADO -> ${email.para.join(", ")}: ${email.assunto}`
       );
@@ -55,6 +59,7 @@ export class EmailService {
       });
       return { status: "enviada" };
     } catch (err) {
+      if (options.privado) return { status: 'falha', erro: 'Falha no transporte de email privado' };
       const mensagem = err instanceof Error ? err.message : String(err);
       console.error(`[notificacao] FALHA ao enviar para ${email.para.join(", ")}:`, mensagem);
       return { status: "falha", erro: mensagem };
