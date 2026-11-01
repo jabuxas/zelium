@@ -28,6 +28,18 @@ app.get("/health", (_req, res) => {
 
 app.use("/api", routes);
 
+// O erro do parser JSON pode carregar err.body (token e senha em claro).
+// Os endpoints de acesso não podem cair no logger genérico de erros abaixo.
+app.use('/api/auth/cadastros', (err: Error & { type?: string }, _req: Request, res: Response, _next: NextFunction) => {
+  res.setHeader('Cache-Control', 'no-store');
+  if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Corpo da requisicao excede o limite' });
+  if (['entity.parse.failed', 'request.aborted', 'encoding.unsupported', 'charset.unsupported', 'request.size.invalid'].includes(err.type ?? '')) {
+    return res.status(400).json({ error: 'Corpo da requisicao invalido' });
+  }
+  console.error('[cadastro] Falha ao processar requisicao');
+  return res.status(500).json({ error: 'Erro interno do servidor' });
+});
+
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ReferenciaDeOutraOrganizacaoError) {
     return res.status(400).json({ error: err.message });

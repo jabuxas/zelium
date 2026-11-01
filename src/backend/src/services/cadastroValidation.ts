@@ -22,3 +22,11 @@ export function validarPedidoCadastro(value: unknown): PedidoCadastro | null {
   if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9]+(?:[.-][a-z0-9]+)*\.[a-z]{2,}$/i.test(email)) return null;
   return { nome: value.nome.trim(), email, organizacaoNome: value.organizacaoNome.trim() };
 }
+
+export function validarConfirmacao(value: unknown): { token: string; senha: string } | null {
+  if (!objetoEstrito(value, ['token', 'senha']) || typeof value.token !== 'string'
+    || !/^[a-f0-9]{64}$/.test(value.token) || typeof value.senha !== 'string'
+    || value.senha.length < 12 || Buffer.byteLength(value.senha, 'utf8') > 72
+    || !value.senha.trim()) return null;
+  return { token: value.token, senha: value.senha };
+}

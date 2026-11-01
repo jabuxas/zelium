@@ -11,5 +11,6 @@ const router = Router();
 router.post("/login", rateLimitLogin, AuthController.login);
 router.get("/me", authenticate, AuthController.me);
 router.post('/cadastros', cadastroHabilitado, criarLimiteCadastro(5), CadastroController.solicitar);
+router.post('/cadastros/confirmacao', cadastroHabilitado, criarLimiteCadastro(10), CadastroController.confirmar);
 
 export default router;
