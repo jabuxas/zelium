@@ -65,6 +65,48 @@ async function contarMigracoes(): Promise<Set<string>> {
   return new Set(rows.map(row => row.id));
 }
 
+describe('Schema do cadastro self-service', () => {
+  it('migra organização antiga como legado sem impor prazo nem limites retroativos', async () => {
+    // Simula instalação anterior, mesmo quando o schema novo já contém campos.
+    await sequelize.query(`
+      DROP TABLE IF EXISTS cadastro_pendente;
+      ALTER TABLE organizacao DROP COLUMN IF EXISTS modalidade_acesso CASCADE,
+        DROP COLUMN IF EXISTS trial_inicio, DROP COLUMN IF EXISTS trial_fim,
+        DROP COLUMN IF EXISTS limite_patrimonios, DROP COLUMN IF EXISTS limite_usuarios;
+    `);
+    const antes = await sequelize.query('SELECT id, nome, slug, ativo FROM organizacao', { type: QueryTypes.SELECT });
+    await migrate();
+    await migrate();
+    expect(await sequelize.query('SELECT id, nome, slug, ativo FROM organizacao', { type: QueryTypes.SELECT })).toEqual(antes);
+    expect(await sequelize.query(`SELECT modalidade_acesso, trial_inicio, trial_fim,
+      limite_patrimonios, limite_usuarios FROM organizacao`, { type: QueryTypes.SELECT }))
+      .toEqual([{ modalidade_acesso: 'legado', trial_inicio: null, trial_fim: null,
+        limite_patrimonios: null, limite_usuarios: null }]);
+    expect(await contarMigracoes()).toContain('20261101_001_cadastro_self_service');
+  });
+
+  it('recusa trial incompleto no banco e permite rollback/reaplicação sem pendências', async () => {
+    await migrate();
+    await expect(sequelize.query(`UPDATE organizacao SET modalidade_acesso = 'trial' WHERE id = 1`))
+      .rejects.toThrow();
+    expect(await rollbackLastMigration()).toBe('20261101_001_cadastro_self_service');
+    expect(await sequelize.getQueryInterface().describeTable('organizacao')).not.toHaveProperty('trial_fim');
+    await migrate();
+    expect(await sequelize.getQueryInterface().describeTable('cadastro_pendente')).toHaveProperty('token_hash');
+  });
+
+  it('não descarta organizações trial nem seu histórico para permitir rollback', async () => {
+    await migrate();
+    await sequelize.query(`UPDATE organizacao SET modalidade_acesso = 'trial',
+      trial_inicio = NOW(), trial_fim = NOW() + INTERVAL '30 days',
+      limite_patrimonios = 500, limite_usuarios = 5 WHERE id = 1`);
+    await expect(rollbackLastMigration()).rejects.toThrow(/cadastro self-service/i);
+    expect(await contarMigracoes()).toContain('20261101_001_cadastro_self_service');
+    expect(await sequelize.query('SELECT modalidade_acesso FROM organizacao WHERE id = 1', { type: QueryTypes.SELECT }))
+      .toEqual([{ modalidade_acesso: 'trial' }]);
+  });
+});
+
 describe('Migrações sem alteração implícita de dados', () => {
   it('preserva campos financeiros ausentes e dados explícitos após duas inicializações', async () => {
     await sequelize.query(`
@@ -180,6 +222,7 @@ describe('Numeração patrimonial no schema SQL e na atualização de banco exis
 
   it('recusa rollback com números compartilhados sem apagar bens nem o histórico', async () => {
     await migrate();
+    expect(await rollbackLastMigration()).toBe('20261101_001_cadastro_self_service');
     // Reverte as migrações posteriores (sessão 003, monetária 002) para voltar
     // ao estado que só tem a restrição de numeração; então compartilha números
     // e recusa reverter a numeração.
@@ -338,6 +381,7 @@ describe('Migração monetária NUMERIC(14,2) — integridade e sujeira legada',
 
   it('reversão volta para DOUBLE PRECISION preservando valores e removendo CHECKs', async () => {
     await migrate();
+    expect(await rollbackLastMigration()).toBe('20261101_001_cadastro_self_service');
     await sequelize.query(`UPDATE patrimonio SET valor_residual = 0.1 + 0.2 WHERE id = 2`);
     // A última migração é a de sessão (003); reverte-a primeiro, depois a
     // monetária — comportamento do rollback: sempre a última aplicada.

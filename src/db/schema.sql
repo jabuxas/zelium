@@ -3,10 +3,33 @@ CREATE TABLE organizacao (
     nome VARCHAR(150) NOT NULL,
     slug VARCHAR(80) NOT NULL UNIQUE,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    modalidade_acesso VARCHAR(20) NOT NULL DEFAULT 'legado',
+    trial_inicio TIMESTAMPTZ,
+    trial_fim TIMESTAMPTZ,
+    limite_patrimonios INT,
+    limite_usuarios INT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMP NULL
+    deleted_at TIMESTAMP NULL,
+    CONSTRAINT organizacao_acesso_check CHECK (
+        (modalidade_acesso = 'legado' AND trial_inicio IS NULL AND trial_fim IS NULL
+            AND limite_patrimonios IS NULL AND limite_usuarios IS NULL)
+        OR (modalidade_acesso = 'trial' AND trial_inicio IS NOT NULL AND trial_fim IS NOT NULL
+            AND trial_fim > trial_inicio AND limite_patrimonios IS NOT NULL AND limite_patrimonios > 0
+            AND limite_usuarios IS NOT NULL AND limite_usuarios > 0)
+    )
 );
+
+-- Segredos de confirmação somente como hash; sem senha ou auditoria de negócio.
+CREATE TABLE cadastro_pendente (
+    token_hash CHAR(64) PRIMARY KEY CHECK (token_hash ~ '^[a-f0-9]{64}$'),
+    email VARCHAR(100) NOT NULL UNIQUE CHECK (email = lower(btrim(email))),
+    nome VARCHAR(100) NOT NULL,
+    organizacao_nome VARCHAR(150) NOT NULL,
+    expira_em TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX cadastro_pendente_expira_idx ON cadastro_pendente (expira_em);
 
 CREATE TABLE tipo_material (
     id SERIAL PRIMARY KEY,
