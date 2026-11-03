@@ -9,7 +9,10 @@ export function cadastroHabilitado(_req: Request, res: Response, next: NextFunct
   }
   try {
     const url = new URL(process.env.SELF_SERVICE_CONFIRMATION_URL ?? '');
-    if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || !smtpConfigurado()) {
+    // Produção exige HTTPS fixo; loopback aceita http (dev/E2E local sem TLS).
+    const loopback = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(url.hostname);
+    const segura = url.protocol === 'https:' || (url.protocol === 'http:' && loopback);
+    if (!segura || url.username || url.password || url.search || url.hash || !smtpConfigurado()) {
       throw new Error('Configuracao insegura');
     }
     res.locals.confirmationUrl = url.toString();

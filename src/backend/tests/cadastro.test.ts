@@ -115,6 +115,17 @@ describe('Solicitação de cadastro', () => {
     expect(envio).not.toHaveBeenCalled();
   });
 
+  it('aceita http apenas para loopback (dev/E2E local sem TLS)', async () => {
+    process.env.SELF_SERVICE_CONFIRMATION_URL = 'http://localhost:3000/cadastro/confirmar';
+    const res = await solicitar();
+    expect(res.status).toBe(202);
+    expect(envio.mock.calls[0][0].corpoTexto).toContain('http://localhost:3000/cadastro/confirmar#token=');
+    await sequelize.query('DELETE FROM cadastro_pendente');
+
+    process.env.SELF_SERVICE_CONFIRMATION_URL = 'http://127.0.0.1:3000/confirmar';
+    expect((await solicitar()).status).toBe(202);
+  });
+
   it('não aceita habilitação sem SMTP', async () => {
     jest.mocked(smtpConfigurado).mockReturnValue(false);
     expect((await solicitar()).status).toBe(503);
