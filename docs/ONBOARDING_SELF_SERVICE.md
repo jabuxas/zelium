@@ -1,9 +1,11 @@
 # Cadastro self-service — contrato e controles
 
 Implementação incremental do bloco 6. **Não é liberação pública**: tratamento
-dos seeds de demonstração, SMTP real, interface web (cadastro, onboarding e
-tratamento dos códigos de trial) e revisão de segurança independente continuam
-sendo gates separados. Cookies HttpOnly/CSRF na web estão concluídos (ADR-0014).
+dos seeds de demonstração, SMTP real, recuperação de senha e revisão de
+segurança independente continuam sendo gates separados. Interface de
+cadastro/confirmação e banner de trial expirado implementados em 03/11/2026
+(E2E web com SMTP fictício — entrega real segue não homologada); cookies
+HttpOnly/CSRF concluídos (ADR-0014).
 
 ## Contrato implementado no backend
 
@@ -83,10 +85,10 @@ liberadas, limites de bens/usuários com liberação de vaga por
 arquivamento/desativação e legado intocado. Não houve teste com SMTP
 externo, abertura pública, deploy, interface web ou dispositivo Android.
 
-Próximos gates: confirmação/recuperação e onboarding na interface (incluindo
-tratamento de `trial_expirado`/`limite_trial`), controle dos seeds demo,
-entrega de e-mail durável e homologada, privacidade/retenção operacional e
-revisão de segurança independente antes de abertura pública. Cookies
-HttpOnly/CSRF na web foram concluídos em 03/11/2026 (ADR-0014). CSV e
-validação institucional continuam entregas distintas. Nenhum gate é
+Próximos gates: recuperação de senha, controle dos seeds demo, entrega de
+e-mail durável e homologada, privacidade/retenção operacional e revisão de
+segurança independente antes de abertura pública. Interface de
+cadastro/confirmação e tratamento de `trial_expirado` (banner) concluídos em
+03/11/2026; `limite_trial` aparece na mensagem de erro dos formulários.
+CSV e validação institucional continuam entregas distintas. Nenhum gate é
 considerado resolvido apenas por existir `SELF_SERVICE_ENABLED`.

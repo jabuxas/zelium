@@ -417,10 +417,10 @@ Tudo o que está automatizado:
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
 | Backend | `cd src/backend && npm test -- --runInBand` | 385 testes/34 suítes em 03/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, cookie/CSRF, limites de login/cadastro, confirmação transacional e fiscalização do trial |
-| Frontend | `cd src/front && pnpm test --runInBand` | 123 testes: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro (aviso de cadastro incompleto) e erros por campo |
+| Frontend | `cd src/front && pnpm test --runInBand` | 146 testes em 03/11/2026: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro (aviso de cadastro incompleto), erros por campo, cadastro/confirmação públicos, guard de rotas públicas e banner de trial expirado |
 | Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
 | E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro, permissões, cookie HttpOnly e CSRF |
-| E2E interfaces | `cd e2e && npm test -- --project=web --project=mobile` | Login e sessão por cookie na web, cadastros, inventário, solicitações, relatórios/downloads web, conferência, fotos e histórico do app (mobile segue por Bearer) |
+| E2E interfaces | `cd e2e && npm test -- --project=web --project=mobile` | Login e sessão por cookie na web, cadastro público (solicitação genérica, confirmação por link, token inválido), cadastros, inventário, solicitações, relatórios/downloads web, conferência, fotos e histórico do app (mobile segue por Bearer) |
 | E2E produção | `cd e2e && npm run test:production` | Mesmos cenários com build Next em `.next-e2e`; Expo Web continua distinto de homologação nativa |
 | Infraestrutura E2E | `cd e2e && npm run test:infrastructure` | Encerramento dos processos filhos/netos da UI |
 
@@ -455,7 +455,7 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 | Falta | Detalhe |
 | --- | --- |
 | **Troca/recuperação de senha** | Usuário não consegue trocar a própria senha nem recuperá-la por e-mail (a senha padrão `Zelium@2026` só muda via gestor em `PUT /api/usuarios/:id`) |
-| **Onboarding self-service na web** | Backend de solicitação/confirmação e fiscalização do trial prontos, desabilitados por padrão; falta interface (incluindo tratamento de `trial_expirado`/`limite_trial`), cookies/CSRF, seeds demo, e-mail real e revisão independente — gates em `ONBOARDING_SELF_SERVICE.md` |
+| **Restante do onboarding self-service** | Solicitação, confirmação e banner de trial expirado têm interface; faltam recuperação de senha, tratamento fino de `limite_trial` por tela e checklist de onboarding — gates em `ONBOARDING_SELF_SERVICE.md` |
 | **UI de gestão de usuários** | O CRUD `/api/usuarios` existe, mas não há página no frontend — gestão é via API/SQL |
 | **UI de gestão de organizações** | Provisionamento por confirmação existe sob flag; não há tela de multiempresa para o operador |
 | **Paginação nas listas web** | Listas carregam tudo de uma vez; com milhares de bens ficará lento |
