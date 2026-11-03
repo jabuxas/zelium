@@ -62,8 +62,11 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
   const { usuario, organizacao, papel, logout } = useAuth();
 
   const isLogin = pathname === "/login";
+  // Cadastro público: mesmo tratamento do login — sem guard de permissões
+  // (o visitante não tem sessão) e sem o shell do app.
+  const isCadastro = pathname === "/cadastro" || pathname.startsWith("/cadastro/");
 
-  if (isLogin) {
+  if (isLogin || isCadastro) {
     return <>{children}</>;
   }
 

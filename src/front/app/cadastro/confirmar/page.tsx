@@ -23,14 +23,24 @@ export default function ConfirmarCadastroPage() {
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
+    // O segredo vai para sessionStorage (por aba) ANTES de sair da URL: o
+    // roteador do Next se integra ao history e pode remontar a página ao
+    // remover o fragmento — sem o resgate, o remount releria um hash vazio
+    // e derrubaria o formulário.
     const match = /^#token=([a-f0-9]{64})$/.exec(window.location.hash);
-    if (!match) {
-      setSemToken(true);
+    if (match) {
+      sessionStorage.setItem("zelium_token_cadastro", match[1]);
+      setToken(match[1]);
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
       return;
     }
-    setToken(match[1]);
-    // O segredo não deve permanecer na barra de endereço (histórico, tela).
-    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    const guardado = sessionStorage.getItem("zelium_token_cadastro");
+    if (guardado && /^[a-f0-9]{64}$/.test(guardado)) {
+      setToken(guardado);
+    } else {
+      sessionStorage.removeItem("zelium_token_cadastro");
+      setSemToken(true);
+    }
   }, []);
 
   function validarLocal(): string | null {
@@ -58,6 +68,7 @@ export default function ConfirmarCadastroPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 201) {
+        sessionStorage.removeItem("zelium_token_cadastro");
         setSucesso(data.message ?? "Cadastro confirmado. Faça login para continuar.");
         setSenha("");
         setConfirmarSenha("");

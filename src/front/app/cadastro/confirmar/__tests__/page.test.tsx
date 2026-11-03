@@ -11,11 +11,13 @@ function definirTokenNaUrl(token: string | null) {
 
 beforeEach(() => {
   definirTokenNaUrl(null);
+  sessionStorage.clear();
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
   definirTokenNaUrl(null);
+  sessionStorage.clear();
 });
 
 async function submeterCom(senha: string) {
@@ -74,6 +76,16 @@ it('link sem token mostra erro e não envia nada', () => {
   render(<ConfirmarCadastroPage />);
   expect(screen.getByText(/Link incompleto/i)).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /Solicitar novo cadastro/i })).toHaveAttribute('href', '/cadastro');
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+it('token guardado na aba sobrevive ao remount do roteador (hash já removido)', () => {
+  sessionStorage.setItem('zelium_token_cadastro', TOKEN);
+  const fetchMock = jest.fn();
+  global.fetch = fetchMock as unknown as typeof fetch;
+  render(<ConfirmarCadastroPage />);
+  expect(screen.getByLabelText('Nova senha', { exact: false })).toBeInTheDocument();
+  expect(screen.queryByText(/Link incompleto/i)).toBeNull();
   expect(fetchMock).not.toHaveBeenCalled();
 });
 
