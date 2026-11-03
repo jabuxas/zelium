@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/auth";
+import { lerCookieSessao } from "../config/sessao";
 import type { UsuarioPapel } from "../models/Usuario";
 import { revalidarSessao } from "./revalidarSessao";
 import { runWithContext } from "../context/requestContext";
@@ -30,13 +31,17 @@ export function authenticate(
   next: NextFunction
 ) {
   const header = req.headers.authorization;
-  if (!header || !header.startsWith("Bearer ")) {
+  // Web (navegador) usa o cookie HttpOnly; mobile e clientes de API usam
+  // Bearer. Header tem prioridade quando presente.
+  const token = header
+    ? (header.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "")
+    : lerCookieSessao(req.headers.cookie);
+
+  if (!token) {
     return res
       .status(401)
       .json({ error: "Autenticacao necessaria. Faca login para continuar." });
   }
-
-  const token = header.slice("Bearer ".length).trim();
 
   try {
     const payload = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;

@@ -14,6 +14,7 @@ import notificacaoRoutes from "./notificacao.routes";
 import relatorioRoutes from "./relatorio.routes";
 import { authenticate, withUserContext } from "../middlewares/auth";
 import { exigirTrialValido } from "../middlewares/trial";
+import { exigirCsrfParaCookie } from "../middlewares/csrf";
 
 const router = Router();
 
@@ -28,6 +29,11 @@ router.use(withUserContext);
 // Trial expirada bloqueia escritas de negócio (leituras/exportações seguem
 // por perfil). Consulta a organização só em POST/PUT/PATCH/DELETE.
 router.use(exigirTrialValido);
+
+// Defesa CSRF: requisições autenticadas POR COOKIE em métodos de escrita
+// exigem X-Requested-With (header customizado = preflight = allowlist CORS).
+// Autenticação por Bearer (mobile/API) é isenta por natureza.
+router.use(exigirCsrfParaCookie);
 
 router.use("/ambientes", ambienteRoutes);
 router.use("/conferentes", conferenteRoutes);

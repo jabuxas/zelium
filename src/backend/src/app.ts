@@ -3,6 +3,7 @@ import routes from "./routes";
 import { ReferenciaDeOutraOrganizacaoError } from "./context/errors";
 import { authenticate, withUserContext } from './middlewares/auth';
 import { PatrimonioFotoController } from './controllers/PatrimonioFotoController';
+import { origensWebPermitidas } from './config/sessao';
 
 const app = express();
 
@@ -10,10 +11,20 @@ const app = express();
 // (X-Forwarded-For do primeiro proxy), exigido pelo rate limit do login.
 app.set("trust proxy", 1);
 
+// CORS com credenciais (cookie de sessão): ACAO só para origens da allowlist
+// — "Access-Control-Allow-Origin: *" é ilegal junto de credentials. Produção
+// é same-origin pelo Caddy e não depende de CORS; dev/E2E usam portas locais.
+// Mobile (React Native) não aplica CORS e segue por Bearer.
+const origensPermitidas = origensWebPermitidas();
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origem = req.headers.origin;
+  if (origem && origensPermitidas.includes(origem)) {
+    res.header('Access-Control-Allow-Origin', origem);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.vary('Origin');
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   if (req.method === 'OPTIONS') return res.status(204).send('');
   next();
 });

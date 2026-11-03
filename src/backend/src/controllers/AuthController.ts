@@ -5,6 +5,7 @@ import { UsuarioService } from "../services/UsuarioService";
 import { LimiteTrialAtingidoError } from "../services/TrialService";
 import { PAPEIS, UsuarioPapel } from "../models/Usuario";
 import { Organizacao } from "../models/Organizacao";
+import { COOKIE_SESSAO, cookieMaxAgeSegundos, cookieSeguro } from "../config/sessao";
 
 const authService = new AuthService();
 const usuarioService = new UsuarioService();
@@ -23,6 +24,15 @@ export const AuthController = {
 
     try {
       const { token, usuario, organizacao } = await authService.login(String(email), String(senha));
+      // Cookie HttpOnly para o navegador (web). O token segue no corpo para o
+      // app mobile (AsyncStorage + Bearer); a web NÃO deve persisti-lo.
+      res.cookie(COOKIE_SESSAO, token, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: cookieSeguro(),
+        maxAge: cookieMaxAgeSegundos() * 1000,
+        path: "/",
+      });
       res.json({ token, usuario, organizacao });
     } catch (err) {
       if (err instanceof CredenciaisInvalidasError) {
@@ -30,6 +40,18 @@ export const AuthController = {
       }
       throw err;
     }
+  },
+
+  /** Logout do navegador: apaga o cookie (destruição client-side; sem
+   * denylist — mesma semântica do logout mobile local). */
+  async logout(_req: Request, res: Response) {
+    res.clearCookie(COOKIE_SESSAO, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: cookieSeguro(),
+      path: "/",
+    });
+    res.json({ message: "Sessao encerrada" });
   },
 
   async me(req: Request, res: Response) {
