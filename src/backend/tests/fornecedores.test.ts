@@ -5,6 +5,12 @@ import { FornecedorService } from '../src/services/FornecedoresService';
 jest.mock('../src/services/FornecedoresService');
 const MockedService = FornecedorService as jest.Mocked<typeof FornecedorService>;
 
+// Escrita sob a guarda de trial consultaria o banco (real em trial.test.ts):
+// simulada como permitida — boundary de teste, não exceção de produção.
+jest.mock('../src/middlewares/trial', () => ({
+  exigirTrialValido: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 // Suíte unitária sem banco: a revalidação de sessão (real em sessao.test.ts)
 // é simulada como válida — boundary de teste, não exceção de produção.
 jest.mock('../src/middlewares/revalidarSessao', () => ({

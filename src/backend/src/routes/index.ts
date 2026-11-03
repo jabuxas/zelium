@@ -13,6 +13,7 @@ import usuarioRoutes from "./usuario.routes";
 import notificacaoRoutes from "./notificacao.routes";
 import relatorioRoutes from "./relatorio.routes";
 import { authenticate, withUserContext } from "../middlewares/auth";
+import { exigirTrialValido } from "../middlewares/trial";
 
 const router = Router();
 
@@ -23,6 +24,10 @@ router.use("/auth", authRoutes);
 // contexto da organização do usuário (isolamento multiempresa)
 router.use(authenticate);
 router.use(withUserContext);
+
+// Trial expirada bloqueia escritas de negócio (leituras/exportações seguem
+// por perfil). Consulta a organização só em POST/PUT/PATCH/DELETE.
+router.use(exigirTrialValido);
 
 router.use("/ambientes", ambienteRoutes);
 router.use("/conferentes", conferenteRoutes);
