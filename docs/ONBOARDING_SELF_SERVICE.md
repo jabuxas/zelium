@@ -1,8 +1,8 @@
 # Cadastro self-service — contrato e controles
 
 Implementação incremental do bloco 6. **Não é liberação pública**: cookies
-HttpOnly/CSRF, tratamento dos seeds de demonstração, SMTP real, aplicação dos
-limites/expiração do trial e interface web continuam sendo gates separados.
+HttpOnly/CSRF, tratamento dos seeds de demonstração, SMTP real, interface web
+e revisão de segurança independente continuam sendo gates separados.
 
 ## Contrato implementado no backend
 
@@ -34,7 +34,11 @@ limites/expiração do trial e interface web continuam sendo gates separados.
   O login posterior usa o contrato existente e sessões revogáveis (ADR-0011).
 - Trial de 30 dias começa na confirmação; limites iniciais de 500 bens/5
   usuários. Organizações existentes ficam explicitamente como `legado`, sem
-  prazo retroativo. **Metadados não substituem a futura fiscalização do trial.**
+  prazo retroativo. Fiscalização aplicada no backend (ADR-0013): trial
+  expirada nega qualquer escrita com `403 codigo trial_expirado` mantendo
+  leituras/exportações por perfil; trial ativa limita criação de bens e
+  usuários com `403 codigo limite_trial`. O cliente ainda não trata esses
+  códigos — interface pendente.
 
 ## Ameaças e privacidade
 
@@ -67,18 +71,21 @@ credenciais e dados pessoais (nome/e-mail para finalidade de criar a conta).
 
 ## Evidências e próximos incrementos
 
-Em 01/11/2026: 365 testes/31 suítes do backend, 17 E2E da API, ambos os
+Em 03/11/2026: 373 testes/32 suítes do backend, 17 E2E da API, ambos os
 checks TypeScript e compilação de produção aprovados. `tests/cadastro.test.ts` cobre API/SQL reais com
 apenas transporte SMTP simulado: isolamento, expiração, replay/corridas,
 rollback incluindo auditoria, validação, respostas genéricas e logs seguros.
 `tests/emailPrivado.test.ts` cobre o contrato privado do transporte; migrações
-cobrem preservação dos legados e reversão protegida. Não houve teste com SMTP
+cobrem preservação dos legados e reversão protegida. `tests/trial.test.ts`
+cobre a fiscalização: escrita bloqueada na expiração, leituras/exportações
+liberadas, limites de bens/usuários com liberação de vaga por
+arquivamento/desativação e legado intocado. Não houve teste com SMTP
 externo, abertura pública, deploy, interface web ou dispositivo Android.
 
-Próximos gates: fiscalização de expiração/limites do trial em todas as escritas
-(com leitura/exportação por perfil após expirar), cookies HttpOnly/CSRF na web,
-confirmação/recuperação e onboarding na interface, controle dos seeds demo,
-entrega de e-mail durável e homologada, privacidade/retenção operacional e
-revisão de segurança independente antes de abertura pública. CSV e validação
-institucional continuam entregas distintas. Nenhum desses gates é considerado
-resolvido apenas por existir `SELF_SERVICE_ENABLED`.
+Próximos gates: cookies HttpOnly/CSRF na web, confirmação/recuperação e
+onboarding na interface (incluindo tratamento de `trial_expirado`/`limite_trial`),
+controle dos seeds demo, entrega de e-mail durável e homologada,
+privacidade/retenção operacional e revisão de segurança independente antes de
+abertura pública. CSV e validação institucional continuam entregas distintas.
+Nenhum desses gates é considerado resolvido apenas por existir
+`SELF_SERVICE_ENABLED`.

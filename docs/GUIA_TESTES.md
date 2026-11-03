@@ -416,7 +416,7 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test -- --runInBand` | 365 testes/31 suítes em 01/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, limites de login/cadastro e confirmação transacional |
+| Backend | `cd src/backend && npm test -- --runInBand` | 373 testes/32 suítes em 03/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, limites de login/cadastro, confirmação transacional e fiscalização do trial |
 | Frontend | `cd src/front && pnpm test --runInBand` | 123 testes: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro (aviso de cadastro incompleto) e erros por campo |
 | Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
 | E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro e permissões |
@@ -455,7 +455,7 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 | Falta | Detalhe |
 | --- | --- |
 | **Troca/recuperação de senha** | Usuário não consegue trocar a própria senha nem recuperá-la por e-mail (a senha padrão `Zelium@2026` só muda via gestor em `PUT /api/usuarios/:id`) |
-| **Onboarding self-service na web** | Backend de solicitação/confirmação pronto, mas desabilitado por padrão; falta interface, fiscalização do trial e gates de abertura pública em `ONBOARDING_SELF_SERVICE.md` |
+| **Onboarding self-service na web** | Backend de solicitação/confirmação e fiscalização do trial prontos, desabilitados por padrão; falta interface (incluindo tratamento de `trial_expirado`/`limite_trial`), cookies/CSRF, seeds demo, e-mail real e revisão independente — gates em `ONBOARDING_SELF_SERVICE.md` |
 | **UI de gestão de usuários** | O CRUD `/api/usuarios` existe, mas não há página no frontend — gestão é via API/SQL |
 | **UI de gestão de organizações** | Provisionamento por confirmação existe sob flag; não há tela de multiempresa para o operador |
 | **Paginação nas listas web** | Listas carregam tudo de uma vez; com milhares de bens ficará lento |
@@ -497,6 +497,8 @@ JWT padrão também é recusado na subida em produção.
 | `429 Muitas tentativas de login` | 10+ falhas de credencial do mesmo IP em 15 min | Aguardar o tempo do header `Retry-After` (sucesso não conta para o limite) |
 | `401 Sessao desatualizada` em tudo | Token de versão anterior: troca de senha, desativação ou organização desativada revogaram a sessão (ou token antigo sem `ver`) | Fazer login novamente |
 | `401 Sessao expirada ou token invalido` em tudo | Token expirado ou inválido | Fazer login novamente |
+| `403 trial_expirado` nas escritas | Período de trial da organização venceu | Consultas/exportações seguem por perfil; renovação é contato comercial (interface pendente) |
+| `403 limite_trial` ao criar bem/usuário | Trial ativa atingiu o limite da organização (default 500 bens/5 usuários) | Arquivar bens ou desativar usuários libera vaga |
 | Frontend não carrega listas | `NEXT_PUBLIC_API_URL` errado | Dev: `http://localhost:8000/api`. Recriar o build se mudou |
 | App mostra "Env EXPO_PUBLIC_API_URL não está definida" | Falta a variável | Rodar `EXPO_PUBLIC_API_URL=http://<ip>:8000/api npx expo start` |
 | Câmera não abre no app | Permissão negada | Liberar câmera nas configurações do Android e reiniciar |
