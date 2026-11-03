@@ -27,7 +27,11 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => close().f
   Object.assign(process.env, {
     NODE_ENV: 'test', DB_HOST: container.getHost(), DB_PORT: String(container.getMappedPort(5432)),
     DB_NAME: container.getDatabase(), DB_USER: container.getUsername(), DB_PASSWORD: container.getPassword(),
-    SMTP_HOST: '', SMTP_USER: '', SMTP_PASSWORD: '',
+    SMTP_HOST: 'smtp.invalid', SMTP_USER: 'no-reply@e2e.local', SMTP_PASSWORD: 'e2e',
+    // Habilita o fluxo self-service na UI: envio privado falha rápido (DNS
+    // reservado) e a solicitação segue com o mesmo 202 genérico do contrato.
+    SELF_SERVICE_ENABLED: 'true',
+    SELF_SERVICE_CONFIRMATION_URL: 'http://localhost:3370/cadastro/confirmar',
   });
   // O backend usa cwd/uploads: isola anexos sem escrever na árvore do projeto.
   uploads = mkdtempSync(path.join(tmpdir(), 'zelium-e2e-'));
