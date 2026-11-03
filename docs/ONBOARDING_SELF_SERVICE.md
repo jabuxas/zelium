@@ -1,8 +1,9 @@
 # Cadastro self-service — contrato e controles
 
-Implementação incremental do bloco 6. **Não é liberação pública**: cookies
-HttpOnly/CSRF, tratamento dos seeds de demonstração, SMTP real, interface web
-e revisão de segurança independente continuam sendo gates separados.
+Implementação incremental do bloco 6. **Não é liberação pública**: tratamento
+dos seeds de demonstração, SMTP real, interface web (cadastro, onboarding e
+tratamento dos códigos de trial) e revisão de segurança independente continuam
+sendo gates separados. Cookies HttpOnly/CSRF na web estão concluídos (ADR-0014).
 
 ## Contrato implementado no backend
 
@@ -82,10 +83,10 @@ liberadas, limites de bens/usuários com liberação de vaga por
 arquivamento/desativação e legado intocado. Não houve teste com SMTP
 externo, abertura pública, deploy, interface web ou dispositivo Android.
 
-Próximos gates: cookies HttpOnly/CSRF na web, confirmação/recuperação e
-onboarding na interface (incluindo tratamento de `trial_expirado`/`limite_trial`),
-controle dos seeds demo, entrega de e-mail durável e homologada,
-privacidade/retenção operacional e revisão de segurança independente antes de
-abertura pública. CSV e validação institucional continuam entregas distintas.
-Nenhum desses gates é considerado resolvido apenas por existir
-`SELF_SERVICE_ENABLED`.
+Próximos gates: confirmação/recuperação e onboarding na interface (incluindo
+tratamento de `trial_expirado`/`limite_trial`), controle dos seeds demo,
+entrega de e-mail durável e homologada, privacidade/retenção operacional e
+revisão de segurança independente antes de abertura pública. Cookies
+HttpOnly/CSRF na web foram concluídos em 03/11/2026 (ADR-0014). CSV e
+validação institucional continuam entregas distintas. Nenhum gate é
+considerado resolvido apenas por existir `SELF_SERVICE_ENABLED`.

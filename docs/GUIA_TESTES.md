@@ -416,11 +416,11 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test -- --runInBand` | 373 testes/32 suítes em 03/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, limites de login/cadastro, confirmação transacional e fiscalização do trial |
+| Backend | `cd src/backend && npm test -- --runInBand` | 385 testes/34 suítes em 03/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, cookie/CSRF, limites de login/cadastro, confirmação transacional e fiscalização do trial |
 | Frontend | `cd src/front && pnpm test --runInBand` | 123 testes: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro (aviso de cadastro incompleto) e erros por campo |
 | Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
-| E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro e permissões |
-| E2E interfaces | `cd e2e && npm test -- --project=web --project=mobile` | Login, cadastros, inventário, solicitações web, relatórios/downloads web, conferência, fotos e histórico do app |
+| E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro, permissões, cookie HttpOnly e CSRF |
+| E2E interfaces | `cd e2e && npm test -- --project=web --project=mobile` | Login e sessão por cookie na web, cadastros, inventário, solicitações, relatórios/downloads web, conferência, fotos e histórico do app (mobile segue por Bearer) |
 | E2E produção | `cd e2e && npm run test:production` | Mesmos cenários com build Next em `.next-e2e`; Expo Web continua distinto de homologação nativa |
 | Infraestrutura E2E | `cd e2e && npm run test:infrastructure` | Encerramento dos processos filhos/netos da UI |
 
@@ -470,16 +470,18 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 
 | Falta | Detalhe |
 | --- | --- |
-| **Cookie de sessão httpOnly na web** | Token segue no `localStorage` (o app mobile usa `AsyncStorage`); migração para cookie `HttpOnly`/`Secure` + CSRF é o próximo passo de hardening |
 | Retenção de logs | `audit_log` e `notificacao` crescem sem política de expurgo |
 | Monitoramento/alertas | Sem métricas ou alertas de saúde (além do `/health`) |
 | Backup externo | O backup roda local; a cópia para fora do servidor é manual (documentada em `docs/DEPLOY.md`) |
+| **CSRF na interface de cadastro público** | As rotas de cadastro self-service ainda não têm cliente web; quando existirem, seguir o padrão de cookie + `X-Requested-With` (ADR-0014) |
 
-Resolvidos em 29–30/10/2026: ~~rate limiting no login~~ (`429` após 10 falhas
-de credencial por IP a cada 15 min, `Retry-After` incluso) e ~~refresh token /
+Resolvidos em 29/10–03/11/2026: ~~rate limiting no login~~ (`429` após 10 falhas
+de credencial por IP a cada 15 min, `Retry-After` incluso), ~~refresh token /
 revogação~~ (sessões revogáveis por `sessao_version` — troca de senha,
-desativação de usuário ou organização matam os tokens; ADR-0011). O segredo
-JWT padrão também é recusado na subida em produção.
+desativação de usuário ou organização matam os tokens; ADR-0011), ~~segredo JWT
+padrão~~ (recusado na subida em produção) e ~~cookie de sessão httpOnly na
+web~~ (sessão em cookie `HttpOnly`/`SameSite=Lax`/`Secure` + defesa CSRF por
+header customizado e CORS com allowlist; token saiu do `localStorage`; ADR-0014).
 
 ### Fora do escopo atual (deliberado)
 
@@ -499,6 +501,7 @@ JWT padrão também é recusado na subida em produção.
 | `401 Sessao expirada ou token invalido` em tudo | Token expirado ou inválido | Fazer login novamente |
 | `403 trial_expirado` nas escritas | Período de trial da organização venceu | Consultas/exportações seguem por perfil; renovação é contato comercial (interface pendente) |
 | `403 limite_trial` ao criar bem/usuário | Trial ativa atingiu o limite da organização (default 500 bens/5 usuários) | Arquivar bens ou desativar usuários libera vaga |
+| `403 csrf` na web ao salvar | Requisição sem o header `X-Requested-With` (ex.: extensão ou script externo chamando a API) | Usar a aplicação web oficial; chamadas programáticas devem usar token Bearer |
 | Frontend não carrega listas | `NEXT_PUBLIC_API_URL` errado | Dev: `http://localhost:8000/api`. Recriar o build se mudou |
 | App mostra "Env EXPO_PUBLIC_API_URL não está definida" | Falta a variável | Rodar `EXPO_PUBLIC_API_URL=http://<ip>:8000/api npx expo start` |
 | Câmera não abre no app | Permissão negada | Liberar câmera nas configurações do Android e reiniciar |

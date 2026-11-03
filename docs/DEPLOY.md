@@ -198,3 +198,11 @@ escrita antes de atualizar**: o DDL pode bloquear tabelas. Consulte
 O backend também **recusa subir em produção sem `JWT_SECRET`** ou com o segredo
 de desenvolvimento (fail fast no import). Sessões são revogáveis: trocar a
 senha de um usuário desativa os tokens dele na hora (ADR-0011).
+
+A sessão da web usa **cookie HttpOnly** (`zelium_sessao`, `SameSite=Lax`,
+`Secure` em produção) e a API aplica defesa CSRF em escritas por cookie
+(ADR-0014). O Caddy serve tudo no mesmo domínio (`/api` no próprio site), então
+**não é preciso definir `WEB_ORIGINS`** — a allowlist CORS nasce vazia em
+produção. Defina `WEB_ORIGINS` (separada por vírgula) apenas se algum dia a
+web for servida em origem diferente da API. Usuários com sessão antiga (token
+no navegador) fazem login novamente uma única vez.
