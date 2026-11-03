@@ -6,7 +6,7 @@ import { apiHeaders } from '../support/helpers';
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
 const foto = { name: 'bem.png', mimeType: 'image/png', buffer: png };
 
-test('foto exige sessão e a organização correta, inclusive após arquivar o bem', async ({ request }) => {
+test('foto exige sessão e a organização correta, inclusive após arquivar o bem', async ({ request, playwright }) => {
   const headers = await apiHeaders(request);
   const outra = await apiHeaders(request, 'gestor.b@e2e.local');
   const criado = await request.post(`${API_URL}/api/patrimonios`, { headers, data: {
@@ -18,7 +18,11 @@ test('foto exige sessão e a organização correta, inclusive após arquivar o b
   const upload = await request.post(`${API_URL}/api/patrimonios/${patrimonio.id}/fotos`, { headers, multipart: { foto } });
   expect(upload.status()).toBe(201);
   const registro = await upload.json();
-  expect((await request.get(`${API_URL}${registro.url}`)).status()).toBe(401);
+  // Cliente anônimo de verdade (contexto sem jar): a fixture da própria
+  // sessão já carrega cookies e não serve para provar negação sem credenciais.
+  const anonima = await playwright.request.newContext();
+  expect((await anonima.get(`${API_URL}${registro.url}`)).status()).toBe(401);
+  await anonima.dispose();
   expect((await request.get(`${API_URL}${registro.url}`, { headers })).status()).toBe(200);
   expect((await request.get(`${API_URL}${registro.url}`, { headers: outra })).status()).toBe(404);
   expect((await request.delete(`${API_URL}/api/patrimonios/${patrimonio.id}`, { headers })).status()).toBe(204);

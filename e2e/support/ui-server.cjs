@@ -6,8 +6,8 @@ const cwd = path.join(root, mobile ? 'src/mobile' : 'src/front');
 const env = {
   ...process.env, BROWSER: 'none', ZELIUM_E2E: '1',
   EXPO_NO_DOTENV: '1',
-  NEXT_PUBLIC_API_URL: 'http://127.0.0.1:8870/api',
-  EXPO_PUBLIC_API_URL: 'http://127.0.0.1:8870/api',
+  NEXT_PUBLIC_API_URL: 'http://localhost:8870/api',
+  EXPO_PUBLIC_API_URL: 'http://localhost:8870/api',
 };
 const production = process.env.E2E_PRODUCTION === '1';
 let child;

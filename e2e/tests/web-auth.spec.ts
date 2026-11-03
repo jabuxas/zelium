@@ -13,3 +13,14 @@ for (const papel of ['gestor', 'responsavel', 'conferente'] as const) {
     expect(errors).toEqual([]);
   });
 }
+
+test('sessão web fica em cookie HttpOnly, não em localStorage', async ({ page }) => {
+  await loginWeb(page, 'gestor');
+  const cookies = await page.context().cookies();
+  const sessao = cookies.find(c => c.name === 'zelium_sessao');
+  expect(sessao).toBeDefined();
+  expect(sessao.httpOnly).toBe(true);
+  expect(sessao.sameSite).toMatch(/Lax/i);
+  expect(await page.evaluate(() => window.localStorage.getItem('zelar_token'))).toBeNull();
+  expect(await page.evaluate(() => window.localStorage.getItem('zelar_logado'))).toBeNull();
+});

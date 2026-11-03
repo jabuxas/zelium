@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-export const API_URL = 'http://127.0.0.1:8870';
+export const API_URL = 'http://localhost:8870';
 export const WEB_URL = 'http://localhost:3370';
 export const MOBILE_URL = 'http://localhost:8170';
 

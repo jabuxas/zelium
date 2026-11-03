@@ -52,7 +52,7 @@ test('financeiro e depreciação respeitam o residual; relatórios não cruzam o
   expect((await vazio.json()).total).toMatchObject({ total_itens: 0, valor_aquisicao: 0 });
 });
 
-test('nega relatórios ao Conferente e financeiro ao Responsável, inclusive exports', async ({ request }) => {
+test('nega relatórios ao Conferente e financeiro ao Responsável, inclusive exports', async ({ request, playwright }) => {
   const conf = await apiHeaders(request, 'conferente@zelium.com');
   const resp = await apiHeaders(request, 'responsavel@zelium.com');
   for (const path of ['patrimonios', 'por-ambiente', 'por-responsavel', 'por-estado', 'financeiro', 'exportar/csv?tipo=patrimonios', 'exportar/pdf?tipo=patrimonios']) {
@@ -66,7 +66,9 @@ test('nega relatórios ao Conferente e financeiro ao Responsável, inclusive exp
   for (const headers of [conf, resp]) {
     expect((await request.get(`${API_URL}/api/patrimonios/1/depreciacao`, { headers })).status()).toBe(403);
   }
-  expect((await request.get(`${API_URL}/api/relatorios/patrimonios`)).status()).toBe(401);
+  const anonima = await playwright.request.newContext();
+  expect((await anonima.get(`${API_URL}/api/relatorios/patrimonios`)).status()).toBe(401);
+  await anonima.dispose();
   expect((await request.get(`${API_URL}/api/relatorios/exportar/csv?tipo=invalido`, { headers: resp })).status()).toBe(400);
 });
 

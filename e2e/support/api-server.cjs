@@ -42,5 +42,5 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => close().f
       FROM usuario WHERE email = 'gestor@zelium.com';
   `);
   const app = backendRequire(path.join(root, 'src/backend/src/app.ts')).default;
-  server = app.listen(8870, '127.0.0.1', () => console.log('API E2E pronta (banco e uploads descartáveis)'));
+  server = app.listen(8870, () => console.log('API E2E pronta (banco e uploads descartáveis)'));
 })().catch(async error => { console.error(error); await close(); process.exit(1); });
