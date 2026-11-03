@@ -57,9 +57,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // O cookie é HttpOnly: o cliente descobre a sessão perguntando à API.
+    // Sonda SEM redirecionamento automático (fetch puro, não apiFetch):
+    // páginas públicas (/cadastro) renderizam sem sessão e não podem ser
+    // expulsas para /login pela checagem inicial.
     // /me também atualiza os dados de exibição se mudarem (ex.: outro tab).
     let ativo = true;
-    apiFetch(`${API_URL}/auth/me`)
+    fetch(`${API_URL}/auth/me`, {
+      credentials: "include",
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    })
       .then(async (res) => {
         if (!res.ok) {
           limparSessaoInfo();
