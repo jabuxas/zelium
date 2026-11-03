@@ -23,5 +23,14 @@ export async function apiFetch(
     }
   }
 
+  // Fiscalização do trial (ADR-0013): banner global em vez de erro em cada
+  // formulário. Clone antes de ler: o corpo original permanece para o chamador.
+  if (response.status === 403 && typeof window !== "undefined") {
+    const corpo = await response.clone().json().catch(() => null);
+    if (corpo?.codigo === "trial_expirado") {
+      window.dispatchEvent(new CustomEvent("zelium:trial-expirado"));
+    }
+  }
+
   return response;
 }

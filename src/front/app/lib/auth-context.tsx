@@ -46,7 +46,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioSessao | null>(null);
   const [organizacao, setOrganizacao] = useState<OrganizacaoSessao | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [trialExpirado, setTrialExpirado] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const aoExpirar = () => setTrialExpirado(true);
+    window.addEventListener("zelium:trial-expirado", aoExpirar);
+    return () => window.removeEventListener("zelium:trial-expirado", aoExpirar);
+  }, []);
 
   useEffect(() => {
     // O cookie é HttpOnly: o cliente descobre a sessão perguntando à API.
@@ -99,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSessaoInfo(data.usuario, data.organizacao ?? undefined);
       setUsuario(data.usuario);
       setOrganizacao(data.organizacao ?? null);
+      setTrialExpirado(false);
       router.push("/");
       router.refresh();
     },
@@ -111,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     limparSessaoInfo();
     setUsuario(null);
     setOrganizacao(null);
+    setTrialExpirado(false);
     router.push("/login");
   }, [router]);
 
@@ -125,6 +134,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{ usuario, organizacao, papel: usuario?.papel ?? null, carregando, login, logout, podeEscrever }}
     >
+      {trialExpirado && (
+        <div
+          role="alert"
+          className="bg-amber-50 border-b border-amber-300 text-amber-900 text-sm px-4 py-2.5 flex items-center justify-between gap-4"
+        >
+          <span>
+            O período de avaliação da sua organização expirou. Consultas e
+            exportações continuam disponíveis; novas escritas estão bloqueadas.
+          </span>
+          <button
+            type="button"
+            onClick={() => setTrialExpirado(false)}
+            className="shrink-0 px-3 py-1 border border-amber-400 rounded-md hover:bg-amber-100"
+          >
+            Entendi
+          </button>
+        </div>
+      )}
       {children}
     </AuthContext.Provider>
   );
