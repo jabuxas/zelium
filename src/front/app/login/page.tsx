@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "../lib/auth-context";
 import { Lock, Mail } from "lucide-react";
 import ZeliumBrand from '../components/ZeliumBrand';
@@ -100,6 +101,12 @@ export default function LoginPage() {
           <p className="text-xs text-gray-500 text-center">
             Perfis de acesso: Gestor, Responsável e Conferente — cada um vê
             apenas o que seu papel permite.
+          </p>
+
+          <p className="text-sm text-center">
+            <Link href="/cadastro" className="text-blue-600 hover:underline">
+              Criar nova conta
+            </Link>
           </p>
         </form>
       </div>
