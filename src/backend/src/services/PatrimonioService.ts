@@ -6,6 +6,8 @@ import { PatrimonioFoto } from '../models/PatrimonioFoto';
 import { EstadoItem } from '../models/EstadoItem';
 import { PatrimonioRepository } from '../repositories/PatrimonioRepository';
 import { NotificacaoService } from './NotificacaoService';
+import { verificarLimiteTrial } from './TrialService';
+import { currentOrgId } from '../context/requestContext';
 
 const fotoPrincipalInclude = {
   model: PatrimonioFoto,
@@ -43,7 +45,10 @@ export class PatrimonioService {
     return item ? withFotoPrincipal(item) : null;
   }
 
-  create(data: CreationAttributes<Patrimonio>) {
+  async create(data: CreationAttributes<Patrimonio>) {
+    // Limite do trial antes de gravar; trial expirada já foi barrada pela
+    // guarda de escrita. Organização vem do contexto da requisição.
+    await verificarLimiteTrial(currentOrgId() ?? data.organizacao_id, 'patrimonios');
     return this.repo.create(data);
   }
 

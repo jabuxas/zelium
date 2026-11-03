@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ForeignKeyConstraintError, UniqueConstraintError } from "sequelize";
 import { PatrimonioService } from "../services/PatrimonioService";
+import { LimiteTrialAtingidoError } from "../services/TrialService";
 import { gerarQrCodeSvg, qrConteudoPatrimonio } from "../utils/qrcode";
 import {
   camposDepreciacaoDoCorpo,
@@ -144,6 +145,9 @@ export const PatrimonioController = {
       const item = await service.create(req.body);
       res.status(201).json(item);
     } catch (err) {
+      if (err instanceof LimiteTrialAtingidoError) {
+        return res.status(403).json({ error: err.message, codigo: err.codigo });
+      }
       if (err instanceof UniqueConstraintError) {
         return res.status(409).json({ error: "Ja existe um patrimonio cadastrado com este numero" });
       }

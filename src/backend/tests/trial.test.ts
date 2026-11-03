@@ -14,6 +14,12 @@ const ORG_EXPIRADA = 2;
 const ORG_ATIVA = 3;
 const ORG_LEGADO = 1;
 
+let catalogoAtiva: { tipo_material_id: number; estado_item_id: number; responsavel_id: number; ambiente_id: number };
+
+function bemTrial(numero: string) {
+  return { numero_patrimonio: numero, descricao: `Bem ${numero}`, valor: 100, ...catalogoAtiva };
+}
+
 beforeAll(async () => {
   container = await new PostgreSqlContainer('postgres:17')
     .withDatabase('trial_isolado').withUsername('teste').withPassword('descartavel').start();
@@ -42,11 +48,25 @@ beforeAll(async () => {
     id: ORG_ATIVA, nome: 'Trial Ativa', slug: 'trial-ativa',
     modalidade_acesso: 'trial', trial_inicio: new Date(Date.now() - 1 * 86_400_000),
     trial_fim: new Date(Date.now() + 29 * 86_400_000),
-    limite_patrimonios: 500, limite_usuarios: 5,
+    limite_patrimonios: 2, limite_usuarios: 2,
   });
   await Usuario.create({ nome: 'Gestor Legado', email: 'gestor-legado@test.local', senha_hash, papel: 'gestor', ativo: true, organizacao_id: ORG_LEGADO });
   await Usuario.create({ nome: 'Gestor Expirado', email: 'gestor-expirado@test.local', senha_hash, papel: 'gestor', ativo: true, organizacao_id: ORG_EXPIRADA });
   await Usuario.create({ nome: 'Gestor Ativo', email: 'gestor-ativo@test.local', senha_hash, papel: 'gestor', ativo: true, organizacao_id: ORG_ATIVA });
+
+  // Catálogo mínimo da trial ativa para os testes de limite de bens.
+  const { TipoMaterial } = await import('../src/models/TipoMaterial');
+  const { EstadoItem } = await import('../src/models/EstadoItem');
+  const { Responsavel } = await import('../src/models/Responsavel');
+  const { Ambiente } = await import('../src/models/Ambiente');
+  const tipo = await TipoMaterial.create({ nome: 'Tipo Trial', organizacao_id: ORG_ATIVA });
+  const estado = await EstadoItem.create({ nome: 'Em condições', avaria: false, organizacao_id: ORG_ATIVA });
+  const responsavel = await Responsavel.create({ nome: 'Resp Trial', email: 'resp@ativa.test', organizacao_id: ORG_ATIVA });
+  const ambiente = await Ambiente.create({ nome: 'Sala Trial', responsavel_id: responsavel.id, organizacao_id: ORG_ATIVA });
+  catalogoAtiva = {
+    tipo_material_id: tipo.id, estado_item_id: estado.id,
+    responsavel_id: responsavel.id, ambiente_id: ambiente.id,
+  };
 }, 60_000);
 
 afterAll(async () => {
@@ -104,6 +124,61 @@ describe('Fiscalização do trial expirado', () => {
     const res = await rawRequest(app).post('/api/tipo-material')
       .set('Authorization', `Bearer ${token}`)
       .send({ nome: 'Tipo Ativo Livre' });
+    expect(res.status).toBe(201);
+  });
+});
+
+describe('Limites do trial ativo', () => {
+  async function criarBem(token: string, numero: string) {
+    return rawRequest(app).post('/api/patrimonios')
+      .set('Authorization', `Bearer ${token}`).send(bemTrial(numero));
+  }
+
+  it('bloqueia patrimônio além do limite e arquivado não conta mais', async () => {
+    const token = await login('gestor-ativo@test.local');
+    expect((await criarBem(token, 'T-001')).status).toBe(201);
+    expect((await criarBem(token, 'T-002')).status).toBe(201);
+    const excedente = await criarBem(token, 'T-003');
+    expect(excedente.status).toBe(403);
+    expect(excedente.body.codigo).toBe('limite_trial');
+    expect(excedente.body.error).toContain('2 patrimonios');
+
+    // Arquivar libera a vaga: bem deletado (paranoid) sai da contagem.
+    const lista = await rawRequest(app).get('/api/patrimonios').set('Authorization', `Bearer ${token}`);
+    const primeiro = lista.body.find((bem: { numero_patrimonio: string }) => bem.numero_patrimonio === 'T-001');
+    expect((await rawRequest(app).delete(`/api/patrimonios/${primeiro.id}`).set('Authorization', `Bearer ${token}`)).status).toBe(204);
+    expect((await criarBem(token, 'T-003')).status).toBe(201);
+  });
+
+  it('bloqueia usuário além do limite e desativação libera a vaga', async () => {
+    const token = await login('gestor-ativo@test.local');
+    const auth = { Authorization: `Bearer ${token}` };
+    const criado = await rawRequest(app).post('/api/usuarios')
+      .set(auth).send({ nome: 'Segundo', email: 'segundo@ativa.test', senha: SENHA, papel: 'conferente' });
+    expect(criado.status).toBe(201);
+
+    const excedente = await rawRequest(app).post('/api/usuarios')
+      .set(auth).send({ nome: 'Terceiro', email: 'terceiro@ativa.test', senha: SENHA, papel: 'conferente' });
+    expect(excedente.status).toBe(403);
+    expect(excedente.body.codigo).toBe('limite_trial');
+    expect(excedente.body.error).toContain('2 usuarios');
+
+    // Desativar libera a vaga: contam apenas usuários ativos.
+    expect((await rawRequest(app).put(`/api/usuarios/${criado.body.id}`).set(auth).send({ ativo: false })).status).toBe(200);
+    const recriado = await rawRequest(app).post('/api/usuarios')
+      .set(auth).send({ nome: 'Terceiro', email: 'terceiro@ativa.test', senha: SENHA, papel: 'conferente' });
+    expect(recriado.status).toBe(201);
+    const limiteAtingido = await rawRequest(app).post('/api/usuarios')
+      .set(auth).send({ nome: 'Quarto', email: 'quarto@ativa.test', senha: SENHA, papel: 'conferente' });
+    expect(limiteAtingido.status).toBe(403);
+    expect(limiteAtingido.body.codigo).toBe('limite_trial');
+  });
+
+  it('organização legado não tem limite de criação', async () => {
+    const token = await login('gestor-legado@test.local');
+    const res = await rawRequest(app).post('/api/patrimonios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ numero_patrimonio: 'LEG-001', descricao: 'Bem legado', valor: 50, tipo_material_id: 1, estado_item_id: 1, ambiente_id: 1, responsavel_id: 1 });
     expect(res.status).toBe(201);
   });
 });

@@ -3,6 +3,8 @@ import { sequelize } from "../database/connection";
 import { Usuario } from "../models/Usuario";
 import { BaseRepository } from "../repositories/BaseRepository";
 import { AuthService } from "./AuthService";
+import { verificarLimiteTrial } from "./TrialService";
+import { currentOrgId } from "../context/requestContext";
 
 export interface CriarUsuarioData {
   nome: string;
@@ -25,6 +27,8 @@ export class UsuarioService {
   }
 
   async create(data: CriarUsuarioData) {
+    // Limite do trial antes de custear o hash da senha.
+    await verificarLimiteTrial(currentOrgId(), 'usuarios');
     const senha_hash = await this.auth.hashSenha(data.senha);
     return this.repo.create({
       nome: data.nome,

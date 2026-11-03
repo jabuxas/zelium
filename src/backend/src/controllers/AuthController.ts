@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { UniqueConstraintError } from "sequelize";
 import { AuthService, CredenciaisInvalidasError } from "../services/AuthService";
 import { UsuarioService } from "../services/UsuarioService";
+import { LimiteTrialAtingidoError } from "../services/TrialService";
 import { PAPEIS, UsuarioPapel } from "../models/Usuario";
 import { Organizacao } from "../models/Organizacao";
 
@@ -74,6 +75,9 @@ export const UsuarioController = {
       const usuario = await usuarioService.create({ nome, email, senha, papel, ativo });
       res.status(201).json(usuario);
     } catch (err) {
+      if (err instanceof LimiteTrialAtingidoError) {
+        return res.status(403).json({ error: err.message, codigo: err.codigo });
+      }
       if (err instanceof UniqueConstraintError) {
         return res.status(409).json({ error: "Ja existe um usuario com este email" });
       }
