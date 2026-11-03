@@ -13,15 +13,14 @@ export interface OrganizacaoSessao {
   nome: string;
 }
 
-const TOKEN_KEY = "zelar_token";
+/**
+ * Sessão web por cookie HttpOnly (definido pela API no login). O token JWT
+ * NÃO é persistido no navegador; aqui ficam apenas dados de exibição
+ * (usuário/organização) para evitar flash de carregamento. O proxy lê o
+ * cookie de sessão server-side; a autorização real é da API.
+ */
 const USUARIO_KEY = "zelar_usuario";
 const ORGANIZACAO_KEY = "zelar_organizacao";
-const COOKIE_KEY = "zelar_logado";
-
-export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(TOKEN_KEY);
-}
 
 export function getUsuario(): UsuarioSessao | null {
   if (typeof window === "undefined") return null;
@@ -45,27 +44,19 @@ export function getOrganizacao(): OrganizacaoSessao | null {
   }
 }
 
-export function setSession(
-  token: string,
+export function setSessaoInfo(
   usuario: UsuarioSessao,
   organizacao?: OrganizacaoSessao
 ): void {
-  window.localStorage.setItem(TOKEN_KEY, token);
   window.localStorage.setItem(USUARIO_KEY, JSON.stringify(usuario));
   if (organizacao) {
     window.localStorage.setItem(ORGANIZACAO_KEY, JSON.stringify(organizacao));
+  } else {
+    window.localStorage.removeItem(ORGANIZACAO_KEY);
   }
-  // Cookie simples usado pelo proxy.ts (checagem otimista de rota)
-  document.cookie = `${COOKIE_KEY}=1; path=/; max-age=604800; SameSite=Lax`;
 }
 
-export function clearSession(): void {
-  window.localStorage.removeItem(TOKEN_KEY);
+export function limparSessaoInfo(): void {
   window.localStorage.removeItem(USUARIO_KEY);
   window.localStorage.removeItem(ORGANIZACAO_KEY);
-  document.cookie = `${COOKIE_KEY}=; path=/; max-age=0`;
-}
-
-export function isAuthenticated(): boolean {
-  return getToken() !== null;
 }

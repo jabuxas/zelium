@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Building2, Users, Activity, Download, FileText } from 'lucide-react';
 import { API_URL } from '../lib/api';
 import { apiFetch } from '../lib/api-client';
-import { getToken } from '../lib/auth';
 
 type Resumo = {
   ambiente_id?: number;
@@ -34,11 +33,8 @@ type Opcao = { id: number; nome: string };
 const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 function baixar(tipo: string, filtros: Record<string, string> = {}) {
-  const token = getToken();
   const params = new URLSearchParams({ tipo, ...filtros });
-  fetch(`${API_URL}/relatorios/exportar/csv?${params.toString()}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  })
+  apiFetch(`${API_URL}/relatorios/exportar/csv?${params.toString()}`)
     .then((r) => {
       if (!r.ok) throw new Error();
       return r.blob();
@@ -55,11 +51,8 @@ function baixar(tipo: string, filtros: Record<string, string> = {}) {
 }
 
 function baixarPdf(tipo: string, filtros: Record<string, string> = {}) {
-  const token = getToken();
   const params = new URLSearchParams({ tipo, ...filtros });
-  fetch(`${API_URL}/relatorios/exportar/pdf?${params.toString()}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  })
+  apiFetch(`${API_URL}/relatorios/exportar/pdf?${params.toString()}`)
     .then((r) => {
       if (!r.ok) throw new Error();
       return r.blob();

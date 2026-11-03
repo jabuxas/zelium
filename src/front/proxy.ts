@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 /**
  * Proteção otimista de rotas (Next 16 "proxy", antigo middleware).
  *
- * Checa apenas a presença do cookie de sessão `zelar_logado` para decidir
- * redirecionar para /login. A autorização real (papéis e dados) é feita pela
- * API no backend — o proxy nunca deve ser a única linha de defesa.
+ * Checa apenas a presença do cookie de sessão HttpOnly `zelium_sessao`
+ * (visível ao servidor mesmo sendo HttpOnly) para decidir redirecionar para
+ * /login. A autorização real (papéis e dados) é feita pela API — o proxy
+ * nunca deve ser a única linha de defesa.
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -14,7 +15,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const logado = request.cookies.get("zelar_logado")?.value === "1";
+  const logado = request.cookies.has("zelium_sessao");
 
   if (!logado) {
     const loginUrl = new URL("/login", request.url);

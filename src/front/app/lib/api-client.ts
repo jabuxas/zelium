@@ -1,24 +1,23 @@
-import { getToken, clearSession } from "./auth";
+import { limparSessaoInfo } from "./auth";
 
 /**
- * Cliente fetch autenticado: anexa o token JWT em todas as requisições e
- * redireciona para /login quando a sessão expira (HTTP 401).
+ * Cliente fetch autenticado por cookie HttpOnly (credentials: include) com
+ * header CSRF exigido pela API em escritas. Redireciona para /login quando
+ * a sessão expira (HTTP 401).
  */
 export async function apiFetch(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const token = getToken();
   const headers = new Headers(options.headers);
+  // Defesa CSRF: header customizado exige preflight, aprovado apenas para
+  // origens na allowlist da API. Inofensivo em leituras.
+  headers.set("X-Requested-With", "XMLHttpRequest");
 
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, { ...options, headers, credentials: "include" });
 
   if (response.status === 401) {
-    clearSession();
+    limparSessaoInfo();
     if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
       window.location.href = "/login";
     }

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Wallet, TrendingDown, PiggyBank, Download } from 'lucide-react';
 import { API_URL } from '../lib/api';
 import { apiFetch } from '../lib/api-client';
-import { getToken } from '../lib/auth';
 
 type ResumoFinanceiro = {
   total: {
@@ -41,10 +40,7 @@ export default function FinanceiroPage() {
   }, []);
 
   function baixarCsv() {
-    const token = getToken();
-    fetch(`${API_URL}/relatorios/exportar/csv?tipo=financeiro`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
+    apiFetch(`${API_URL}/relatorios/exportar/csv?tipo=financeiro`)
       .then((r) => (r.ok ? r.blob() : Promise.reject()))
       .then((blob) => {
         const url = URL.createObjectURL(blob);
