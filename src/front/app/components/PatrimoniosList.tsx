@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2, AlertCircle, QrCode, ExternalLink } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, AlertCircle, QrCode, ExternalLink, Upload } from 'lucide-react';
 import { useToast } from './Toast';
 import Link from 'next/link';
 import { API_URL } from '../lib/api';
@@ -93,13 +93,22 @@ export default function PatrimoniosList() {
           <p className="text-gray-600">Gerencie todos os patrimônios da empresa</p>
         </div>
         {podeEditar && (
-        <Link
-          href="/patrimonios/novo"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Plus size={20} />
-          Novo Patrimônio
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/patrimonios/importar"
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            <Upload size={20} />
+            Importar CSV
+          </Link>
+          <Link
+            href="/patrimonios/novo"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <Plus size={20} />
+            Novo Patrimônio
+          </Link>
+        </div>
         )}
       </div>
 
