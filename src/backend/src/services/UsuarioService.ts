@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { sequelize } from "../database/connection";
 import { Usuario } from "../models/Usuario";
 import { BaseRepository } from "../repositories/BaseRepository";
-import { AuthService } from "./AuthService";
+import { AuthService, HASH_FANTASMA } from "./AuthService";
 import { verificarLimiteTrial } from "./TrialService";
 import { currentOrgId } from "../context/requestContext";
 
@@ -44,8 +44,8 @@ export class UsuarioService {
    * escopo padrão). Para a troca da própria senha pelo titular autenticado. */
   async verificarSenhaAtual(id: number, senhaAtual: string): Promise<boolean> {
     const usuario = await Usuario.unscoped().findByPk(id);
-    if (!usuario) return false;
-    return bcrypt.compare(senhaAtual, usuario.senha_hash);
+    const igual = await bcrypt.compare(senhaAtual, usuario?.senha_hash ?? HASH_FANTASMA);
+    return Boolean(usuario) && igual;
   }
 
   async update(id: number, data: Partial<CriarUsuarioData>) {

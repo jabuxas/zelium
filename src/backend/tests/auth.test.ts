@@ -65,6 +65,16 @@ describe('POST /api/auth/login', () => {
     expect(res.status).toBe(401);
   });
 
+  it('email inexistente também paga o custo do bcrypt (sem enumeração por timing)', async () => {
+    const compare = jest.spyOn(bcrypt, 'compare');
+    const res = await rawRequest(app)
+      .post('/api/auth/login')
+      .send({ email: 'fantasma@org.com', senha: SENHA });
+    expect(res.status).toBe(401);
+    expect(compare).toHaveBeenCalledTimes(1);
+    compare.mockRestore();
+  });
+
   it('retorna 401 com email inexistente', async () => {
     const res = await rawRequest(app)
       .post('/api/auth/login')

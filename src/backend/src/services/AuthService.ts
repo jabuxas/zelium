@@ -35,15 +35,16 @@ function toAuthUser(usuario: Usuario): AuthUser {
   };
 }
 
+// Hash bcrypt (custo 10) de um valor aleatório descartado: nenhuma senha o satisfaz.
+export const HASH_FANTASMA = "$2b$10$vafAzyJLB3nKNNi3iKKtU.ZS57/UbX5N3lWjP62z6wHRn9zvnkif6";
+
 export class AuthService {
   async login(email: string, senha: string): Promise<LoginResult> {
     const usuario = await Usuario.unscoped().findOne({ where: { email } });
-    if (!usuario || !usuario.ativo) {
-      throw new CredenciaisInvalidasError();
-    }
-
-    const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
-    if (!senhaValida) {
+    // Sempre paga o custo do bcrypt: e-mail inexistente ou inativo não pode
+    // responder mais rápido que senha errada (enumeração por timing).
+    const senhaValida = await bcrypt.compare(senha, usuario?.senha_hash ?? HASH_FANTASMA);
+    if (!usuario || !usuario.ativo || !senhaValida) {
       throw new CredenciaisInvalidasError();
     }
 
