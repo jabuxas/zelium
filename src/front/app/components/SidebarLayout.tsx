@@ -20,6 +20,7 @@ import {
   LogOut,
   Bell,
   History,
+  KeyRound,
 } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
 import type { Papel } from "../lib/auth";
@@ -62,11 +63,12 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
   const { usuario, organizacao, papel, logout } = useAuth();
 
   const isLogin = pathname === "/login";
-  // Cadastro público: mesmo tratamento do login — sem guard de permissões
-  // (o visitante não tem sessão) e sem o shell do app.
+  // Rotas públicas sem sessão: mesmo tratamento do login — sem guard de
+  // permissões e sem o shell do app.
   const isCadastro = pathname === "/cadastro" || pathname.startsWith("/cadastro/");
+  const isRecuperacao = pathname.startsWith("/recuperar-senha");
 
-  if (isLogin || isCadastro) {
+  if (isLogin || isCadastro || isRecuperacao) {
     return <>{children}</>;
   }
 
@@ -114,6 +116,13 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
               {usuario.nome}
             </p>
             <p className="text-xs text-gray-500 mb-2">{PAPEL_LABEL[usuario.papel]}</p>
+            <Link
+              href="/conta"
+              className="flex items-center gap-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg px-2 py-1.5 w-full"
+            >
+              <KeyRound size={16} />
+              Alterar senha
+            </Link>
             <button
               onClick={logout}
               className="flex items-center gap-2 text-sm text-red-600 hover:bg-red-50 rounded-lg px-2 py-1.5 w-full"

@@ -104,6 +104,12 @@ export default function LoginPage() {
           </p>
 
           <p className="text-sm text-center">
+            <Link href="/recuperar-senha" className="text-blue-600 hover:underline">
+              Esqueci minha senha
+            </Link>
+          </p>
+
+          <p className="text-sm text-center">
             <Link href="/cadastro" className="text-blue-600 hover:underline">
               Criar nova conta
             </Link>

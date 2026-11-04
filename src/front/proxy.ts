@@ -11,7 +11,8 @@ import { NextRequest, NextResponse } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname === "/login" || pathname === "/cadastro" || pathname.startsWith("/cadastro/") || pathname === "/favicon.ico") {
+  if (pathname === "/login" || pathname === "/cadastro" || pathname.startsWith("/cadastro/")
+    || pathname.startsWith("/recuperar-senha") || pathname === "/favicon.ico") {
     return NextResponse.next();
   }
 

@@ -28,7 +28,7 @@ it('Escape fecha o menu móvel', () => {
 });
 
 describe('rotas públicas sem sessão', () => {
-  it.each(['/cadastro', '/cadastro/confirmar'])('%s renderiza o conteúdo sem guard nem shell', path => {
+  it.each(['/cadastro', '/cadastro/confirmar', '/recuperar-senha', '/recuperar-senha/redefinir'])('%s renderiza o conteúdo sem guard nem shell', path => {
     pathnameAtual.valor = path;
     render(<SidebarLayout><p>Formulário público</p></SidebarLayout>);
     expect(screen.getByText('Formulário público')).toBeInTheDocument();
