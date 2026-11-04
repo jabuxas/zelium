@@ -83,6 +83,11 @@ CHECK recusa metadados incompletos. O `down` recusa descartar pendências ou
 trials (inclusive arquivados); não apagar contas para forçar reversão.
 Rotas seguem desabilitadas por padrão: [contrato e gates](ONBOARDING_SELF_SERVICE.md).
 
+Quinta migração: `20261104_001_senha_recuperacao`. Adiciona `senha_pendente`
+(hash SHA-256 do token, usuário, expiração). Pendências são EFÊMERAS (24h e
+comando de limpeza): o `down` descarta sem resistência — quem pediu, pede de
+novo; nenhum dado de negócio é perdido. Detalhes em ADR-0015.
+
 ## Dados que a inicialização não deve presumir
 
 - Aquisição, vida útil e residual ausentes permanecem ausentes. `created_at` não
