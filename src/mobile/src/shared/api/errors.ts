@@ -28,3 +28,20 @@ export class DependencyConflictError extends ApiError {
     this.ambientes = payload.ambientes;
   }
 }
+
+/** Fiscalização do trial (ADR-0013): o app distingue os códigos para dar
+ * mensagens claras — escrita bloqueada na expiração, teto atingido — sem
+ * derrubar a sessão nem bloquear consultas. */
+export class TrialExpiredError extends ApiError {
+  constructor(payload: { error: string; codigo?: string }) {
+    super(payload.error, 403, payload);
+    this.name = "TrialExpiredError";
+  }
+}
+
+export class LimiteTrialError extends ApiError {
+  constructor(payload: { error: string; codigo?: string }) {
+    super(payload.error, 403, payload);
+    this.name = "LimiteTrialError";
+  }
+}

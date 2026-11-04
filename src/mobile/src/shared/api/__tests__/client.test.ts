@@ -177,3 +177,39 @@ describe("apiClient", () => {
     });
   });
 });
+
+describe("códigos de trial (fiscalização ADR-0013)", () => {
+  it("403 trial_expirado lança TrialExpiredError com a mensagem da API", async () => {
+    mockFetch(() => ({
+      status: 403,
+      body: { error: "Periodo de trial expirado: escritas bloqueadas.", codigo: "trial_expirado" },
+    }));
+
+    const promessa = apiClient("/tipo-material", { method: "POST", body: JSON.stringify({ nome: "X" }) });
+
+    await expect(promessa).rejects.toMatchObject({
+      name: "TrialExpiredError",
+      status: 403,
+      message: expect.stringMatching(/trial expirado/i),
+    });
+  });
+
+  it("403 limite_trial lança LimiteTrialError com o limite na mensagem", async () => {
+    mockFetch(() => ({
+      status: 403,
+      body: { error: "Limite do trial atingido: 500 patrimonios ativos.", codigo: "limite_trial" },
+    }));
+
+    await expect(apiClient("/patrimonios", { method: "POST", body: JSON.stringify({}) }))
+      .rejects.toMatchObject({ name: "LimiteTrialError", status: 403 });
+  });
+
+  it("403 sem código de trial continua ApiError comum (RBAC)", async () => {
+    mockFetch(() => ({ status: 403, body: { error: "Acesso negado" } }));
+
+    await expect(apiClient("/usuarios")).rejects.toMatchObject({
+      name: "ApiError",
+      message: "Acesso negado",
+    });
+  });
+});

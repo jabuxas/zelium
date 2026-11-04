@@ -4,6 +4,8 @@ import { authGeneration, expireSession, getAuthToken } from "@/src/shared/auth/t
 import {
   ApiError,
   DependencyConflictError,
+  LimiteTrialError,
+  TrialExpiredError,
   type DependencyConflictPayload,
 } from "@/src/shared/api/errors";
 
@@ -44,6 +46,16 @@ function createErrorFromPayload(status: number, payload: unknown): Error {
     "error" in payload
   ) {
     return new DependencyConflictError(payload as DependencyConflictPayload);
+  }
+
+  if (status === 403 && typeof payload === "object" && payload !== null) {
+    const codigo = (payload as { codigo?: unknown }).codigo;
+    if (codigo === "trial_expirado" && "error" in payload) {
+      return new TrialExpiredError(payload as { error: string });
+    }
+    if (codigo === "limite_trial" && "error" in payload) {
+      return new LimiteTrialError(payload as { error: string });
+    }
   }
 
   if (typeof payload === "object" && payload !== null && "error" in payload) {
