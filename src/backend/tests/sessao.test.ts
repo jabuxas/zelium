@@ -142,6 +142,38 @@ describe('Sessões revogáveis por versão', () => {
     expect(comVerErrada.status).toBe(401);
   });
 
+  it('rebaixar o papel do usuário vale no token já emitido, sem relogin', async () => {
+    const func = await login('func@sessao.com', SENHA_NOVA);
+    expect(func.status).toBe(200);
+    const gestor = await login('gestor@sessao.com', SENHA_INICIAL);
+
+    // Gestor rebaixa o usuário a conferente (já era conferente; sobe para
+    // responsável e depois rebaixa — o ponto é o papel FRESCO por request).
+    const promover = await rawRequest(app)
+      .put('/api/usuarios/2')
+      .set('Authorization', `Bearer ${gestor.token}`)
+      .send({ papel: 'responsavel' });
+    expect(promover.status).toBe(200);
+
+    const me = await rawRequest(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${func.token}`);
+    expect(me.status).toBe(200);
+    expect(me.body.usuario.papel).toBe('responsavel');
+    expect((await rawRequest(app).get('/api/usuarios')
+      .set('Authorization', `Bearer ${func.token}`)).status).toBe(403);
+
+    // Rebaixa de volta para o estado inicial da suíte.
+    await rawRequest(app)
+      .put('/api/usuarios/2')
+      .set('Authorization', `Bearer ${gestor.token}`)
+      .send({ papel: 'conferente' });
+    const meFinal = await rawRequest(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${func.token}`);
+    expect(meFinal.body.usuario.papel).toBe('conferente');
+  });
+
   it('organização desativada revoga as sessões de seus usuários', async () => {
     const sessao = await login('func@sessao.com', SENHA_NOVA);
     expect(sessao.status).toBe(200);

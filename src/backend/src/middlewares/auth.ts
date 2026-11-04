@@ -66,13 +66,19 @@ export function authenticate(
             .status(401)
             .json({ error: "Sessao desatualizada. Faca login novamente." });
         }
+        // Papel, e-mail, nome e organização vêm do BANCO (frescos a cada
+        // requisição): rebaixar papel ou mover de organização vale no token
+        // já emitido, sem depender de revogação. Só o `sub` vem do JWT
+        // (identidade verificada por assinatura). O fallback `?? payload`
+        // nunca dispara em produção (colunas NOT NULL) — existe apenas para
+        // suítes unitárias sem banco, cujo mock representa o token.
         req.user = {
-          sub: String(payload.sub),
-          email: String(payload.email),
-          nome: String(payload.nome),
-          papel: payload.papel as UsuarioPapel,
-          organizacaoId: Number(payload.organizacaoId),
-          ver: Number(payload.ver),
+          sub: String(usuario.id),
+          email: usuario.email ?? String(payload.email),
+          nome: usuario.nome ?? String(payload.nome),
+          papel: usuario.papel ?? (payload.papel as UsuarioPapel),
+          organizacaoId: usuario.organizacao_id ?? Number(payload.organizacaoId),
+          ver: usuario.sessao_version,
         };
         next();
       })

@@ -81,7 +81,7 @@ describe("Testes de integração do log de auditoria", () => {
     expect(log.dados_anteriores).toBeNull();
     expect(log.dados_novos).toBeDefined();
     expect(log.dados_novos?.nome).toBe("Audit-Create-Test");
-    expect(log.usuario).toBe("Teste gestor (#1)");
+    expect(log.usuario).toBe("Teste Gestor (#1)");
   });
 
   it('não confirma cadastro quando a auditoria falha', async () => {

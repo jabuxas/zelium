@@ -104,13 +104,10 @@ describe('Proteção de rotas', () => {
   });
 
   it('retorna 403 para papel sem permissao (conferente em rota de gestor)', async () => {
-    const login = await rawRequest(app)
-      .post('/api/auth/login')
-      .send({ email: 'conferente@org.com', senha: SENHA });
-
+    // O conferente deste banco é o usuário #2 (papel vem do banco).
     const res = await rawRequest(app)
       .get('/api/usuarios')
-      .set(bearerToken('conferente'));
+      .set(bearerToken('conferente', '2'));
     expect(res.status).toBe(403);
   });
 

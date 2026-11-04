@@ -20,9 +20,14 @@ export const rawRequest = supertest;
 
 export function bearerToken(
   papel: UsuarioPapel = "gestor",
-  subject = "1",
+  subject?: string,
   organizacaoId = 1
 ): Record<string, string> {
+  // Sem subject explícito, casa com o fixture criarUsuariosDeTeste:
+  // 1=gestor, 2=responsável, 3=conferente (sessão revogável revalida o
+  // papel no banco — token e registro precisam ser a MESMA pessoa).
+  const subFixo = { gestor: "1", responsavel: "2", conferente: "3" } as const;
+  const sub = subject ?? subFixo[papel];
   const token = jwt.sign(
     {
       email: `${papel}@teste.zelium.com`,
@@ -33,7 +38,7 @@ export function bearerToken(
       ver: 1,
     },
     JWT_SECRET,
-    { subject, expiresIn: "1h" }
+    { subject: sub, expiresIn: "1h" }
   );
   return { Authorization: `Bearer ${token}` };
 }
