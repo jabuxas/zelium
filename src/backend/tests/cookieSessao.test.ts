@@ -106,6 +106,23 @@ describe('Sessão por cookie HttpOnly', () => {
   });
 });
 
+describe('JSON malformado não vaza credenciais no log', () => {
+  it.each([
+    '/api/auth/login',
+    '/api/usuarios/senha',
+    '/api/auth/senha/redefinir',
+  ])('%s responde 400 sem logar o corpo cru', async rota => {
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await rawRequest(app).post(rota)
+      .set('Content-Type', 'application/json')
+      .send('{"senha":"SegredoNoLog@123","token":"TokenNoLog",');
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(log.mock.calls)).not.toContain('SegredoNoLog');
+    expect(JSON.stringify(log.mock.calls)).not.toContain('TokenNoLog');
+    log.mockRestore();
+  });
+});
+
 describe('Verificação de origem em rotas públicas (login CSRF)', () => {
   it('POST login com Origin de outro site é recusado (403 codigo origem)', async () => {
     const res = await rawRequest(app).post('/api/auth/login')

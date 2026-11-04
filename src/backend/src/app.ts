@@ -51,6 +51,15 @@ app.use('/api/auth/cadastros', (err: Error & { type?: string }, _req: Request, r
   return res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
+// Mesma proteção para o resto da API (login, troca/redefinição de senha...):
+// erros do body-parser nunca chegam ao logger genérico. Outros erros seguem.
+const ERROS_DE_CORPO = ['entity.parse.failed', 'entity.too.large', 'request.aborted', 'encoding.unsupported', 'charset.unsupported', 'request.size.invalid'];
+app.use('/api', (err: Error & { type?: string }, _req: Request, res: Response, next: NextFunction) => {
+  if (!ERROS_DE_CORPO.includes(err.type ?? '')) return next(err);
+  if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Corpo da requisicao excede o limite' });
+  return res.status(400).json({ error: 'Corpo da requisicao invalido' });
+});
+
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ReferenciaDeOutraOrganizacaoError) {
     return res.status(400).json({ error: err.message });
