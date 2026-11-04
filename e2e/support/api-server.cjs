@@ -32,6 +32,8 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => close().f
     // reservado) e a solicitação segue com o mesmo 202 genérico do contrato.
     SELF_SERVICE_ENABLED: 'true',
     SELF_SERVICE_CONFIRMATION_URL: 'http://localhost:3370/cadastro/confirmar',
+    RECUPERACAO_SENHA_ENABLED: 'true',
+    RECUPERACAO_SENHA_URL: 'http://localhost:3370/recuperar-senha/redefinir',
   });
   // O backend usa cwd/uploads: isola anexos sem escrever na árvore do projeto.
   uploads = mkdtempSync(path.join(tmpdir(), 'zelium-e2e-'));
