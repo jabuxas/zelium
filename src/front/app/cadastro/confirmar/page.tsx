@@ -3,45 +3,30 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { API_URL } from "../../lib/api";
+import { useTokenDeLink, descartarTokenDeLink } from "../../lib/token-link";
 import ZeliumBrand from '../../components/ZeliumBrand';
 
 /**
  * Confirmação do cadastro: o segredo chega no fragmento do link do e-mail
- * (#token=...). O fragmento nunca chega ao servidor — lido aqui e REMOVIDO
- * da barra/endereçamento imediatamente (não fica em histórico). A senha é
- * enviada por POST explícito; nada consome confirmação por GET (robôs de
+ * (#token=...). Lido pelo hook (que o guarda por aba e remove da URL) e
+ * enviado por POST explícito; nada consome confirmação por GET (robôs de
  * pré-visualização de e-mail são inofensivos por construção, ADR-0012).
  */
 export default function ConfirmarCadastroPage() {
   const [token, setToken] = useState<string | null>(null);
+  const [semToken, setSemToken] = useState(false);
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [erroLocal, setErroLocal] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [semToken, setSemToken] = useState(false);
   const [sucesso, setSucesso] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
+  const estadoToken = useTokenDeLink("zelium_token_cadastro");
   useEffect(() => {
-    // O segredo vai para sessionStorage (por aba) ANTES de sair da URL: o
-    // roteador do Next se integra ao history e pode remontar a página ao
-    // remover o fragmento — sem o resgate, o remount releria um hash vazio
-    // e derrubaria o formulário.
-    const match = /^#token=([a-f0-9]{64})$/.exec(window.location.hash);
-    if (match) {
-      sessionStorage.setItem("zelium_token_cadastro", match[1]);
-      setToken(match[1]);
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-      return;
-    }
-    const guardado = sessionStorage.getItem("zelium_token_cadastro");
-    if (guardado && /^[a-f0-9]{64}$/.test(guardado)) {
-      setToken(guardado);
-    } else {
-      sessionStorage.removeItem("zelium_token_cadastro");
-      setSemToken(true);
-    }
-  }, []);
+    setToken(estadoToken.token);
+    setSemToken(estadoToken.semToken);
+  }, [estadoToken.token, estadoToken.semToken]);
 
   function validarLocal(): string | null {
     if (senha.length < 12) return "A senha deve ter pelo menos 12 caracteres.";
@@ -68,7 +53,7 @@ export default function ConfirmarCadastroPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 201) {
-        sessionStorage.removeItem("zelium_token_cadastro");
+        descartarTokenDeLink("zelium_token_cadastro");
         setSucesso(data.message ?? "Cadastro confirmado. Faça login para continuar.");
         setSenha("");
         setConfirmarSenha("");
