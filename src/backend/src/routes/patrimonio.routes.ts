@@ -1,11 +1,17 @@
 import { Router } from "express";
 import { PatrimonioController } from "../controllers/PatrimonioController";
+import { PatrimonioImportacaoController, receberArquivoCsv } from "../controllers/PatrimonioImportacaoController";
 import { DepreciacaoController } from "../controllers/DepreciacaoController";
 import { authorize } from "../middlewares/auth";
 import patrimonioFotoRoutes from "./patrimonioFoto.routes";
 import conferenciaRoutes from "./conferencia.routes";
 
 const router = Router();
+
+// Importação de CSV: gestor-only, arquivo em memória (2 MB), preview
+// stateless + confirmação atômica. Registradas antes das rotas por id.
+router.post('/importacao/preview', authorize('gestor'), receberArquivoCsv, PatrimonioImportacaoController.preview);
+router.post('/importacao/confirmar', authorize('gestor'), receberArquivoCsv, PatrimonioImportacaoController.confirmar);
 
 router.get("/", PatrimonioController.findAll);
 router.get("/deletados", PatrimonioController.listDeletados);
