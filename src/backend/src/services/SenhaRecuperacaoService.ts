@@ -100,8 +100,10 @@ export class SenhaRecuperacaoService {
           UPDATE usuario SET senha_hash = :senhaHash, sessao_version = sessao_version + 1
           WHERE id = :id
         `, { replacements: { senhaHash: senha_hash, id: pendente.usuario_id }, transaction, logging: false });
-        await sequelize.query('DELETE FROM senha_pendente WHERE token_hash = :tokenHash', {
-          replacements: { tokenHash: hashTokenSenha(token) }, transaction, logging: false,
+        // Apaga TODAS as pendências do usuário: pedidos paralelos não
+        // sobrevivem à senha já trocada.
+        await sequelize.query('DELETE FROM senha_pendente WHERE usuario_id = :id', {
+          replacements: { id: pendente.usuario_id }, transaction, logging: false,
         });
         return true;
       });

@@ -36,6 +36,14 @@ beforeAll(async () => {
 
   await import('../src/database/index');
   await sequelize.sync({ force: true });
+  // Tabela fora dos models (vem do schema/migração em produção): a troca de
+  // senha e a desativação apagam pendências de recuperação do usuário.
+  await sequelize.query(`CREATE TABLE senha_pendente (
+    token_hash CHAR(64) PRIMARY KEY,
+    usuario_id INT NOT NULL REFERENCES usuario(id),
+    expira_em TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
 
   app = (await import('../src/app')).default;
 

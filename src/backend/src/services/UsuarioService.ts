@@ -73,6 +73,10 @@ export class UsuarioService {
           { sessao_version: literal("sessao_version + 1") as unknown as number },
           { where: { id }, transaction }
         );
+        // Link de recuperação emitido antes não pode redefinir a senha nova.
+        await sequelize.query('DELETE FROM senha_pendente WHERE usuario_id = :id', {
+          replacements: { id }, transaction, logging: false,
+        });
       }
       return atualizado;
     });

@@ -242,6 +242,28 @@ describe('Troca da própria senha (autenticado)', () => {
     expect((await login('conferente@zelium.com', SENHA_NOVA)).status).toBe(200);
   });
 
+  it('troca de senha invalida o link de recuperação emitido antes', async () => {
+    expect((await solicitar({ email: 'responsavel@zelium.com' })).status).toBe(202);
+    expect(await pendentes()).toHaveLength(1);
+    const sessao = await login('responsavel@zelium.com', 'Zelium@2026');
+    const res = await rawRequest(app).post('/api/usuarios/senha')
+      .set('Authorization', `Bearer ${sessao.body.token}`)
+      .set('X-Requested-With', 'XMLHttpRequest')
+      .send({ senha_atual: 'Zelium@2026', senha: SENHA_NOVA });
+    expect(res.status).toBe(200);
+    expect(await pendentes()).toEqual([]);
+  });
+
+  it('redefinir consome também pendências paralelas do mesmo usuário', async () => {
+    const token = await novoPedido();
+    await sequelize.query(`
+      INSERT INTO senha_pendente (token_hash, usuario_id, expira_em)
+      SELECT '${'c'.repeat(64)}', usuario_id, NOW() + INTERVAL '1 hour' FROM senha_pendente LIMIT 1`);
+    expect(await pendentes()).toHaveLength(2);
+    expect((await redefinir(token)).status).toBe(200);
+    expect(await pendentes()).toEqual([]);
+  });
+
   it('senha atual errada recusa sem alterar', async () => {
     const sessao = await login('conferente@zelium.com', SENHA_NOVA);
     const res = await rawRequest(app).post('/api/usuarios/senha')
