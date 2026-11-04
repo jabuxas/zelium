@@ -106,6 +106,51 @@ describe('Sessão por cookie HttpOnly', () => {
   });
 });
 
+describe('Verificação de origem em rotas públicas (login CSRF)', () => {
+  it('POST login com Origin de outro site é recusado (403 codigo origem)', async () => {
+    const res = await rawRequest(app).post('/api/auth/login')
+      .set('Origin', 'http://atacante.test')
+      .send({ email: 'gestor@cookie.test', senha: SENHA });
+    expect(res.status).toBe(403);
+    expect(res.body.codigo).toBe('origem');
+    expect(res.headers['cache-control']).toBe('no-store');
+  });
+
+  it('Origin da allowlist da web passa', async () => {
+    const res = await rawRequest(app).post('/api/auth/login')
+      .set('Origin', 'http://localhost:3000')
+      .send({ email: 'gestor@cookie.test', senha: SENHA });
+    expect(res.status).toBe(200);
+  });
+
+  it('mesma origem do Host (produção same-origin) passa', async () => {
+    const res = await rawRequest(app).post('/api/auth/login')
+      .set('Origin', 'http://app.local')
+      .set('Host', 'app.local')
+      .send({ email: 'gestor@cookie.test', senha: SENHA });
+    expect(res.status).toBe(200);
+  });
+
+  it('cadastro e recuperação também recusam origem estranha', async () => {
+    process.env.SELF_SERVICE_ENABLED = 'true';
+    process.env.SELF_SERVICE_CONFIRMATION_URL = 'https://app.example.test/cadastro/confirmar';
+    process.env.RECUPERACAO_SENHA_ENABLED = 'true';
+    process.env.RECUPERACAO_SENHA_URL = 'https://app.example.test/recuperar-senha/redefinir';
+    const cadastro = await rawRequest(app).post('/api/auth/cadastros')
+      .set('Origin', 'http://atacante.test').send({ nome: 'X', email: 'x@x.test', organizacaoNome: 'X' });
+    expect(cadastro.status).toBe(403);
+    expect(cadastro.body.codigo).toBe('origem');
+    const recuperar = await rawRequest(app).post('/api/auth/senha/recuperar')
+      .set('Origin', 'http://atacante.test').send({ email: 'gestor@cookie.test' });
+    expect(recuperar.status).toBe(403);
+    expect(recuperar.body.codigo).toBe('origem');
+    delete process.env.SELF_SERVICE_ENABLED;
+    delete process.env.SELF_SERVICE_CONFIRMATION_URL;
+    delete process.env.RECUPERACAO_SENHA_ENABLED;
+    delete process.env.RECUPERACAO_SENHA_URL;
+  });
+});
+
 describe('CORS com credenciais restritas', () => {
   it('origem da web permitida recebe eco + credentials e X-Requested-With liberado', async () => {
     const res = await rawRequest(app).options('/api/auth/login')

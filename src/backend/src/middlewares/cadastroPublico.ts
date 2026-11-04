@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { smtpConfigurado } from '../config/mail';
+import { origensWebPermitidas } from '../config/sessao';
 
 /** HTTPS fixo sem credenciais/query/fragmento; http só para loopback (dev/E2E). */
 export function urlEmailValida(valor: string): boolean {
@@ -11,6 +12,30 @@ export function urlEmailValida(valor: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** Verificação de ORIGEM em rotas públicas POST (login CSRF e afins).
+ * Navegador SEMPRE envia Origin em POST: aceita mesma origem do Host
+ * (produção same-origin pelo Caddy) ou allowlist WEB_ORIGINS (dev/E2E
+ * cross-origin). Cliente não-navegador (mobile/API/scripts) não envia
+ * Origin e passa — o cookie não os afeta. Um formulário forjado em outro
+ * site traz o Origin do atacante e é recusado: SameSite=Lax impede o envio
+ * do cookie antigo, mas NÃO impede o Set-Cookie da resposta de um POST
+ * cross-site (login CSRF). */
+export function verificarOrigem(req: Request, res: Response, next: NextFunction) {
+  res.setHeader('Cache-Control', 'no-store');
+  const origem = req.headers.origin;
+  if (!origem) return next();
+  const permitida = (() => {
+    try {
+      return new URL(origem).host === req.headers.host
+        || origensWebPermitidas().includes(origem);
+    } catch {
+      return false;
+    }
+  })();
+  if (permitida) return next();
+  return res.status(403).json({ error: 'Origem nao autorizada para esta operacao.', codigo: 'origem' });
 }
 
 export function cadastroHabilitado(_req: Request, res: Response, next: NextFunction) {
