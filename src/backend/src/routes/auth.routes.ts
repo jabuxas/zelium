@@ -17,5 +17,6 @@ router.post("/logout", authenticate, exigirCsrfParaCookie, AuthController.logout
 router.post('/cadastros', cadastroHabilitado, criarLimiteCadastro(5), CadastroController.solicitar);
 router.post('/cadastros/confirmacao', cadastroHabilitado, criarLimiteCadastro(10), CadastroController.confirmar);
 router.post('/senha/recuperar', recuperacaoHabilitado, criarLimiteCadastro(5), SenhaRecuperacaoController.solicitar);
+router.post('/senha/redefinir', recuperacaoHabilitado, criarLimiteCadastro(10), SenhaRecuperacaoController.redefinir);
 
 export default router;

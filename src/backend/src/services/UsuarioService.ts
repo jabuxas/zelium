@@ -1,4 +1,5 @@
 import { CreationAttributes, Transaction, literal } from "sequelize";
+import bcrypt from "bcryptjs";
 import { sequelize } from "../database/connection";
 import { Usuario } from "../models/Usuario";
 import { BaseRepository } from "../repositories/BaseRepository";
@@ -37,6 +38,14 @@ export class UsuarioService {
       papel: data.papel,
       ativo: data.ativo ?? true,
     } as CreationAttributes<Usuario>);
+  }
+
+  /** Compara a senha atual de um usuário (fetch unscoped: o hash não está no
+   * escopo padrão). Para a troca da própria senha pelo titular autenticado. */
+  async verificarSenhaAtual(id: number, senhaAtual: string): Promise<boolean> {
+    const usuario = await Usuario.unscoped().findByPk(id);
+    if (!usuario) return false;
+    return bcrypt.compare(senhaAtual, usuario.senha_hash);
   }
 
   async update(id: number, data: Partial<CriarUsuarioData>) {

@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'crypto';
+import bcrypt from 'bcryptjs';
 import { QueryTypes } from 'sequelize';
 import { sequelize } from '../database/connection';
 import { EmailService } from './EmailService';
@@ -64,6 +65,49 @@ export class SenhaRecuperacaoService {
           replacements: { tokenHash }, logging: false,
         });
       }
+    }
+  }
+
+  /**
+   * Consome o token e redefine a senha em UMA transação com bloqueio de
+   * linha: UPDATE único (hash + sessao_version) revoga todas as sessões
+   * emitidas antes (ADR-0011) junto com o consumo da pendência. Conta
+   * desativada não é reativada pelo link — pendência descartada.
+   */
+  async redefinir(token: string, senha: string): Promise<boolean> {
+    await this.limparExpirados();
+    try {
+      return await sequelize.transaction({ logging: false }, async transaction => {
+        const [pendente] = await sequelize.query<{ usuario_id: number }>(`
+          SELECT usuario_id FROM senha_pendente
+          WHERE token_hash = :tokenHash AND expira_em > NOW() FOR UPDATE
+        `, { replacements: { tokenHash: hashTokenSenha(token) }, type: QueryTypes.SELECT, transaction, logging: false });
+        if (!pendente) return false;
+
+        const [usuario] = await sequelize.query<{ ativo: boolean }>(
+          'SELECT ativo FROM usuario WHERE id = :id FOR UPDATE',
+          { replacements: { id: pendente.usuario_id }, type: QueryTypes.SELECT, transaction, logging: false },
+        );
+        if (!usuario || !usuario.ativo) {
+          await sequelize.query('DELETE FROM senha_pendente WHERE token_hash = :tokenHash', {
+            replacements: { tokenHash: hashTokenSenha(token) }, transaction, logging: false,
+          });
+          return false;
+        }
+
+        const senha_hash = await bcrypt.hash(senha, 12);
+        await sequelize.query(`
+          UPDATE usuario SET senha_hash = :senhaHash, sessao_version = sessao_version + 1
+          WHERE id = :id
+        `, { replacements: { senhaHash: senha_hash, id: pendente.usuario_id }, transaction, logging: false });
+        await sequelize.query('DELETE FROM senha_pendente WHERE token_hash = :tokenHash', {
+          replacements: { tokenHash: hashTokenSenha(token) }, transaction, logging: false,
+        });
+        return true;
+      });
+    } catch {
+      // Falha de banco não vaza detalhes; pendência permanece até expirar.
+      return false;
     }
   }
 }

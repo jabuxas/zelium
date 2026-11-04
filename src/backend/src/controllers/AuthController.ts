@@ -66,6 +66,31 @@ export const AuthController = {
 };
 
 export const UsuarioController = {
+  /** Troca da própria senha pelo titular autenticado (qualquer papel).
+   * Exige a senha atual; sessões antigas moram no bump de sessao_version
+   * (ADR-0011) — inclusive a que fez a troca. */
+  async alterarSenhaPropia(req: Request, res: Response) {
+    const body = req.body as Record<string, unknown> | null;
+    if (!body || typeof body !== 'object' || Array.isArray(body)
+      || Object.keys(body).length !== 2
+      || Object.keys(body).some(c => !['senha_atual', 'senha'].includes(c))) {
+      return res.status(400).json({ error: 'Informe senha_atual e senha, sem campos adicionais' });
+    }
+    const { senha_atual, senha } = body;
+    if (typeof senha !== 'string' || senha.length < 12 || Buffer.byteLength(senha, 'utf8') > 72 || !senha.trim()) {
+      return res.status(400).json({ error: 'senha deve ter de 12 caracteres a 72 bytes' });
+    }
+    if (typeof senha_atual !== 'string' || senha_atual.length === 0 || Buffer.byteLength(senha_atual, 'utf8') > 200) {
+      return res.status(400).json({ error: 'senha_atual e obrigatoria' });
+    }
+    const id = Number(req.user?.sub);
+    if (!await usuarioService.verificarSenhaAtual(id, senha_atual)) {
+      return res.status(400).json({ error: 'Senha atual incorreta' });
+    }
+    await usuarioService.update(id, { senha });
+    res.json({ message: 'Senha alterada. Faca login novamente com a nova senha.' });
+  },
+
   async findAll(_req: Request, res: Response) {
     const usuarios = await usuarioService.findAll();
     res.json(usuarios);

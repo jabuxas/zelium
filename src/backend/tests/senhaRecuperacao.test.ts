@@ -130,3 +130,140 @@ describe('Solicitação de recuperação de senha', () => {
     expect(envio).toHaveBeenCalledTimes(2);
   });
 });
+
+const SENHA_NOVA = 'SenhaNovaForte@99';
+function redefinir(token: string, senha: string = SENHA_NOVA) {
+  return rawRequest(app).post('/api/auth/senha/redefinir')
+    .set('X-Forwarded-For', `192.0.2.${ip}`).send({ token, senha });
+}
+async function novoPedido(email = 'gestor@zelium.com'): Promise<string> {
+  expect((await solicitar({ email })).status).toBe(202);
+  const payload = envio.mock.calls[envio.mock.calls.length - 1][0];
+  return payload.corpoTexto.match(/#token=([a-f0-9]{64})/)![1];
+}
+async function login(email: string, senha: string) {
+  return rawRequest(app).post('/api/auth/login').send({ email, senha });
+}
+
+describe('Redefinição por token', () => {
+  it('redefine a senha e revoga as sessões emitidas antes', async () => {
+    const sessaoAntiga = await login('gestor@zelium.com', 'Zelium@2026');
+    expect(sessaoAntiga.status).toBe(200);
+    const token = await novoPedido();
+
+    const res = await redefinir(token);
+    expect(res.status).toBe(200);
+    expect(res.body.message).toMatch(/faca login/i);
+
+    expect((await login('gestor@zelium.com', 'Zelium@2026')).status).toBe(401);
+    const nova = await login('gestor@zelium.com', SENHA_NOVA);
+    expect(nova.status).toBe(200);
+    // Sessão emitida antes da redefinição morre (sessao_version subiu)
+    const me = await rawRequest(app).get('/api/auth/me')
+      .set('Authorization', `Bearer ${sessaoAntiga.body.token}`);
+    expect(me.status).toBe(401);
+    expect(await pendentes()).toEqual([]);
+  });
+
+  it('replay, expiração e token desconhecido retornam o mesmo 400', async () => {
+    const token = await novoPedido();
+    expect((await redefinir(token)).status).toBe(200);
+    expect((await redefinir(token)).status).toBe(400);
+    expect((await redefinir('0'.repeat(64))).status).toBe(400);
+    const tokenExpirado = await novoPedido();
+    await sequelize.query(`UPDATE senha_pendente SET expira_em = NOW() - INTERVAL '1 second'`);
+    expect((await redefinir(tokenExpirado)).status).toBe(400);
+    expect(await pendentes()).toEqual([]);
+  });
+
+  it('redefinições concorrentes criam uma senha só e consomem a pendência', async () => {
+    const token = await novoPedido();
+    const respostas = await Promise.all([redefinir(token), redefinir(token)]);
+    expect(respostas.map(r => r.status).sort()).toEqual([200, 400]);
+    expect(await login('gestor@zelium.com', SENHA_NOVA)).toMatchObject({ status: 200 });
+    expect(await pendentes()).toEqual([]);
+  });
+
+  it.each(['curta123', 'á'.repeat(37), ' '.repeat(12), null])
+  ('senha inválida é recusada sem consumir a pendência: %p', async senha => {
+    const token = await novoPedido();
+    const res = await rawRequest(app).post('/api/auth/senha/redefinir')
+      .set('X-Forwarded-For', `192.0.2.${ip}`).send({ token, senha });
+    expect(res.status).toBe(400);
+    expect(await pendentes()).toHaveLength(1);
+  });
+
+  it('não aceita campos extras na redefinição', async () => {
+    const token = await novoPedido();
+    const res = await rawRequest(app).post('/api/auth/senha/redefinir')
+      .set('X-Forwarded-For', `192.0.2.${ip}`).send({ token, senha: SENHA_NOVA, email: 'x@x.test' });
+    expect(res.status).toBe(400);
+    expect(await pendentes()).toHaveLength(1);
+  });
+
+  it('conta desativada depois do pedido não é reativada pelo link', async () => {
+    const token = await novoPedido('responsavel@zelium.com');
+    await sequelize.query(`UPDATE usuario SET ativo = FALSE WHERE email = 'responsavel@zelium.com'`);
+    const res = await redefinir(token);
+    expect(res.status).toBe(400);
+    const [usuario] = await sequelize.query<{ ativo: boolean; senha_hash: string }>(
+      'SELECT ativo, senha_hash FROM usuario WHERE email = \'responsavel@zelium.com\'', { type: QueryTypes.SELECT });
+    expect(usuario.ativo).toBe(false);
+    expect(await pendentes()).toEqual([]);
+    // Reativa para o estado do arquivo não vazar entre testes
+    await sequelize.query(`UPDATE usuario SET ativo = TRUE WHERE email = 'responsavel@zelium.com'`);
+  });
+
+  it('bloqueia a 11ª tentativa por IP', async () => {
+    for (let i = 0; i < 10; i += 1) expect((await redefinir('0'.repeat(64))).status).toBe(400);
+    const bloqueado = await redefinir('0'.repeat(64));
+    expect(bloqueado.status).toBe(429);
+    expect(Number(bloqueado.headers['retry-after'])).toBeGreaterThan(0);
+  });
+});
+
+describe('Troca da própria senha (autenticado)', () => {
+  it('exige autenticação', async () => {
+    expect((await rawRequest(app).post('/api/usuarios/senha').send({})).status).toBe(401);
+  });
+
+  it('troca com senha atual correta e revoga as sessões antigas', async () => {
+    const sessao = await login('conferente@zelium.com', 'Zelium@2026');
+    expect(sessao.status).toBe(200);
+    const res = await rawRequest(app).post('/api/usuarios/senha')
+      .set('Authorization', `Bearer ${sessao.body.token}`)
+      .set('X-Requested-With', 'XMLHttpRequest')
+      .send({ senha_atual: 'Zelium@2026', senha: SENHA_NOVA });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toMatch(/faca login/i);
+    expect((await rawRequest(app).get('/api/auth/me')
+      .set('Authorization', `Bearer ${sessao.body.token}`)).status).toBe(401);
+    expect((await login('conferente@zelium.com', 'Zelium@2026')).status).toBe(401);
+    expect((await login('conferente@zelium.com', SENHA_NOVA)).status).toBe(200);
+  });
+
+  it('senha atual errada recusa sem alterar', async () => {
+    const sessao = await login('conferente@zelium.com', SENHA_NOVA);
+    const res = await rawRequest(app).post('/api/usuarios/senha')
+      .set('Authorization', `Bearer ${sessao.body.token}`)
+      .set('X-Requested-With', 'XMLHttpRequest')
+      .send({ senha_atual: 'errada', senha: 'OutraSenhaForte@77' });
+    expect(res.status).toBe(400);
+    expect((await login('conferente@zelium.com', SENHA_NOVA)).status).toBe(200);
+    expect((await login('conferente@zelium.com', 'OutraSenhaForte@77')).status).toBe(401);
+  });
+
+  it('corpo estrito: campo extra ou senha curta é recusado sem consultar hash', async () => {
+    const sessao = await login('conferente@zelium.com', SENHA_NOVA);
+    for (const body of [
+      { senha_atual: SENHA_NOVA, senha: 'OutraSenhaForte@77', papel: 'gestor' },
+      { senha_atual: SENHA_NOVA, senha: 'curta' },
+      { senha: 'OutraSenhaForte@77' },
+    ]) {
+      expect((await rawRequest(app).post('/api/usuarios/senha')
+        .set('Authorization', `Bearer ${sessao.body.token}`)
+        .set('X-Requested-With', 'XMLHttpRequest').send(body)).status).toBe(400);
+    }
+    expect((await login('conferente@zelium.com', SENHA_NOVA)).status).toBe(200);
+  });
+});
