@@ -30,3 +30,10 @@ export function validarConfirmacao(value: unknown): { token: string; senha: stri
     || !value.senha.trim()) return null;
   return { token: value.token, senha: value.senha };
 }
+
+export function validarPedidoRecuperacao(value: unknown): { email: string } | null {
+  if (!objetoEstrito(value, ['email']) || !texto(value.email, 100)) return null;
+  const email = value.email.trim().toLowerCase();
+  if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9]+(?:[.-][a-z0-9]+)*\.[a-z]{2,}$/i.test(email)) return null;
+  return { email };
+}

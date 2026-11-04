@@ -1,6 +1,7 @@
 import { QueryTypes, Transaction } from 'sequelize';
 import { sequelize } from './connection';
 import { cadastroSelfServiceMigration } from './cadastroSelfServiceMigration';
+import { senhaRecuperacaoMigration } from './senhaRecuperacaoMigration';
 
 const migrations = [{
   id: '20261029_001_numero_patrimonio_por_organizacao',  async up(transaction: Transaction) {
@@ -176,7 +177,7 @@ const migrations = [{
       ALTER TABLE public.usuario DROP COLUMN IF EXISTS sessao_version;
     `, { transaction });
   },
-}, cadastroSelfServiceMigration];
+}, cadastroSelfServiceMigration, senhaRecuperacaoMigration];
 
 /** Serializa inicializações e rollback no mesmo banco, com DDL transacional. */
 export async function withMigrationLock<T>(work: (transaction: Transaction) => Promise<T>): Promise<T> {

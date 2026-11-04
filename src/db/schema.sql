@@ -226,3 +226,14 @@ CREATE TABLE conferencia (
     observacao TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- Pendências de redefinição de senha: só hash do token, efêmeras (24h).
+-- Fica no fim do arquivo porque referencia usuario(id).
+CREATE TABLE senha_pendente (
+    token_hash CHAR(64) PRIMARY KEY CHECK (token_hash ~ '^[a-f0-9]{64}$'),
+    usuario_id INT NOT NULL REFERENCES usuario(id),
+    expira_em TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX senha_pendente_expira_idx ON senha_pendente (expira_em);
+CREATE INDEX senha_pendente_usuario_idx ON senha_pendente (usuario_id);

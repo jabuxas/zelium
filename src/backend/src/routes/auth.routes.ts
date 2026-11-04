@@ -4,7 +4,8 @@ import { authenticate } from "../middlewares/auth";
 import { exigirCsrfParaCookie } from "../middlewares/csrf";
 import { rateLimitLogin } from "../middlewares/rateLimitLogin";
 import { CadastroController } from '../controllers/CadastroController';
-import { cadastroHabilitado, criarLimiteCadastro } from '../middlewares/cadastroPublico';
+import { SenhaRecuperacaoController } from '../controllers/SenhaRecuperacaoController';
+import { cadastroHabilitado, criarLimiteCadastro, recuperacaoHabilitado } from '../middlewares/cadastroPublico';
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.get("/me", authenticate, AuthController.me);
 router.post("/logout", authenticate, exigirCsrfParaCookie, AuthController.logout);
 router.post('/cadastros', cadastroHabilitado, criarLimiteCadastro(5), CadastroController.solicitar);
 router.post('/cadastros/confirmacao', cadastroHabilitado, criarLimiteCadastro(10), CadastroController.confirmar);
+router.post('/senha/recuperar', recuperacaoHabilitado, criarLimiteCadastro(5), SenhaRecuperacaoController.solicitar);
 
 export default router;

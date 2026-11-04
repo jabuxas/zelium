@@ -85,10 +85,27 @@ describe('Schema do cadastro self-service', () => {
     expect(await contarMigracoes()).toContain('20261101_001_cadastro_self_service');
   });
 
+  it('cria e reverte a tabela de recuperação de senha sem perder dado de negócio', async () => {
+    await migrate();
+    await sequelize.query(`INSERT INTO senha_pendente (token_hash, usuario_id, expira_em)
+      SELECT '${'a'.repeat(64)}', id, NOW() + INTERVAL '1 hour' FROM usuario LIMIT 1`);
+    expect(await rollbackLastMigration()).toBe('20261104_001_senha_recuperacao');
+    // Pendência é efêmera: descartá-la não exige proteção como trials.
+    const existe = await sequelize.query(
+      `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'senha_pendente') AS existe`,
+      { type: QueryTypes.SELECT },
+    );
+    expect(existe).toEqual([{ existe: false }]);
+    await migrate();
+    expect(await contarMigracoes()).toContain('20261104_001_senha_recuperacao');
+  });
+
   it('recusa trial incompleto no banco e permite rollback/reaplicação sem pendências', async () => {
     await migrate();
     await expect(sequelize.query(`UPDATE organizacao SET modalidade_acesso = 'trial' WHERE id = 1`))
       .rejects.toThrow();
+    // A migração de recuperação (005) sai primeiro: pendências são efêmeras.
+    expect(await rollbackLastMigration()).toBe('20261104_001_senha_recuperacao');
     expect(await rollbackLastMigration()).toBe('20261101_001_cadastro_self_service');
     expect(await sequelize.getQueryInterface().describeTable('organizacao')).not.toHaveProperty('trial_fim');
     await migrate();
@@ -97,6 +114,9 @@ describe('Schema do cadastro self-service', () => {
 
   it('não descarta organizações trial nem seu histórico para permitir rollback', async () => {
     await migrate();
+    // A de recuperação sai sem resistência (efêmera); a de cadastro recusa
+    // descartar trials existentes.
+    expect(await rollbackLastMigration()).toBe('20261104_001_senha_recuperacao');
     await sequelize.query(`UPDATE organizacao SET modalidade_acesso = 'trial',
       trial_inicio = NOW(), trial_fim = NOW() + INTERVAL '30 days',
       limite_patrimonios = 500, limite_usuarios = 5 WHERE id = 1`);
@@ -222,10 +242,11 @@ describe('Numeração patrimonial no schema SQL e na atualização de banco exis
 
   it('recusa rollback com números compartilhados sem apagar bens nem o histórico', async () => {
     await migrate();
-    expect(await rollbackLastMigration()).toBe('20261101_001_cadastro_self_service');
-    // Reverte as migrações posteriores (sessão 003, monetária 002) para voltar
-    // ao estado que só tem a restrição de numeração; então compartilha números
-    // e recusa reverter a numeração.
+    expect(await rollbackLastMigration()).toBe('20261104_001_senha_recuperacao');
+    // Reverte as migrações posteriores (cadastro 004, sessão 003, monetária
+    // 002) para voltar ao estado que só tem a restrição de numeração; então
+    // compartilha números e recusa reverter a numeração.
+    await rollbackLastMigration();
     await rollbackLastMigration();
     await rollbackLastMigration();
     await inserirMesmoNumeroNaOutraEmpresa();
@@ -240,6 +261,8 @@ describe('Numeração patrimonial no schema SQL e na atualização de banco exis
     expect(aplicadas.has('20261029_001_numero_patrimonio_por_organizacao')).toBe(true);
     expect(aplicadas.has('20261029_002_valor_monetario_numeric')).toBe(false);
     expect(aplicadas.has('20261030_001_usuario_sessao_version')).toBe(false);
+    expect(aplicadas.has('20261101_001_cadastro_self_service')).toBe(false);
+    expect(aplicadas.has('20261104_001_senha_recuperacao')).toBe(false);
   });
 
   it('desfaz DDL e troca de unicidade se falhar o registro da migração', async () => {
@@ -381,10 +404,11 @@ describe('Migração monetária NUMERIC(14,2) — integridade e sujeira legada',
 
   it('reversão volta para DOUBLE PRECISION preservando valores e removendo CHECKs', async () => {
     await migrate();
+    // As três migrações posteriores saem primeiro (recuperação 005, cadastro
+    // 004, sessão 003); depois a monetária — rollback: sempre a última aplicada.
+    expect(await rollbackLastMigration()).toBe('20261104_001_senha_recuperacao');
     expect(await rollbackLastMigration()).toBe('20261101_001_cadastro_self_service');
     await sequelize.query(`UPDATE patrimonio SET valor_residual = 0.1 + 0.2 WHERE id = 2`);
-    // A última migração é a de sessão (003); reverte-a primeiro, depois a
-    // monetária — comportamento do rollback: sempre a última aplicada.
     expect(await rollbackLastMigration()).toBe('20261030_001_usuario_sessao_version');
     expect(await rollbackLastMigration()).toBe('20261029_002_valor_monetario_numeric');
     expect(await tiposDeValor()).toMatchObject({

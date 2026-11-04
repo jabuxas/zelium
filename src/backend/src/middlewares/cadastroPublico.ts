@@ -1,25 +1,44 @@
 import { NextFunction, Request, Response } from 'express';
 import { smtpConfigurado } from '../config/mail';
 
+/** HTTPS fixo sem credenciais/query/fragmento; http só para loopback (dev/E2E). */
+export function urlEmailValida(valor: string): boolean {
+  try {
+    const url = new URL(valor);
+    const loopback = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(url.hostname);
+    const segura = url.protocol === 'https:' || (url.protocol === 'http:' && loopback);
+    return segura && !url.username && !url.password && !url.search && !url.hash;
+  } catch {
+    return false;
+  }
+}
+
 export function cadastroHabilitado(_req: Request, res: Response, next: NextFunction) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Referrer-Policy', 'no-referrer');
   if (process.env.SELF_SERVICE_ENABLED !== 'true') {
     return res.status(404).json({ error: 'Recurso indisponivel' });
   }
-  try {
-    const url = new URL(process.env.SELF_SERVICE_CONFIRMATION_URL ?? '');
-    // Produção exige HTTPS fixo; loopback aceita http (dev/E2E local sem TLS).
-    const loopback = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(url.hostname);
-    const segura = url.protocol === 'https:' || (url.protocol === 'http:' && loopback);
-    if (!segura || url.username || url.password || url.search || url.hash || !smtpConfigurado()) {
-      throw new Error('Configuracao insegura');
-    }
-    res.locals.confirmationUrl = url.toString();
-    next();
-  } catch {
-    res.status(503).json({ error: 'Cadastro temporariamente indisponivel' });
+  if (!urlEmailValida(process.env.SELF_SERVICE_CONFIRMATION_URL ?? '') || !smtpConfigurado()) {
+    return res.status(503).json({ error: 'Cadastro temporariamente indisponivel' });
   }
+  res.locals.confirmationUrl = new URL(process.env.SELF_SERVICE_CONFIRMATION_URL as string).toString();
+  next();
+}
+
+/** Recuperação de senha: flag própria — beneficia contas existentes (piloto)
+ * mesmo com o cadastro self-service fechado. Mesma exigência de URL/SMTP. */
+export function recuperacaoHabilitado(_req: Request, res: Response, next: NextFunction) {
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  if (process.env.RECUPERACAO_SENHA_ENABLED !== 'true') {
+    return res.status(404).json({ error: 'Recurso indisponivel' });
+  }
+  if (!urlEmailValida(process.env.RECUPERACAO_SENHA_URL ?? '') || !smtpConfigurado()) {
+    return res.status(503).json({ error: 'Recuperacao temporariamente indisponivel' });
+  }
+  res.locals.confirmationUrl = new URL(process.env.RECUPERACAO_SENHA_URL as string).toString();
+  next();
 }
 
 /** Conta inclusive sucesso e payload inválido, antes de trabalho caro.
