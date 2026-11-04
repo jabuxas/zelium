@@ -98,3 +98,22 @@ cadastro/confirmação e banner de trial expirado concluídos em 03–04/11/2026
 importação CSV entregue à parte. CSV e validação institucional continuam
 entregas distintas. Nenhum gate é considerado resolvido apenas por existir
 `SELF_SERVICE_ENABLED`.
+
+## Revisão de segurança independente (04/11/2026)
+
+Subagente com contexto limpo revisou `6002626..HEAD`: **0 Critical, 2 Required,
+6 Optional**. Todos tratados em commits próprios, com teste RED antes:
+
+- **Required** — login CSRF: rotas públicas (login, cadastro, recuperação)
+  recusam `Origin` fora da allowlist/mesmo host (403 `origem`). Papel e
+  organização passam a vir do banco a cada requisição (rebaixar vale no token
+  já emitido).
+- **Optional** — troca/desativação/redefinição apagam links de recuperação
+  pendentes do usuário; erros do body-parser nunca chegam ao logger em `/api`;
+  células do CSV truncadas nas mensagens; login e troca de senha pagam bcrypt
+  mesmo sem usuário (timing); `TRUST_PROXY` configurável; senha mínima de 12
+  caracteres também para usuários criados pelo Gestor.
+
+Não substitui revisão humana independente nem pentest antes da abertura
+pública; o revisor foi um modelo, sem acesso a produção.
+

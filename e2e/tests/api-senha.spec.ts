@@ -3,6 +3,8 @@ import { API_URL } from '../playwright.config';
 import { apiHeaders, senha } from '../support/helpers';
 
 const test = base.extend({});
+// Política: 12+ caracteres também para usuários criados pelo Gestor.
+const SENHA_INICIAL = 'SenhaInicial@2026';
 const SENHA_NOVA = 'SenhaE2EForte@2026';
 
 test.describe('Recuperação e troca de senha (API)', () => {
@@ -37,14 +39,14 @@ test.describe('Recuperação e troca de senha (API)', () => {
     const gestor = await apiHeaders(admin, 'gestor@zelium.com');
     const criado = await admin.post(`${API_URL}/api/usuarios`, {
       headers: gestor,
-      data: { nome: 'Recuperacao E2E', email: 'recuperacao.e2e@zelium.com', senha, papel: 'conferente' },
+      data: { nome: 'Recuperacao E2E', email: 'recuperacao.e2e@zelium.com', senha: SENHA_INICIAL, papel: 'conferente' },
     });
     if (criado.status() !== 201) expect(await criado.json()).toMatchObject({ error: /ja existe/i });
     await admin.dispose();
 
     const contexto = await playwright.request.newContext();
     const login1 = await contexto.post(`${API_URL}/api/auth/login`, {
-      data: { email: 'recuperacao.e2e@zelium.com', senha },
+      data: { email: 'recuperacao.e2e@zelium.com', senha: SENHA_INICIAL },
     });
     expect(login1.status()).toBe(200);
     const tokenAntigo = (await login1.json()).token;
@@ -65,7 +67,7 @@ test.describe('Recuperação e troca de senha (API)', () => {
     // Troca da própria senha pelo titular autenticado (mesma revogação).
     const troca = await contexto.post(`${API_URL}/api/usuarios/senha`, {
       headers: { Authorization: `Bearer ${tokenAntigo}`, 'X-Requested-With': 'XMLHttpRequest' },
-      data: { senha_atual: senha, senha: SENHA_NOVA },
+      data: { senha_atual: SENHA_INICIAL, senha: SENHA_NOVA },
     });
     expect(troca.status()).toBe(200);
 
@@ -74,7 +76,7 @@ test.describe('Recuperação e troca de senha (API)', () => {
     });
     expect(comTokenAntigo.status()).toBe(401);
     expect((await contexto.post(`${API_URL}/api/auth/login`, {
-      data: { email: 'recuperacao.e2e@zelium.com', senha },
+      data: { email: 'recuperacao.e2e@zelium.com', senha: SENHA_INICIAL },
     })).status()).toBe(401);
     expect((await contexto.post(`${API_URL}/api/auth/login`, {
       data: { email: 'recuperacao.e2e@zelium.com', senha: SENHA_NOVA },

@@ -416,7 +416,7 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test -- --runInBand` | 428 testes/36 suítes em 04/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, cookie/CSRF, limites de login/cadastro, confirmação transacional, fiscalização do trial, recuperação/troca de senha, parser de CSV e importação |
+| Backend | `cd src/backend && npm test -- --runInBand` | 448 testes/39 suítes em 04/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, cookie/CSRF, limites de login/cadastro, confirmação transacional, fiscalização do trial, recuperação/troca de senha, parser de CSV e importação |
 | Frontend | `cd src/front && pnpm test --runInBand` | 169 testes em 04/11/2026: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro, erros por campo, cadastro/confirmação públicos, recuperação/troca de senha, guard de rotas públicas, banner de trial expirado e importação CSV |
 | Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
 | E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro, permissões, cookie HttpOnly, CSRF, senha e importação CSV |

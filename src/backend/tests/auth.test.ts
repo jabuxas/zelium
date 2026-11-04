@@ -140,16 +140,23 @@ describe('CRUD de usuarios (gestor)', () => {
       .send({ email: 'gestor@org.com', senha: SENHA });
     const token = login.body.token as string;
 
+    const curta = await rawRequest(app)
+      .post('/api/usuarios')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ nome: 'Senha Curta', email: 'curta@org.com', senha: 'Curta@123', papel: 'conferente' });
+    expect(curta.status).toBe(400);
+    expect(curta.body.error).toMatch(/12 caracteres/);
+
     const created = await rawRequest(app)
       .post('/api/usuarios')
       .set('Authorization', `Bearer ${token}`)
-      .send({ nome: 'Novo Responsavel', email: 'novo@org.com', senha: 'Senha@456', papel: 'responsavel' });
+      .send({ nome: 'Novo Responsavel', email: 'novo@org.com', senha: 'SenhaNova@456789', papel: 'responsavel' });
     expect(created.status).toBe(201);
     expect(created.body.senha_hash).toBeUndefined();
 
     const novoLogin = await rawRequest(app)
       .post('/api/auth/login')
-      .send({ email: 'novo@org.com', senha: 'Senha@456' });
+      .send({ email: 'novo@org.com', senha: 'SenhaNova@456789' });
     expect(novoLogin.status).toBe(200);
     expect(novoLogin.body.usuario.papel).toBe('responsavel');
   });
@@ -162,7 +169,7 @@ describe('CRUD de usuarios (gestor)', () => {
     const res = await rawRequest(app)
       .post('/api/usuarios')
       .set('Authorization', `Bearer ${login.body.token}`)
-      .send({ nome: 'Duplicado', email: 'gestor@org.com', senha: 'Senha@456', papel: 'conferente' });
+      .send({ nome: 'Duplicado', email: 'gestor@org.com', senha: 'SenhaNova@456789', papel: 'conferente' });
     expect(res.status).toBe(409);
   });
 });

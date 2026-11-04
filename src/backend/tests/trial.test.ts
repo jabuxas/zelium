@@ -10,6 +10,7 @@ let sequelize: Sequelize;
 let container: StartedPostgreSqlContainer;
 
 const SENHA = 'Senha@123';
+const SENHA_LONGA = 'SenhaLonga@2026!';
 const ORG_EXPIRADA = 2;
 const ORG_ATIVA = 3;
 const ORG_LEGADO = 1;
@@ -154,11 +155,11 @@ describe('Limites do trial ativo', () => {
     const token = await login('gestor-ativo@test.local');
     const auth = { Authorization: `Bearer ${token}` };
     const criado = await rawRequest(app).post('/api/usuarios')
-      .set(auth).send({ nome: 'Segundo', email: 'segundo@ativa.test', senha: SENHA, papel: 'conferente' });
+      .set(auth).send({ nome: 'Segundo', email: 'segundo@ativa.test', senha: SENHA_LONGA, papel: 'conferente' });
     expect(criado.status).toBe(201);
 
     const excedente = await rawRequest(app).post('/api/usuarios')
-      .set(auth).send({ nome: 'Terceiro', email: 'terceiro@ativa.test', senha: SENHA, papel: 'conferente' });
+      .set(auth).send({ nome: 'Terceiro', email: 'terceiro@ativa.test', senha: SENHA_LONGA, papel: 'conferente' });
     expect(excedente.status).toBe(403);
     expect(excedente.body.codigo).toBe('limite_trial');
     expect(excedente.body.error).toContain('2 usuarios');
@@ -166,10 +167,10 @@ describe('Limites do trial ativo', () => {
     // Desativar libera a vaga: contam apenas usuários ativos.
     expect((await rawRequest(app).put(`/api/usuarios/${criado.body.id}`).set(auth).send({ ativo: false })).status).toBe(200);
     const recriado = await rawRequest(app).post('/api/usuarios')
-      .set(auth).send({ nome: 'Terceiro', email: 'terceiro@ativa.test', senha: SENHA, papel: 'conferente' });
+      .set(auth).send({ nome: 'Terceiro', email: 'terceiro@ativa.test', senha: SENHA_LONGA, papel: 'conferente' });
     expect(recriado.status).toBe(201);
     const limiteAtingido = await rawRequest(app).post('/api/usuarios')
-      .set(auth).send({ nome: 'Quarto', email: 'quarto@ativa.test', senha: SENHA, papel: 'conferente' });
+      .set(auth).send({ nome: 'Quarto', email: 'quarto@ativa.test', senha: SENHA_LONGA, papel: 'conferente' });
     expect(limiteAtingido.status).toBe(403);
     expect(limiteAtingido.body.codigo).toBe('limite_trial');
   });

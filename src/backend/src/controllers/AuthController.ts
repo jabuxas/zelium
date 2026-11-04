@@ -111,8 +111,8 @@ export const UsuarioController = {
     if (!email || !String(email).includes("@")) {
       return res.status(400).json({ error: "email valido e obrigatorio" });
     }
-    if (!senha || String(senha).length < 8) {
-      return res.status(400).json({ error: "senha deve ter ao menos 8 caracteres" });
+    if (!senha || String(senha).length < 12) {
+      return res.status(400).json({ error: "senha deve ter ao menos 12 caracteres" });
     }
     if (!isPapelValido(papel)) {
       return res.status(400).json({ error: "papel invalido" });
@@ -138,8 +138,8 @@ export const UsuarioController = {
     if (papel !== undefined && !isPapelValido(papel)) {
       return res.status(400).json({ error: "papel invalido" });
     }
-    if (senha !== undefined && String(senha).length < 8) {
-      return res.status(400).json({ error: "senha deve ter ao menos 8 caracteres" });
+    if (senha !== undefined && String(senha).length < 12) {
+      return res.status(400).json({ error: "senha deve ter ao menos 12 caracteres" });
     }
 
     try {
