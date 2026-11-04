@@ -56,6 +56,9 @@ export default function AdminHubScreen() {
       <Button mode="contained-tonal" icon="history" contentStyle={styles.buttonContent} style={styles.history}
         onPress={() => router.push('/audit-log')}>Histórico da organização</Button>
 
+      <Button mode="outlined" icon="key" contentStyle={styles.buttonContent}
+        onPress={() => router.push('/alterar-senha' as RelativePathString)}>Alterar senha</Button>
+
       {podeAdministrar ? (
         <View style={styles.grid}>
           <Text variant="titleMedium" accessibilityRole="header">Cadastros da organização</Text>
