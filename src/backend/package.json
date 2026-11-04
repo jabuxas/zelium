@@ -7,7 +7,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "cadastros:limpar": "tsx src/database/limparCadastros.ts",
+    "retencao:executar": "tsx src/database/limparRetencao.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

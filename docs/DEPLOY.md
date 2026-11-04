@@ -192,6 +192,16 @@ escrita antes de atualizar**: o DDL pode bloquear tabelas. Consulte
 **Boas práticas**
 
 - Troque as senhas padrão e o `JWT_SECRET` antes do primeiro acesso público.
+  A partir de 04/11/2026 a aplicação **recusa subir em produção** com as
+  contas demo (`gestor/responsavel/conferente@zelium.com`) ainda na senha
+  padrão; `PERMITIR_CONTAS_DEMO=true` é transição consciente e fica avisando.
+- **Retenção operacional:** agende `docker compose ... exec backend node
+  dist/database/limparRetencao.js` ao menos diariamente. Ele apaga pendências
+  expiradas (cadastro/senha), notificações acima de
+  `NOTIFICACAO_RETENCAO_DIAS` (padrão 180) e auditoria acima de
+  `AUDITORIA_RETENCAO_DIAS` (padrão 0 = manter tudo — é o rastro de
+  responsabilidade; purgar é decisão explícita). Sem o agendamento, dados
+  crescem sem limite.
 - Monitore o disco (`backups_data` e `db_data` crescem com o tempo).
 - Confira o certificado com `curl -vI https://<domínio>/` após a primeira subida.
 

@@ -59,11 +59,14 @@ credenciais e dados pessoais (nome/e-mail para finalidade de criar a conta).
   implantação atual de uma instância. Abrir publicamente exige controle
   compartilhado se houver múltiplas instâncias e revisão de abuso de e-mail.
 - Pendências expiram em 24h e são removidas na próxima solicitação ou por
-  `npm run cadastros:limpar` no pacote `src/backend`. Ao habilitar o piloto,
-  agendar esse comando ao menos diariamente no mesmo ambiente do backend:
-  retenção máxima operacional de 48h com o agendamento ativo. Monitorar o
-  código de saída e não registrar linhas/payloads. Backups seguem a política
-  de retenção operacional e não podem reintroduzir pendências válidas antigas.
+  `npm run retencao:executar` no pacote `src/backend` (rotina única de
+  retenção: pendências + purga de notificações/auditoria conforme
+  `NOTIFICACAO_RETENCAO_DIAS`/`AUDITORIA_RETENCAO_DIAS`). Ao habilitar o
+  piloto, agendar esse comando ao menos diariamente no mesmo ambiente do
+  backend: retenção máxima operacional de 48h com o agendamento ativo.
+  Monitorar o código de saída e não registrar linhas/payloads. Backups seguem
+  a política de retenção operacional e não podem reintroduzir pendências
+  válidas antigas.
   No contêiner compilado, usar `node dist/database/limparCadastros.js`
   (produção não instala `tsx`). Após restaurar backup, invalidar pendências
   antes de reabrir tráfego para impedir replay de confirmações já consumidas.
