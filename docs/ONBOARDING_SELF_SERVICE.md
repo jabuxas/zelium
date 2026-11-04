@@ -88,12 +88,13 @@ liberadas, limites de bens/usuários com liberação de vaga por
 arquivamento/desativação e legado intocado. Não houve teste com SMTP
 externo, abertura pública, deploy, interface web ou dispositivo Android.
 
-Próximos gates: controle dos seeds demo, entrega de e-mail durável e
-homologada (inclui agendar a limpeza de pendências de senha junto com a de
-cadastro), privacidade/retenção operacional e revisão de segurança
-independente antes de abertura pública. Recuperação/troca de senha (ADR-0015),
-interface de cadastro/confirmação e banner de trial expirado concluídos em
-03–04/11/2026; importação CSV entregue à parte. Plano do app em
-[`PLANO_MOBILE.md`](PLANO_MOBILE.md). CSV e validação institucional continuam
+Próximos gates (04/11/2026): **seeds demo fechado** (produção recusa contas
+com a senha padrão), **e-mail real homologado** (Migadu 465/SSL, recuperação
+ponta a ponta com verificação IMAPS) e **retenção operacional** (`retencao:executar`
+com purga configurável). Restam antes da abertura pública: fila de envio
+durável/assíncrona, revisão de segurança independente e o restante do plano do
+mobile (`PLANO_MOBILE.md`). Recuperação/troca de senha (ADR-0015), interface de
+cadastro/confirmação e banner de trial expirado concluídos em 03–04/11/2026;
+importação CSV entregue à parte. CSV e validação institucional continuam
 entregas distintas. Nenhum gate é considerado resolvido apenas por existir
 `SELF_SERVICE_ENABLED`.

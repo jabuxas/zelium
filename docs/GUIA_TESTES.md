@@ -461,7 +461,7 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 | **UI de gestão de organizações** | Provisionamento por confirmação existe sob flag; não há tela de multiempresa para o operador |
 | **Paginação nas listas web** | Listas carregam tudo de uma vez; com milhares de bens ficará lento |
 | **Job mobile no CI** | Os testes do app não rodam no GitHub Actions |
-| **E-mail real homologado** | O fluxo SMTP está pronto, mas não foi testado com um provedor real de e-mail |
+| **E-mail real homologado** | ~~Fluxo SMTP testado com provedor real (Migadu: smtp.migadu.com 465/SSL/LOGIN) em 04/11/2026~~ Recuperação de senha ponta a ponta com entrega verificada por IMAPS e redefinição/login; entrega em provedores externos e a fila durável de envio seguem pendentes |
 | **Deploy real no servidor** | A stack de produção está pronta, mas a migração física do Render para o servidor da equipe ainda não foi executada |
 | **APK real distribuído** | O perfil EAS existe, mas o build ainda não foi executado (requer conta expo.dev) |
 | **Impressão de etiquetas em lote** | A etiqueta é individual; não há seleção múltipla |
