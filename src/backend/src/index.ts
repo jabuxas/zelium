@@ -1,6 +1,7 @@
 import "./database";
 import { sequelize } from "./database/connection";
 import { migrate } from "./database/migrate";
+import { verificarContasDemo } from "./database/verificarContasDemo";
 import app from "./app";
 
 const PORT = process.env.PORT ?? 8000;
@@ -8,6 +9,7 @@ const PORT = process.env.PORT ?? 8000;
 sequelize
   .authenticate()
   .then(() => migrate())
+  .then(() => verificarContasDemo())
   .then(() => {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })

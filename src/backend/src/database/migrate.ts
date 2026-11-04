@@ -72,7 +72,7 @@ async function ensureAmbienteLocalizacaoColumns(transaction: Transaction): Promi
   `, { transaction });
 }
 
-const DEFAULT_SENHA_HASH =
+export const DEFAULT_SENHA_HASH =
   '$2b$10$cbRZLPMpC5p2.q1EsYT38.eCQTlTCsonhEMvOGAsNkoCnKRrQpJ82';
 
 async function ensureUsuarioTable(transaction: Transaction): Promise<void> {
