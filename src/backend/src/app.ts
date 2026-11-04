@@ -9,7 +9,10 @@ const app = express();
 
 // A stack de produção roda atrás do Caddy: req.ip passa a ser o cliente real
 // (X-Forwarded-For do primeiro proxy), exigido pelo rate limit do login.
-app.set("trust proxy", 1);
+// TRUST_PROXY = número de proxies confiáveis (padrão 1; 0 se o backend ficar
+// exposto sem proxy — senão X-Forwarded-For forjado burla os limites por IP).
+const saltosProxy = Number(process.env.TRUST_PROXY ?? 1);
+app.set("trust proxy", Number.isInteger(saltosProxy) && saltosProxy >= 0 ? saltosProxy : 1);
 
 // CORS com credenciais (cookie de sessão): ACAO só para origens da allowlist
 // — "Access-Control-Allow-Origin: *" é ilegal junto de credentials. Produção
