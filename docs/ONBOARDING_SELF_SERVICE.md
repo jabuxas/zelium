@@ -85,10 +85,12 @@ liberadas, limites de bens/usuários com liberação de vaga por
 arquivamento/desativação e legado intocado. Não houve teste com SMTP
 externo, abertura pública, deploy, interface web ou dispositivo Android.
 
-Próximos gates: recuperação de senha, controle dos seeds demo, entrega de
-e-mail durável e homologada, privacidade/retenção operacional e revisão de
-segurança independente antes de abertura pública. Interface de
-cadastro/confirmação e tratamento de `trial_expirado` (banner) concluídos em
-03/11/2026; `limite_trial` aparece na mensagem de erro dos formulários.
-CSV e validação institucional continuam entregas distintas. Nenhum gate é
-considerado resolvido apenas por existir `SELF_SERVICE_ENABLED`.
+Próximos gates: controle dos seeds demo, entrega de e-mail durável e
+homologada (inclui agendar a limpeza de pendências de senha junto com a de
+cadastro), privacidade/retenção operacional e revisão de segurança
+independente antes de abertura pública. Recuperação/troca de senha (ADR-0015),
+interface de cadastro/confirmação e banner de trial expirado concluídos em
+03–04/11/2026; importação CSV entregue à parte. Plano do app em
+[`PLANO_MOBILE.md`](PLANO_MOBILE.md). CSV e validação institucional continuam
+entregas distintas. Nenhum gate é considerado resolvido apenas por existir
+`SELF_SERVICE_ENABLED`.

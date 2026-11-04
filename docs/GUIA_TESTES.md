@@ -416,11 +416,11 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test -- --runInBand` | 385 testes/34 suítes em 03/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, cookie/CSRF, limites de login/cadastro, confirmação transacional e fiscalização do trial |
-| Frontend | `cd src/front && pnpm test --runInBand` | 146 testes em 03/11/2026: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro (aviso de cadastro incompleto), erros por campo, cadastro/confirmação públicos, guard de rotas públicas e banner de trial expirado |
+| Backend | `cd src/backend && npm test -- --runInBand` | 428 testes/36 suítes em 04/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, cookie/CSRF, limites de login/cadastro, confirmação transacional, fiscalização do trial, recuperação/troca de senha, parser de CSV e importação |
+| Frontend | `cd src/front && pnpm test --runInBand` | 169 testes em 04/11/2026: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro, erros por campo, cadastro/confirmação públicos, recuperação/troca de senha, guard de rotas públicas, banner de trial expirado e importação CSV |
 | Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
-| E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro, permissões, cookie HttpOnly e CSRF |
-| E2E interfaces | `cd e2e && npm test -- --project=web --project=mobile` | Login e sessão por cookie na web, cadastro público (solicitação genérica, confirmação por link, token inválido), cadastros, inventário, solicitações, relatórios/downloads web, conferência, fotos e histórico do app (mobile segue por Bearer) |
+| E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro, permissões, cookie HttpOnly, CSRF, senha e importação CSV |
+| E2E interfaces | `cd e2e && npm test -- --project=web --project=mobile` | Login e sessão por cookie na web, cadastro público, recuperação de senha, Minha conta, cadastros, inventário, solicitações, relatórios/downloads web, conferência, fotos e histórico do app (mobile segue por Bearer) |
 | E2E produção | `cd e2e && npm run test:production` | Mesmos cenários com build Next em `.next-e2e`; Expo Web continua distinto de homologação nativa |
 | Infraestrutura E2E | `cd e2e && npm run test:infrastructure` | Encerramento dos processos filhos/netos da UI |
 
@@ -454,8 +454,9 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 
 | Falta | Detalhe |
 | --- | --- |
-| **Troca/recuperação de senha** | Usuário não consegue trocar a própria senha nem recuperá-la por e-mail (a senha padrão `Zelium@2026` só muda via gestor em `PUT /api/usuarios/:id`) |
-| **Restante do onboarding self-service** | Solicitação, confirmação e banner de trial expirado têm interface; faltam recuperação de senha, tratamento fino de `limite_trial` por tela e checklist de onboarding — gates em `ONBOARDING_SELF_SERVICE.md` |
+| **Troca/recuperação de senha** | ~~Recuperação por e-mail e troca da própria senha implementadas (ADR-0015, 04/11/2026)~~ Restam os itens do plano do mobile: tela Conta no app e tratamento dos códigos de trial (`PLANO_MOBILE.md`) |
+| **Restante do onboarding self-service** | Solicitação, confirmação e banner de trial expirado têm interface; faltam tratamento fino de `limite_trial` por tela e checklist de onboarding — gates em `ONBOARDING_SELF_SERVICE.md` |
+| **Importação em lote** | ~~CSV de patrimônios com preview e confirmação atômica implementado (web, Gestor, 04/11/2026)~~ Restam ajustes de uso real com planilhas institucionais (colunas variáveis, acentuação) |
 | **UI de gestão de usuários** | O CRUD `/api/usuarios` existe, mas não há página no frontend — gestão é via API/SQL |
 | **UI de gestão de organizações** | Provisionamento por confirmação existe sob flag; não há tela de multiempresa para o operador |
 | **Paginação nas listas web** | Listas carregam tudo de uma vez; com milhares de bens ficará lento |
@@ -463,7 +464,6 @@ CI: `.github/workflows/test.yml` roda backend e frontend a cada push/PR.
 | **E-mail real homologado** | O fluxo SMTP está pronto, mas não foi testado com um provedor real de e-mail |
 | **Deploy real no servidor** | A stack de produção está pronta, mas a migração física do Render para o servidor da equipe ainda não foi executada |
 | **APK real distribuído** | O perfil EAS existe, mas o build ainda não foi executado (requer conta expo.dev) |
-| **Importação em lote** | Cadastro via CSV (comum em implantações patrimoniais) não existe |
 | **Impressão de etiquetas em lote** | A etiqueta é individual; não há seleção múltipla |
 
 ### Segurança / operação
