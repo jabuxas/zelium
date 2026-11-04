@@ -96,6 +96,17 @@ describe('Importação de patrimônios por CSV', () => {
     expect(depois).toEqual(antes);
   });
 
+  it('mensagens de erro truncam células enormes em vez de ecoá-las', async () => {
+    const gigante = 'Z'.repeat(5000);
+    const res = await enviar('preview', csv([
+      `IMP-020;Fantasma;100;${gigante};Em condições;Sala 1;Ana Silva;${gigante};;`,
+    ]), { Authorization: `Bearer ${tokenGestor}` });
+    expect(res.status).toBe(200);
+    const texto = JSON.stringify(res.body);
+    expect(texto).not.toContain('Z'.repeat(200));
+    expect(texto).toContain('não encontrado');
+  });
+
   it('número repetido dentro do arquivo recusa o lote', async () => {
     const res = await enviar('confirmar', csv(['IMP-010;Primeiro;1;Informática;Em condições;Sala 1;Ana Silva;;;',
       'IMP-010;Duplicado;2;Informática;Em condições;Sala 1;Ana Silva;;;']), { Authorization: `Bearer ${tokenGestor}` });

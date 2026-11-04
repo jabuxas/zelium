@@ -18,6 +18,11 @@ const COLUNAS_OBRIGATORIAS = [
 ] as const;
 const COLUNAS_Opcionais = ['fornecedor', 'data_aquisicao', 'vida_util_anos', 'valor_residual'] as const;
 const MAX_LINHAS = 1000;
+/** Células do arquivo nunca voltam inteiras nas mensagens de erro. */
+function resumir(texto: string, max = 80): string {
+  return texto.length > max ? `${texto.slice(0, max)}…` : texto;
+}
+
 export const MAX_BYTES_CSV = 2 * 1024 * 1024;
 
 interface LinhaValida {
@@ -123,7 +128,7 @@ export class PatrimonioImportacaoService {
         const texto = campo(valores, nome);
         if (!texto) return `${nome} obrigatório (por nome do cadastro)`;
         const id = mapa.get(texto.toLowerCase());
-        if (!id) return `${nome} "${texto}" não encontrado no cadastro desta organização`;
+        if (!id) return `${nome} "${resumir(texto)}" não encontrado no cadastro desta organização`;
         return null;
       };
       for (const [nome, mapa] of [
@@ -138,7 +143,7 @@ export class PatrimonioImportacaoService {
       const fornecedorNome = campo(valores, 'fornecedor');
       if (fornecedorNome) {
         const id = fornecedorId.get(fornecedorNome.toLowerCase());
-        if (!id) errosDaLinha.push(`fornecedor "${fornecedorNome}" não encontrado no cadastro`);
+        if (!id) errosDaLinha.push(`fornecedor "${resumir(fornecedorNome)}" não encontrado no cadastro`);
         else opcionais.fornecedor_id = id;
       }
       const data = campo(valores, 'data_aquisicao');
