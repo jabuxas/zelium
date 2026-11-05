@@ -117,3 +117,20 @@ Subagente com contexto limpo revisou `6002626..HEAD`: **0 Critical, 2 Required,
 Não substitui revisão humana independente nem pentest antes da abertura
 pública; o revisor foi um modelo, sem acesso a produção.
 
+## Facilidades de implantação (04/11/2026)
+
+- `deploy/up.sh`: cria o `.env` com segredos gerados, valida e sobe a stack.
+- `BOOTSTRAP_GESTOR_*`: o primeiro Gestor nasce por variável de ambiente na
+  primeira subida (organização sem prazo + estados iniciais) e as contas demo
+  com senha padrão são desativadas — sem SQL manual. Idempotente.
+- Compose repassa `SELF_SERVICE_*` e `RECUPERACAO_SENHA_*` (URLs derivadas de
+  `ZELAR_DOMAIN`), mantendo ambos **desligados por padrão**; DuckDNS virou
+  opcional; a retenção roda sozinha a cada 24h.
+- O compose anterior era **inválido** (`${ZELAR_DOMAIN%%.*}`) e recusado pelo
+  `docker compose`; corrigido e validado com subida real db + backend +
+  retenção (bootstrap, login do Gestor, demo recusado, reinício idempotente).
+  Frontend + Caddy (HTTPS real com domínio) **não** foram exercitados nessa
+  validação.
+
+Instruções em `docs/DEPLOY.md` (seção 3).
+

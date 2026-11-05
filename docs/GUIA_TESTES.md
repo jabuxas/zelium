@@ -416,12 +416,13 @@ Tudo o que está automatizado:
 
 | Projeto | Comando | O que cobre |
 | --- | --- | --- |
-| Backend | `cd src/backend && npm test -- --runInBand` | 448 testes/39 suítes em 04/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, cookie/CSRF, limites de login/cadastro, confirmação transacional, fiscalização do trial, recuperação/troca de senha, parser de CSV e importação |
+| Backend | `cd src/backend && npm test -- --runInBand` | 463 testes/41 suítes em 04/11/2026: CRUDs, RBAC, multiempresa/numeração, migrações/reversão, validação financeira, notificações, relatórios, QR/conferência, depreciação em centavos, auditoria/rollback, sessões revogáveis, cookie/CSRF, limites de login/cadastro, confirmação transacional, fiscalização do trial, recuperação/troca de senha, parser de CSV e importação, bootstrap do primeiro Gestor e configuração com variáveis vazias |
 | Frontend | `cd src/front && pnpm test --runInBand` | 169 testes em 04/11/2026: listas, formulários acessíveis e carregamento seguro, dashboard, permissões, notificações, inspeção, histórico, navegação, configuração de avaria, financeiro, erros por campo, cadastro/confirmação públicos, recuperação/troca de senha, guard de rotas públicas, banner de trial expirado e importação CSV |
 | Mobile | `cd src/mobile && npm test -- --runInBand` | 263 testes: telas, permissões, sessão, repositórios, hooks, dashboard, auditoria, fotos autenticadas, câmera/QR e formulários |
 | E2E API | `cd e2e && npm run test:api` | API real e PostgreSQL descartável; CRUDs, isolamento, fotos, relatórios, financeiro, permissões, cookie HttpOnly, CSRF, senha e importação CSV |
 | E2E interfaces | `cd e2e && npm test -- --project=web --project=mobile` | Login e sessão por cookie na web, cadastro público, recuperação de senha, Minha conta, cadastros, inventário, solicitações, relatórios/downloads web, conferência, fotos e histórico do app (mobile segue por Bearer) |
 | E2E produção | `cd e2e && npm run test:production` | Mesmos cenários com build Next em `.next-e2e`; Expo Web continua distinto de homologação nativa |
+| Deploy (`up.sh`) | `cd deploy && ./up.test.sh` | 14 cenários sem subir nada: `.env` gerado com segredos, validações (domínio, bootstrap, SMTP), profile DuckDNS, prompts e idempotência |
 | Infraestrutura E2E | `cd e2e && npm run test:infrastructure` | Encerramento dos processos filhos/netos da UI |
 
 > Os testes de banco do backend usam **containers isolados** (Testcontainers) —
