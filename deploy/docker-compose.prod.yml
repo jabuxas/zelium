@@ -2,7 +2,7 @@
 #
 # Uso (no servidor da equipe):
 #   1. cp deploy/.env.example deploy/.env  e preencha os valores
-#   2. Configure o DuckDNS (veja docs/DEPLOY.md)
+#   2. Domínio apontando para o servidor (DuckDNS opcional: docs/DEPLOY.md)
 #   3. docker compose --env-file .env -f docker-compose.prod.yml up -d --build
 #
 # O Caddy obtém o certificado SSL automaticamente (Let's Encrypt) para
@@ -93,13 +93,17 @@ services:
       - backend
 
   duckdns:
-    # Atualiza o IP do domínio DuckDNS quando o IP público mudar.
+    # OPCIONAL (profile "duckdns"): só para quem usa domínio DuckDNS com IP
+    # dinâmico. Ative com COMPOSE_PROFILES=duckdns no .env e informe
+    # DUCKDNS_TOKEN e DUCKDNS_SUBDOMAIN (só o nome, ex.: "zelium" para
+    # zelium.duckdns.org). Com domínio próprio, deixe desativado.
     # Documentação: https://www.duckdns.org/spec.jsp
+    profiles: ["duckdns"]
     image: linuxserver/duckdns
     restart: unless-stopped
     environment:
-      TOKEN: ${DUCKDNS_TOKEN:?DUCKDNS_TOKEN é obrigatório}
-      SUBDOMAINS: ${ZELAR_DOMAIN%%.*}
+      TOKEN: ${DUCKDNS_TOKEN:-}
+      SUBDOMAINS: ${DUCKDNS_SUBDOMAIN:-}
       LOG_FILE: "false"
     volumes:
       - ./duckdns-config:/config
