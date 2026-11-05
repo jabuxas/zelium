@@ -41,6 +41,23 @@ services:
       DB_USER: ${POSTGRES_USER:-zelar}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET é obrigatório}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      # Primeira subida: cria organização + Gestor e desativa as contas demo
+      # (backend/src/database/bootstrap.ts). Idempotente.
+      BOOTSTRAP_GESTOR_EMAIL: ${BOOTSTRAP_GESTOR_EMAIL:-}
+      BOOTSTRAP_GESTOR_SENHA: ${BOOTSTRAP_GESTOR_SENHA:-}
+      BOOTSTRAP_GESTOR_NOME: ${BOOTSTRAP_GESTOR_NOME:-}
+      BOOTSTRAP_ORGANIZACAO_NOME: ${BOOTSTRAP_ORGANIZACAO_NOME:-}
+      # Transição consciente: sobe com as contas demo (senha publicada!) ativas.
+      PERMITIR_CONTAS_DEMO: ${PERMITIR_CONTAS_DEMO:-}
+      # Cadastro público e recuperação de senha (exigem SMTP). URLs derivadas
+      # do domínio; sobrescreva só se o frontend ficar em outro endereço.
+      SELF_SERVICE_ENABLED: ${SELF_SERVICE_ENABLED:-false}
+      SELF_SERVICE_CONFIRMATION_URL: ${SELF_SERVICE_CONFIRMATION_URL:-https://${ZELAR_DOMAIN:?ZELAR_DOMAIN é obrigatório}/cadastro/confirmar}
+      RECUPERACAO_SENHA_ENABLED: ${RECUPERACAO_SENHA_ENABLED:-false}
+      RECUPERACAO_SENHA_URL: ${RECUPERACAO_SENHA_URL:-https://${ZELAR_DOMAIN}/recuperar-senha/redefinir}
+      RATE_LIMIT_LOGIN_MAX: ${RATE_LIMIT_LOGIN_MAX:-}
+      WEB_ORIGINS: ${WEB_ORIGINS:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
