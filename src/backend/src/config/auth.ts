@@ -17,4 +17,4 @@ function resolverSegredo(): string {
 
 export const JWT_SECRET = resolverSegredo();
 
-export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? "7d";
+export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
