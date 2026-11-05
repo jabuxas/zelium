@@ -1,14 +1,10 @@
-import { createHash, randomBytes, randomUUID } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { QueryTypes, UniqueConstraintError } from 'sequelize';
 import { sequelize } from '../database/connection';
-import { runWithContext } from '../context/requestContext';
-import { Organizacao } from '../models/Organizacao';
-import { Usuario } from '../models/Usuario';
-import { EstadoItem } from '../models/EstadoItem';
-import { AuditLog } from '../models/AuditLog';
 import { EmailService } from './EmailService';
 import { PedidoCadastro } from './cadastroValidation';
+import { provisionarOrganizacao } from './ProvisionamentoService';
 
 export function hashTokenCadastro(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -44,32 +40,11 @@ export class CadastroService {
 
         // Hash apenas depois de validar o token; nunca guardar senha pendente.
         const senha_hash = await bcrypt.hash(senha, 12);
-        const inicio = new Date();
-        // A organização ainda não tem contexto. Evita o hook global atribuir
-        // seu evento à org padrão; a auditoria explícita abaixo é obrigatória
-        // e participa da MESMA transação, sem tolerância a falha.
-        const org = await Organizacao.create({
-          nome: pendente.organizacao_nome, slug: `org-${randomUUID()}`, ativo: true,
-          modalidade_acesso: 'trial', trial_inicio: inicio,
-          trial_fim: new Date(inicio.getTime() + 30 * 24 * 60 * 60 * 1000),
-          limite_patrimonios: 500, limite_usuarios: 5,
-        }, { transaction, hooks: false, logging: false });
-
-        await runWithContext({ usuarioId: 0, usuarioNome: 'Cadastro self-service', papel: 'gestor', organizacaoId: org.id }, async () => {
-          await AuditLog.create({
-            tabela: 'organizacao', registro_id: org.id, organizacao_id: org.id, acao: 'CREATE',
-            dados_anteriores: null, dados_novos: org.get({ plain: true }), campos_alterados: null,
-          }, { transaction, logging: false });
-          await Usuario.create({
-            nome: pendente.nome, email: pendente.email, senha_hash,
-            papel: 'gestor', ativo: true, organizacao_id: org.id,
-          }, { transaction, logging: false });
-          for (const [nome, avaria] of [
-            ['Em condições', false], ['Em manutenção', true], ['Inservível', true], ['Descarte pendente', true],
-          ] as const) {
-            await EstadoItem.create({ nome, descricao: null, avaria, organizacao_id: org.id }, { transaction, logging: false });
-          }
-        });
+        await provisionarOrganizacao({
+          organizacaoNome: pendente.organizacao_nome, gestorNome: pendente.nome,
+          gestorEmail: pendente.email, senhaHash: senha_hash,
+          modalidade: 'trial', origem: 'Cadastro self-service',
+        }, transaction);
         await remover();
         return true;
       });
