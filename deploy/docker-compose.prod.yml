@@ -8,6 +8,11 @@
 # O Caddy obtém o certificado SSL automaticamente (Let's Encrypt) para
 # o domínio DuckDNS e renova sozinho.
 
+# Backend e retenção usam a MESMA imagem (build compartilhado e em cache).
+x-backend-build: &backend-build
+  context: ../src
+  dockerfile: backend/Dockerfile
+
 services:
   db:
     image: postgres:17
@@ -28,9 +33,8 @@ services:
       retries: 5
 
   backend:
-    build:
-      context: ../src
-      dockerfile: backend/Dockerfile
+    build: *backend-build
+    image: zelium-backend:local
     restart: unless-stopped
     environment:
       PORT: 8000
@@ -75,6 +79,31 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  retencao:
+    # Retenção operacional diária (privacidade): apaga pendências expiradas de
+    # cadastro/senha e purga notificações antigas. Auditoria só é purgada se
+    # AUDITORIA_RETENCAO_DIAS > 0 (padrão 0 = manter: é o rastro de
+    # responsabilidade). Roda ao subir e a cada 24h; relata só contagens.
+    build: *backend-build
+    image: zelium-backend:local
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-zelar}
+      DB_USER: ${POSTGRES_USER:-zelar}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      NOTIFICACAO_RETENCAO_DIAS: ${NOTIFICACAO_RETENCAO_DIAS:-180}
+      AUDITORIA_RETENCAO_DIAS: ${AUDITORIA_RETENCAO_DIAS:-0}
+    command:
+      - sh
+      - -c
+      - while true; do node dist/database/limparRetencao.js || true; sleep 86400; done
+    depends_on:
+      backend:
+        condition: service_healthy
 
   frontend:
     build:
