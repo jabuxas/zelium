@@ -17,10 +17,10 @@
 
 name: zelium
 
-# Backend e retenção usam a MESMA imagem (build compartilhado e em cache).
-x-backend-build: &backend-build
-  context: ../src
-  dockerfile: backend/Dockerfile
+# Imagens buildadas pelo GitHub Actions (linux/arm64) e publicadas no GHCR:
+#   ghcr.io/jabuxas/zelium-backend:latest
+#   ghcr.io/jabuxas/zelium-frontend:latest
+# O frontend recebe NEXT_PUBLIC_API_URL=/api como build-arg no CI.
 
 services:
   db:
@@ -42,8 +42,7 @@ services:
       retries: 5
 
   backend:
-    build: *backend-build
-    image: zelium-backend:local
+    image: ghcr.io/jabuxas/zelium-backend:latest
     restart: unless-stopped
     ports:
       - "10.100.10.67:8000:8000"
@@ -97,8 +96,7 @@ services:
     # cadastro/senha e purga notificações antigas. Auditoria só é purgada se
     # AUDITORIA_RETENCAO_DIAS > 0 (padrão 0 = manter: é o rastro de
     # responsabilidade). Roda ao subir e a cada 24h; relata só contagens.
-    build: *backend-build
-    image: zelium-backend:local
+    image: ghcr.io/jabuxas/zelium-backend:latest
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -118,11 +116,7 @@ services:
         condition: service_healthy
 
   frontend:
-    build:
-      context: ../src/front
-      args:
-        # Mesma origem: o NPM encaminha /api e /uploads para o backend
-        NEXT_PUBLIC_API_URL: /api
+    image: ghcr.io/jabuxas/zelium-frontend:latest
     restart: unless-stopped
     ports:
       - "10.100.10.67:3002:3000"
