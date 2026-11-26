@@ -63,4 +63,4 @@ jobs:
         run: |
           curl -fsS -X POST \
             -H "X-Gitlab-Token: ${{ secrets.DOCKHAND_WEBHOOK_TOKEN }}" \
-            https://hook.jabuxas.com/api/git/stacks/5/webhook
+            https://hook.jabuxas.com/api/git/stacks/6/webhook
