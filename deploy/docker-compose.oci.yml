@@ -45,7 +45,7 @@ services:
     image: ghcr.io/jabuxas/zelium-backend:latest
     restart: unless-stopped
     ports:
-      - "10.100.10.67:8000:8000"
+      - "8000:8000"
     environment:
       PORT: 8000
       NODE_ENV: production
@@ -119,7 +119,7 @@ services:
     image: ghcr.io/jabuxas/zelium-frontend:latest
     restart: unless-stopped
     ports:
-      - "10.100.10.67:3002:3000"
+      - "3002:3000"
     depends_on:
       backend:
         condition: service_healthy
