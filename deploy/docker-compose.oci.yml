@@ -1,0 +1,169 @@
+# Zelium — Stack OCI (Oracle Cloud, arm64)
+#
+# Variante do docker-compose.prod.yml para rodar no OCI atrás do Nginx
+# Proxy Manager, que assume os papéis do Caddy + DuckDNS:
+#   - TLS/HTTPS e roteamento (/api, /uploads, /health -> backend;
+#     todo o resto -> frontend)
+#   - o domínio público aponta para o IP estático da VM (sem updater)
+#
+# Uso (via Dockhand, stack Git):
+#   compose path: deploy/docker-compose.oci.yml
+#   variáveis obrigatórias no painel de Env do stack:
+#     ZELAR_DOMAIN, POSTGRES_PASSWORD, JWT_SECRET
+#   opcionais: BOOTSTRAP_GESTOR_*, SMTP_*, SELF_SERVICE_*, RETENCAO_*
+#
+# Portas publicadas apenas no IP WireGuard da VM:
+#   8000 (backend) e 3002 (frontend; 3000 já é do Dockhand)
+
+name: zelium
+
+# Backend e retenção usam a MESMA imagem (build compartilhado e em cache).
+x-backend-build: &backend-build
+  context: ../src
+  dockerfile: backend/Dockerfile
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-zelar}
+      POSTGRES_USER: ${POSTGRES_USER:-zelar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD é obrigatório}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ../src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../src/db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    # Sem porta exposta: o banco só é acessível dentro da rede docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-zelar} -d ${POSTGRES_DB:-zelar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: *backend-build
+    image: zelium-backend:local
+    restart: unless-stopped
+    ports:
+      - "10.100.10.67:8000:8000"
+    environment:
+      PORT: 8000
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-zelar}
+      DB_USER: ${POSTGRES_USER:-zelar}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET é obrigatório}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      # Primeira subida: cria organização + Gestor e desativa as contas demo
+      # (backend/src/database/bootstrap.ts). Idempotente.
+      BOOTSTRAP_GESTOR_EMAIL: ${BOOTSTRAP_GESTOR_EMAIL:-}
+      BOOTSTRAP_GESTOR_SENHA: ${BOOTSTRAP_GESTOR_SENHA:-}
+      BOOTSTRAP_GESTOR_NOME: ${BOOTSTRAP_GESTOR_NOME:-}
+      BOOTSTRAP_ORGANIZACAO_NOME: ${BOOTSTRAP_ORGANIZACAO_NOME:-}
+      # Transição consciente: sobe com as contas demo (senha publicada!) ativas.
+      PERMITIR_CONTAS_DEMO: ${PERMITIR_CONTAS_DEMO:-}
+      # Cadastro público e recuperação de senha (exigem SMTP). URLs derivadas
+      # do domínio; sobrescreva só se o frontend ficar em outro endereço.
+      SELF_SERVICE_ENABLED: ${SELF_SERVICE_ENABLED:-false}
+      SELF_SERVICE_CONFIRMATION_URL: ${SELF_SERVICE_CONFIRMATION_URL:-https://${ZELAR_DOMAIN:?ZELAR_DOMAIN é obrigatório}/cadastro/confirmar}
+      RECUPERACAO_SENHA_ENABLED: ${RECUPERACAO_SENHA_ENABLED:-false}
+      RECUPERACAO_SENHA_URL: ${RECUPERACAO_SENHA_URL:-https://${ZELAR_DOMAIN}/recuperar-senha/redefinir}
+      RATE_LIMIT_LOGIN_MAX: ${RATE_LIMIT_LOGIN_MAX:-}
+      WEB_ORIGINS: ${WEB_ORIGINS:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      # Atrás do NPM do OCI: 1 hop de proxy (padrão do prod, mantido explícito)
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  retencao:
+    # Retenção operacional diária (privacidade): apaga pendências expiradas de
+    # cadastro/senha e purga notificações antigas. Auditoria só é purgada se
+    # AUDITORIA_RETENCAO_DIAS > 0 (padrão 0 = manter: é o rastro de
+    # responsabilidade). Roda ao subir e a cada 24h; relata só contagens.
+    build: *backend-build
+    image: zelium-backend:local
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-zelar}
+      DB_USER: ${POSTGRES_USER:-zelar}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      NOTIFICACAO_RETENCAO_DIAS: ${NOTIFICACAO_RETENCAO_DIAS:-180}
+      AUDITORIA_RETENCAO_DIAS: ${AUDITORIA_RETENCAO_DIAS:-0}
+    command:
+      - sh
+      - -c
+      - while true; do node dist/database/limparRetencao.js || true; sleep 86400; done
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../src/front
+      args:
+        # Mesma origem: o NPM encaminha /api e /uploads para o backend
+        NEXT_PUBLIC_API_URL: /api
+    restart: unless-stopped
+    ports:
+      - "10.100.10.67:3002:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/login || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  backup:
+    # Backup automático: dump diário às 02:00 (UTC) com retenção rotativa.
+    # Restauração: veja deploy/restore.sh e docs/DEPLOY.md
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-zelar}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-zelar}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - backups_data:/backups
+      - ./backup.sh:/backup.sh:ro
+      - ./restore.sh:/restore.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "0 2 * * * /backup.sh" > /tmp/crontab
+        crontab /tmp/crontab
+        echo "Backups agendados para 02:00 UTC (retenção: $${BACKUP_RETENTION_DAYS} dias)"
+        # Roda o cron em primeiro plano; logs de backup vão para /backups/backup.log
+        crond -f -l 8 > /backups/backup.log 2>&1
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  uploads_data:
+  backups_data:
