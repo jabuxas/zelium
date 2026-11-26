@@ -133,7 +133,8 @@ services:
   backup:
     # Backup automático: dump diário às 02:00 (UTC) com retenção rotativa.
     # Restauração: veja deploy/restore.sh e docs/DEPLOY.md
-    image: postgres:17
+    # Variante -alpine: o Debian do postgres:17 não traz crond/crontab.
+    image: postgres:17-alpine
     restart: unless-stopped
     environment:
       PGHOST: db
